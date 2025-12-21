@@ -565,7 +565,8 @@
     const incSel = document.getElementById("tradeIncludeSelect");
     document.getElementById("trade_include").value = incSel ? incSel.value : "TRUE";
 
-    setStatus(tradeStatus, "Gesendet ✅", "ok");
+    const msg = `${selectedInst} ${rStr} R, ${formatDDMMYYYY(d)}`;
+    setStatus(tradeStatus, `Gesendet ✅    ${msg}`, "ok");
 
     setTimeout(() => {
       document.getElementById("tradeResultR").value = "";
