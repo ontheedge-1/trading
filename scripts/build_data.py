@@ -75,6 +75,7 @@ def read_starting_equity(settings_rows):
   # accept variants
   direct_candidates = [
     "starting_equity_$",
+    "starting_equity_",
     "starting_equity",
     "start_equity_$",
     "start_equity",
