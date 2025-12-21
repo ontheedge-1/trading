@@ -1,0 +1,12 @@
+{
+  "trade_count": 0,
+  "winrate": null,
+  "profit_factor": null,
+  "expectancy_R": null,
+  "avg_win_R": null,
+  "avg_loss_R": null,
+  "longest_winning_streak": null,
+  "avg_winning_streak": null,
+  "longest_losing_streak": null,
+  "avg_losing_streak": null
+}

@@ -1,0 +1,21 @@
+{
+  "last_updated_utc": "2025-12-21T18:15:53+00:00",
+  "sources": {
+    "trades_csv": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTr-eyyO0CYH8WG3JWNa7nnaRWFRbT5k0Z6xCzJ-s9616fqOfsUZ9pQZDyAPVZMHjHMtLS3auB9Lws/pub?gid=1403228163&single=true&output=csv",
+    "adjustments_csv": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTr-eyyO0CYH8WG3JWNa7nnaRWFRbT5k0Z6xCzJ-s9616fqOfsUZ9pQZDyAPVZMHjHMtLS3auB9Lws/pub?gid=1741852264&single=true&output=csv",
+    "settings_csv": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTr-eyyO0CYH8WG3JWNa7nnaRWFRbT5k0Z6xCzJ-s9616fqOfsUZ9pQZDyAPVZMHjHMtLS3auB9Lws/pub?gid=0&single=true&output=csv"
+  },
+  "starting_equity_$": 35.0,
+  "counts": {
+    "trades_rows_total": 15,
+    "trades_rows_included": 14,
+    "adjustment_rows_total": 11,
+    "adjustment_rows_included": 11
+  },
+  "model": {
+    "cash_equity_driver": "broker_truth_daily_adjustments_only",
+    "trades_unit": "R",
+    "daily_adjustments_unit": "$",
+    "daily_pnl_applied": "after_trades_same_date (by date, regardless of entry time)"
+  }
+}
