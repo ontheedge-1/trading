@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Trade Entry</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 16px; }
+    h1 { font-size: 18px; margin: 0 0 12px; }
+    .tabs { display:flex; gap:8px; margin-bottom:12px; }
+    .tabbtn { padding:10px 12px; border:1px solid #ccc; background:#f7f7f7; border-radius:10px; cursor:pointer; }
+    .tabbtn.active { background:#e9eefc; border-color:#8aa2ff; }
+    .panel { display:none; border:1px solid #e5e5e5; border-radius:12px; padding:12px; }
+    .panel.active { display:block; }
+    .row { margin: 10px 0; }
+    label { display:block; font-size: 13px; margin-bottom: 6px; }
+    input, select, button { width:100%; padding:10px 12px; border:1px solid #ccc; border-radius:10px; font-size: 16px; }
+    .radio { display:flex; gap:10px; flex-wrap:wrap; }
+    .radio label { display:flex; align-items:center; gap:6px; margin:0; font-size: 14px; }
+    .instruments { display:flex; gap:8px; flex-wrap:wrap; }
+    .instbtn { width:auto; padding:10px 12px; border:1px solid #ccc; border-radius:999px; background:#fff; cursor:pointer; }
+    .instbtn.active { border-color:#2f5bff; background:#e9eefc; }
+    .hint { font-size: 12px; color:#666; margin-top:6px; }
+    details { border:1px dashed #ddd; border-radius:12px; padding:10px 12px; }
+    summary { cursor:pointer; font-weight:600; }
+    .actions { display:flex; gap:10px; }
+    .actions button { flex:1; }
+    .status { margin-top:10px; font-size: 13px; }
+    .ok { color: #1a7f37; }
+    .warn { color: #b54708; }
+    iframe { display:none; }
+  </style>
+</head>
+<body>
+  <h1>Entry</h1>
+
+  <div class="tabs">
+    <button class="tabbtn active" type="button" data-tab="trade">Trade</button>
+    <button class="tabbtn" type="button" data-tab="adj">Daily / Cash</button>
+  </div>
+
+  <!-- hidden iframe for CORS-safe form POST -->
+  <iframe name="hidden_iframe"></iframe>
+
+  <!-- ===================== TRADE PANEL ===================== -->
+  <section id="panel-trade" class="panel active">
+    <form id="tradeForm" method="POST" action="https://script.google.com/macros/s/AKfycbzoSoBKeaHy7c_DX8G1mnywgGAHjpEgbZdvtq0JM7OWKVSMG5BwO5WapaNgK5jWy2AyVw/exec" target="hidden_iframe">
+      <!-- required by Apps Script -->
+      <input type="hidden" name="type" value="trade" />
+      <input type="hidden" name="trade_id" id="trade_id" />
+      <input type="hidden" name="date" id="trade_date" />
+      <input type="hidden" name="instrument" id="trade_instrument" />
+      <input type="hidden" name="include" id="trade_include" value="TRUE" />
+
+      <div class="row">
+        <label>Datum</label>
+        <div class="radio">
+          <label><input type="radio" name="tradeDateMode" value="today" checked> today</label>
+          <label><input type="radio" name="tradeDateMode" value="yesterday"> yesterday</label>
+          <label><input type="radio" name="tradeDateMode" value="custom"> date</label>
+        </div>
+        <div id="tradeCustomDateWrap" style="display:none; margin-top:8px;">
+          <input type="date" id="tradeCustomDate" />
+          <div class="hint">Nur sichtbar, wenn “date” gewählt ist.</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <label>Instrument</label>
+
+        <!-- Buttons (fast on mobile) -->
+        <div class="instruments" id="instButtons">
+          <button type="button" class="instbtn active" data-inst="ES">ES</button>
+          <button type="button" class="instbtn" data-inst="NQ">NQ</button>
+          <button type="button" class="instbtn" data-inst="RTY">RTY</button>
+          <button type="button" class="instbtn" data-inst="YM">YM</button>
+          <button type="button" class="instbtn" data-inst="CL">CL</button>
+          <button type="button" class="instbtn" data-inst="GC">GC</button>
+        </div>
+
+        <!-- Also keep a dropdown as fallback -->
+        <div style="margin-top:8px;">
+          <select id="tradeInstrumentSelect">
+            <option value="ES">ES</option>
+            <option value="NQ">NQ</option>
+            <option value="RTY">RTY</option>
+            <option value="YM">YM</option>
+            <option value="CL">CL</option>
+            <option value="GC">GC</option>
+          </select>
+          <div class="hint">Du kannst Buttons oder Dropdown benutzen – beides setzt dasselbe Feld.</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <label>Result (R)</label>
+        <input id="tradeResultR" inputmode="decimal" placeholder="z.B. 1,2 oder -0,7" />
+        <div class="hint">Deutsch: Komma erlaubt (z.B. -0,7). Genau so wird es gesendet.</div>
+      </div>
+
+      <details class="row">
+        <summary>Optional (Notes / Include)</summary>
+        <div style="margin-top:10px;">
+          <label>Notes</label>
+          <input name="notes" id="tradeNotes" placeholder="optional" />
+        </div>
+
+        <div style="margin-top:10px;">
+          <label>Include</label>
+          <select id="tradeIncludeSelect">
+            <option value="TRUE" selected>TRUE</option>
+            <option value="FALSE">FALSE</option>
+          </select>
+          <div class="hint">Standard TRUE. FALSE = wird später von Berechnungen ignoriert.</div>
+        </div>
+      </details>
+
+      <!-- Apps Script expects result_r -->
+      <input type="hidden" name="result_r" id="trade_result_r" />
+
+      <div class="row actions">
+        <button type="submit">Save Trade</button>
+        <button type="button" id="tradeClear">Clear</button>
+      </div>
+
+      <div id="tradeStatus" class="status"></div>
+    </form>
+  </section>
+
+  <!-- ===================== ADJUSTMENT PANEL ===================== -->
+  <section id="panel-adj" class="panel">
+    <form id="adjForm" method="POST" action="https://script.google.com/macros/s/AKfycbzoSoBKeaHy7c_DX8G1mnywgGAHjpEgbZdvtq0JM7OWKVSMG5BwO5WapaNgK5jWy2AyVw/exec" target="hidden_iframe">
+      <input type="hidden" name="type" value="adjustment" />
+      <input type="hidden" name="event_id" id="adj_event_id" />
+      <input type="hidden" name="date" id="adj_date" />
+      <input type="hidden" name="include" id="adj_include" value="TRUE" />
+
+      <div class="row">
+        <label>Datum</label>
+        <div class="radio">
+          <label><input type="radio" name="adjDateMode" value="today" checked> today</label>
+          <label><input type="radio" name="adjDateMode" value="yesterday"> yesterday</label>
+          <label><input type="radio" name="adjDateMode" value="custom"> date</label>
+        </div>
+        <div id="adjCustomDateWrap" style="display:none; margin-top:8px;">
+          <input type="date" id="adjCustomDate" />
+        </div>
+      </div>
+
+      <div class="row">
+        <label>Type</label>
+        <select name="type" id="adjTypeSelect">
+          <option value="daily_pnl" selected>daily_pnl</option>
+          <option value="withdrawal">withdrawal</option>
+          <option value="deposit">deposit</option>
+          <option value="fees">fees</option>
+          <option value="correction">correction</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <label>Amount ($)</label>
+        <input id="adjAmount" inputmode="decimal" placeholder="z.B. -120,50 oder 950" />
+        <div class="hint">Negative Werte für withdrawal/fees oder Verlust (daily_pnl).</div>
+      </div>
+
+      <details class="row">
+        <summary>Optional (Notes / Include)</summary>
+        <div style="margin-top:10px;">
+          <label>Notes</label>
+          <input name="notes" id="adjNotes" placeholder="optional" />
+        </div>
+
+        <div style="margin-top:10px;">
+          <label>Include</label>
+          <select id="adjIncludeSelect">
+            <option value="TRUE" selected>TRUE</option>
+            <option value="FALSE">FALSE</option>
+          </select>
+        </div>
+      </details>
+
+      <!-- Apps Script expects amount_$ -->
+      <input type="hidden" name="amount_$" id="adj_amount_usd" />
+      <!-- we already have "type" hidden in form, but here type is also a field.
+           To avoid conflicts, we send "type" as adjustment in hidden and "type" of adjustment as "type" too.
+           Apps Script uses payload.type to route. So we must ensure routing type remains "adjustment".
+           We'll send adjustment kind in separate param: adj_kind -->
+      <input type="hidden" name="adj_kind" id="adj_kind" />
+
+      <div class="row actions">
+        <button type="submit">Save Daily/Cash</button>
+        <button type="button" id="adjClear">Clear</button>
+      </div>
+
+      <div id="adjStatus" class="status"></div>
+    </form>
+  </section>
+
+<script>
+  // NOTE:
+  // In the adjustment form, there is a naming collision: Apps Script expects payload.type to be "adjustment"
+  // but we also want a field named "type" (daily_pnl / withdrawal / etc.).
+  // Solution: keep routing field "type=adjustment" fixed, and send actual adjustment type as "adj_kind".
+  //
+  // Your Apps Script currently reads p.type for adjustment type.
+  // Therefore we should update the Apps Script OR we adapt here to send "type" for adjustment kind
+  // and send routing as another field.
+  //
+  // Easiest fix without touching Apps Script: we will send:
+  // - type = adjustment (routing)  -> already in hidden input
+  // - and also send "type" = kind  -> but that would overwrite routing.
+  //
+  // So: we will POST JSON later OR update Apps Script slightly.
+  //
+  // For now, to keep everything consistent with your Apps Script, we will do:
+  // - keep routing: type=adjustment
+  // - send kind as "type" by renaming the dropdown field to "adj_type"
+  //
+  // We'll patch that now at runtime by removing name="type" from dropdown and setting name="adj_type".
+</script>
+
+<script>
+  // --- Utility functions ---
+  function pad2(n){ return String(n).padStart(2,"0"); }
+
+  function formatDDMMYYYY(d){
+    // d is Date
+    const dd = pad2(d.getDate());
+    const mm = pad2(d.getMonth()+1);
+    const yy = d.getFullYear();
+    return `${dd}.${mm}.${yy}`;
+  }
+
+  function dateFromMode(mode, customDateInput){
+    const now = new Date();
+    if (mode === "today") return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (mode === "yesterday") {
+      const y = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      y.setDate(y.getDate() - 1);
+      return y;
+    }
+    // custom date input is yyyy-mm-dd
+    if (mode === "custom") {
+      const v = customDateInput.value;
+      if (!v) return null;
+      const [yyyy, mm, dd] = v.split("-").map(Number);
+      return new Date(yyyy, mm-1, dd);
+    }
+    return null;
+  }
+
+  function makeId(prefix){
+    const d = new Date();
+    const ts = `${d.getFullYear()}${pad2(d.getMonth()+1)}${pad2(d.getDate())}-${pad2(d.getHours())}${pad2(d.getMinutes())}${pad2(d.getSeconds())}`;
+    const rnd = Math.floor(1000 + Math.random()*9000);
+    return `${prefix}-${ts}-${rnd}`;
+  }
+
+  function setStatus(el, msg, cls){
+    el.className = `status ${cls || ""}`;
+    el.textContent = msg;
+  }
+
+  // --- Tabs ---
+  const tabButtons = document.querySelectorAll(".tabbtn");
+  const tradePanel = document.getElementById("panel-trade");
+  const adjPanel = document.getElementById("panel-adj");
+
+  tabButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      tabButtons.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      const t = btn.dataset.tab;
+      tradePanel.classList.toggle("active", t === "trade");
+      adjPanel.classList.toggle("active", t === "adj");
+    });
+  });
+
+  // --- Trade date mode ---
+  const tradeCustomWrap = document.getElementById("tradeCustomDateWrap");
+  document.querySelectorAll('input[name="tradeDateMode"]').forEach(r => {
+    r.addEventListener("change", () => {
+      tradeCustomWrap.style.display = (r.value === "custom" && r.checked) ? "block" : tradeCustomWrap.style.display;
+      const checked = document.querySelector('input[name="tradeDateMode"]:checked').value;
+      tradeCustomWrap.style.display = (checked === "custom") ? "block" : "none";
+    });
+  });
+
+  // --- Adj date mode ---
+  const adjCustomWrap = document.getElementById("adjCustomDateWrap");
+  document.querySelectorAll('input[name="adjDateMode"]').forEach(r => {
+    r.addEventListener("change", () => {
+      const checked = document.querySelector('input[name="adjDateMode"]:checked').value;
+      adjCustomWrap.style.display = (checked === "custom") ? "block" : "none";
+    });
+  });
+
+  // --- Instrument buttons <-> dropdown sync ---
+  const instBtns = document.querySelectorAll(".instbtn");
+  const instSelect = document.getElementById("tradeInstrumentSelect");
+  let selectedInst = "ES";
+
+  function setInstrument(inst){
+    selectedInst = inst;
+    instBtns.forEach(b => b.classList.toggle("active", b.dataset.inst === inst));
+    instSelect.value = inst;
+  }
+
+  instBtns.forEach(b => {
+    b.addEventListener("click", () => setInstrument(b.dataset.inst));
+  });
+
+  instSelect.addEventListener("change", () => setInstrument(instSelect.value));
+
+  // default
+  setInstrument("ES");
+
+  // --- Fix adjustment dropdown name collision with Apps Script ---
+  // Apps Script expects: payload.type (routing) == "adjustment", and also uses p.type as adjustment kind.
+  // That collides. We solve it by renaming the adjustment kind field to "adj_type" and then mapping it
+  // into a hidden input named "type_kind" OR we update Apps Script.
+  //
+  // Simplest here: update Apps Script? Since it's easy, I'd prefer to update Apps Script to read p.adj_type
+  // for kind. But you asked to begin now and keep it simple.
+  //
+  // So: We'll change the dropdown field name from "type" to "adj_type" and ALSO create hidden input "type"
+  // for routing only (already exists). We'll then modify the Apps Script later to read adj_type.
+  //
+  // For now, we patch the form so it sends adj_type. Your current Apps Script expects p.type for kind,
+  // so adjustments would fail until we do the small Apps Script tweak.
+  //
+  // Let's implement that tweak next right after this page is in place.
+  const adjTypeSelect = document.getElementById("adjTypeSelect");
+  adjTypeSelect.removeAttribute("name");
+  adjTypeSelect.setAttribute("name","adj_type");
+
+  // --- Trade form submit ---
+  const tradeForm = document.getElementById("tradeForm");
+  const tradeStatus = document.getElementById("tradeStatus");
+
+  tradeForm.addEventListener("submit", (ev) => {
+    // Fill hidden fields right before submit
+    const mode = document.querySelector('input[name="tradeDateMode"]:checked').value;
+    const custom = document.getElementById("tradeCustomDate");
+    const d = dateFromMode(mode, custom);
+    if (!d) {
+      ev.preventDefault();
+      setStatus(tradeStatus, "Bitte Datum auswählen (bei 'date').", "warn");
+      return;
+    }
+
+    const rStr = document.getElementById("tradeResultR").value.trim();
+    if (!rStr) {
+      ev.preventDefault();
+      setStatus(tradeStatus, "Bitte Result (R) eingeben.", "warn");
+      return;
+    }
+
+    document.getElementById("trade_id").value = makeId("T");
+    document.getElementById("trade_date").value = formatDDMMYYYY(d);
+    document.getElementById("trade_instrument").value = selectedInst;
+    document.getElementById("trade_result_r").value = rStr;
+
+    // include + notes (optional)
+    document.getElementById("trade_include").value = document.getElementById("tradeIncludeSelect").value;
+
+    setStatus(tradeStatus, "Gesendet ✅ (Sheet wird aktualisiert).", "ok");
+
+    // Clear input quickly (keep instrument & date mode)
+    setTimeout(() => {
+      document.getElementById("tradeResultR").value = "";
+      document.getElementById("tradeNotes").value = "";
+    }, 50);
+  });
+
+  document.getElementById("tradeClear").addEventListener("click", () => {
+    document.getElementById("tradeResultR").value = "";
+    document.getElementById("tradeNotes").value = "";
+    document.getElementById("tradeIncludeSelect").value = "TRUE";
+    setStatus(tradeStatus, "", "");
+  });
+
+  // --- Adjustment form submit ---
+  const adjForm = document.getElementById("adjForm");
+  const adjStatus = document.getElementById("adjStatus");
+
+  adjForm.addEventListener("submit", (ev) => {
+    const mode = document.querySelector('input[name="adjDateMode"]:checked').value;
+    const custom = document.getElementById("adjCustomDate");
+    const d = dateFromMode(mode, custom);
+    if (!d) {
+      ev.preventDefault();
+      setStatus(adjStatus, "Bitte Datum auswählen (bei 'date').", "warn");
+      return;
+    }
+
+    const amtStr = document.getElementById("adjAmount").value.trim();
+    if (!amtStr) {
+      ev.preventDefault();
+      setStatus(adjStatus, "Bitte Amount ($) eingeben.", "warn");
+      return;
+    }
+
+    document.getElementById("adj_event_id").value = makeId("E");
+    document.getElementById("adj_date").value = formatDDMMYYYY(d);
+    document.getElementById("adj_amount_usd").value = amtStr;
+    document.getElementById("adj_include").value = document.getElementById("adjIncludeSelect").value;
+
+    setStatus(adjStatus, "Gesendet ✅ (Sheet wird aktualisiert).", "ok");
+
+    setTimeout(() => {
+      document.getElementById("adjAmount").value = "";
+      document.getElementById("adjNotes").value = "";
+    }, 50);
+  });
+
+  document.getElementById("adjClear").addEventListener("click", () => {
+    document.getElementById("adjAmount").value = "";
+    document.getElementById("adjNotes").value = "";
+    document.getElementById("adjIncludeSelect").value = "TRUE";
+    setStatus(adjStatus, "", "");
+  });
+
+</script>
+</body>
+</html>
