@@ -38,16 +38,111 @@ def truthy_include(row: dict):
   v = str(row.get("include", "TRUE")).strip().upper()
   return v != "FALSE"
 
+def norm_key(s: str) -> str:
+  """Normalize keys for robust matching."""
+  if s is None:
+    return ""
+  s = str(s).strip().lower()
+  # unify separators
+  for ch in [" ", "-", "–", "—", ".", ":", "/"]:
+    s = s.replace(ch, "_")
+  # collapse multiple underscores
+  while "__" in s:
+    s = s.replace("__", "_")
+  return s
+
 def read_starting_equity(settings_rows):
-  # expects a column named starting_equity_$ in Settings sheet
+  """
+  Robustly reads starting equity from Settings CSV.
+
+  Supports:
+  A) Column header exists:
+     starting_equity_$   (single row or multiple)
+  B) Key/Value table:
+     key,value   with a row where key == starting_equity_$
+  C) Other common header pairs:
+     setting/value, name/value, parameter/value, key/val, etc.
+  """
+  if not settings_rows:
+    raise RuntimeError("Settings CSV is empty.")
+
+  # Build normalized header list from first row keys
+  headers = list(settings_rows[0].keys())
+  headers_norm = [norm_key(h) for h in headers]
+  header_map = {norm_key(h): h for h in headers}  # normalized -> actual
+
+  # --- Case A: direct column ---
+  # accept variants
+  direct_candidates = [
+    "starting_equity_$",
+    "starting_equity",
+    "start_equity_$",
+    "start_equity",
+    "initial_equity_$",
+    "initial_equity",
+    "starting_balance_$",
+    "starting_balance",
+    "start_balance_$",
+    "start_balance",
+  ]
+  for cand in direct_candidates:
+    if cand in headers_norm:
+      col = header_map[cand]
+      for r in settings_rows:
+        if not truthy_include(r):
+          continue
+        val = parse_de_number(r.get(col))
+        if val is not None:
+          return val
+
+  # --- Case B/C: key/value style ---
+  # Detect likely key column and value column
+  key_col_candidates = ["key", "setting", "name", "parameter", "field", "variable"]
+  val_col_candidates = ["value", "val", "amount", "number", "usd", "$", "equity"]
+
+  key_col = None
+  val_col = None
+
+  for kn in key_col_candidates:
+    if kn in headers_norm:
+      key_col = header_map[kn]
+      break
+
+  for vn in val_col_candidates:
+    if vn in headers_norm:
+      val_col = header_map[vn]
+      break
+
+  # If not found, try fallback: assume first two columns are key/value
+  if key_col is None or val_col is None:
+    if len(headers) >= 2:
+      key_col = key_col or headers[0]
+      val_col = val_col or headers[1]
+
+  # Now scan rows for a key that matches starting equity
+  target_keys = set(direct_candidates) | {
+    "starting_capital",
+    "starting_capital_$",
+    "starting_account",
+    "starting_account_$",
+  }
+
   for r in settings_rows:
     if not truthy_include(r):
       continue
-    if "starting_equity_$" in r:
-      val = parse_de_number(r.get("starting_equity_$"))
+    k_raw = r.get(key_col, "")
+    k = norm_key(k_raw)
+    if k in target_keys:
+      val = parse_de_number(r.get(val_col))
       if val is not None:
         return val
-  raise RuntimeError('Could not find "starting_equity_$" in Settings CSV.')
+
+  # If still nothing, show helpful debug context
+  raise RuntimeError(
+    'Could not find starting equity in Settings CSV. '
+    'Expected either a column "starting_equity_$" OR a key/value row where key == "starting_equity_$". '
+    f"Detected headers: {headers}"
+  )
 
 def ensure_data_dir():
   os.makedirs(DATA_DIR, exist_ok=True)
@@ -60,19 +155,15 @@ def write_json(name: str, obj):
 def main():
   ensure_data_dir()
 
-  # Fetch sources
   settings = fetch_csv(SETTINGS_URL)
   trades = fetch_csv(TRADES_URL)
   adjs = fetch_csv(ADJ_URL)
 
-  # Filter include TRUE
   trades_inc = [r for r in trades if truthy_include(r)]
   adjs_inc = [r for r in adjs if truthy_include(r)]
 
   starting_equity = read_starting_equity(settings)
 
-  # Minimal “pipeline-alive” outputs (we’ll fill real logic next)
-  # NOTE: Option A is locked: cash equity will be broker-truth from daily_pnl + withdrawals/deposits/fees.
   meta = {
     "last_updated_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     "sources": {
@@ -95,7 +186,7 @@ def main():
     }
   }
 
-  # Placeholder files (so dashboard can safely read them immediately)
+  # Pipeline-alive placeholder outputs (we’ll fill real logic next)
   write_json("meta.json", meta)
   write_json("equity.json", [])
   write_json("daily_aggregates.json", [])
