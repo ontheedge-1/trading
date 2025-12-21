@@ -671,7 +671,7 @@
 
     document.getElementById("adj_event_id").value = makeId("E");
     document.getElementById("adj_date").value = "'" + formatDDMMYYYY(d);
-    document.getElementById("adj_amount_usd").value = "'" + String(signedAmt);
+    document.getElementById("adj_amount_usd").value = "" + String(signedAmt);
 
     const incSel = document.getElementById("adjIncludeSelect");
     document.getElementById("adj_include").value = incSel ? incSel.value : "TRUE";
