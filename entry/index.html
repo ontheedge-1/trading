@@ -601,9 +601,9 @@
 
 
     document.getElementById("trade_id").value = makeId("T");
-    document.getElementById("trade_date").value = "'" + formatDDMMYYYY(d);
+    document.getElementById("trade_date").value = formatDDMMYYYY(d);
     document.getElementById("trade_instrument").value = selectedInst;
-    document.getElementById("trade_result_r").value = "" + String(signedR);
+    document.getElementById("trade_result_r").value = String(signedR);
 
 
     // include
@@ -670,8 +670,8 @@
     const signedAmt = (amtValue * adjSign);
 
     document.getElementById("adj_event_id").value = makeId("E");
-    document.getElementById("adj_date").value = "'" + formatDDMMYYYY(d);
-    document.getElementById("adj_amount_usd").value = "" + String(signedAmt);
+    document.getElementById("adj_date").value = formatDDMMYYYY(d);
+    document.getElementById("adj_amount_usd").value = String(signedAmt);
 
     const incSel = document.getElementById("adjIncludeSelect");
     document.getElementById("adj_include").value = incSel ? incSel.value : "TRUE";
