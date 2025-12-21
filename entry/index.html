@@ -2,230 +2,445 @@
 <html lang="de">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Trade Entry</title>
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 16px; }
-    h1 { font-size: 18px; margin: 0 0 12px; }
-    .tabs { display:flex; gap:8px; margin-bottom:12px; }
-    .tabbtn { padding:10px 12px; border:1px solid #ccc; background:#f7f7f7; border-radius:10px; cursor:pointer; }
-    .tabbtn.active { background:#e9eefc; border-color:#8aa2ff; }
-    .panel { display:none; border:1px solid #e5e5e5; border-radius:12px; padding:12px; }
-    .panel.active { display:block; }
-    .row { margin: 10px 0; }
-    label { display:block; font-size: 13px; margin-bottom: 6px; }
-    input, select, button { width:100%; padding:10px 12px; border:1px solid #ccc; border-radius:10px; font-size: 16px; }
-    .radio { display:flex; gap:10px; flex-wrap:wrap; }
-    .radio label { display:flex; align-items:center; gap:6px; margin:0; font-size: 14px; }
-    .instruments { display:flex; gap:8px; flex-wrap:wrap; }
-    .instbtn { width:auto; padding:10px 12px; border:1px solid #ccc; border-radius:999px; background:#fff; cursor:pointer; }
-    .instbtn.active { border-color:#2f5bff; background:#e9eefc; }
-    .hint { font-size: 12px; color:#666; margin-top:6px; }
-    details { border:1px dashed #ddd; border-radius:12px; padding:10px 12px; }
-    summary { cursor:pointer; font-weight:600; }
-    .actions { display:flex; gap:10px; }
-    .actions button { flex:1; }
-    .status { margin-top:10px; font-size: 13px; }
-    .ok { color: #1a7f37; }
-    .warn { color: #b54708; }
-    iframe { display:none; }
+    :root{
+      --bg0:#060B18;
+      --bg1:#0A1226;
+      --card:#0D1731;
+      --card2:#0B142B;
+      --line:rgba(255,255,255,.08);
+      --line2:rgba(120,170,255,.25);
+      --text:#EAF1FF;
+      --muted:rgba(234,241,255,.7);
+      --muted2:rgba(234,241,255,.55);
+      --blue:#2F66FF;
+      --blue2:#1C4BDB;
+      --blueGlow:rgba(47,102,255,.35);
+      --good:#3ddc84;
+      --bad:#ff5a7a;
+      --warn:#ffb020;
+      --radius:16px;
+      --radius2:14px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 900px at 10% -10%, rgba(47,102,255,.22) 0%, rgba(47,102,255,0) 55%),
+        radial-gradient(900px 700px at 95% 0%, rgba(47,102,255,.18) 0%, rgba(47,102,255,0) 60%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      padding: calc(14px + env(safe-area-inset-top)) 14px calc(18px + env(safe-area-inset-bottom));
+    }
+
+    .shell{
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding: 10px 6px 14px;
+    }
+    .brand{
+      display:flex; flex-direction:column; gap:4px;
+    }
+    .brand h1{
+      font-size: 20px;
+      letter-spacing: .2px;
+      margin:0;
+      font-weight: 750;
+    }
+    .brand .sub{
+      font-size: 12px;
+      color: var(--muted2);
+    }
+    .link{
+      color: rgba(170,200,255,.9);
+      text-decoration:none;
+      font-weight:650;
+      font-size: 13px;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,.03);
+    }
+    .link:active{transform: translateY(1px);}
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: 0 16px 60px rgba(0,0,0,.35);
+      backdrop-filter: blur(8px);
+    }
+
+    /* Tabs like the mockup */
+    .tabs{
+      display:flex;
+      gap:10px;
+      padding: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--line);
+      margin-bottom: 14px;
+    }
+    .tabbtn{
+      flex:1;
+      padding: 12px 14px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 750;
+      cursor:pointer;
+      letter-spacing:.2px;
+    }
+    .tabbtn.active{
+      color: var(--text);
+      background: linear-gradient(180deg, rgba(47,102,255,.35), rgba(47,102,255,.18));
+      border-color: rgba(120,170,255,.35);
+      box-shadow: 0 10px 30px rgba(47,102,255,.16);
+    }
+
+    .panel{display:none;}
+    .panel.active{display:block;}
+
+    .sectionTitle{
+      font-size: 12px;
+      color: var(--muted2);
+      text-transform: uppercase;
+      letter-spacing: .14em;
+      margin: 10px 2px 10px;
+      font-weight: 800;
+    }
+
+    label{
+      display:block;
+      font-size: 13px;
+      color: var(--muted);
+      margin: 0 0 8px 2px;
+      font-weight: 650;
+    }
+
+    input, select, button, textarea{
+      font: inherit;
+      color: var(--text);
+    }
+
+    .input{
+      width:100%;
+      padding: 14px 14px;
+      border-radius: var(--radius2);
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(6,11,24,.55);
+      outline: none;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.25);
+    }
+    .input:focus{
+      border-color: rgba(120,170,255,.55);
+      box-shadow: 0 0 0 4px rgba(47,102,255,.18);
+    }
+
+    .row{ margin: 14px 0; }
+
+    /* Segmented control (fixes iPhone radio overlap) */
+    .seg{
+      display:flex;
+      gap:8px;
+      padding: 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--line);
+    }
+    .seg input{ display:none; }
+    .seg label{
+      margin:0;
+      flex:1;
+      text-align:center;
+      padding: 10px 10px;
+      border-radius: 999px;
+      font-weight: 750;
+      color: var(--muted);
+      cursor:pointer;
+      user-select:none;
+      border: 1px solid transparent;
+    }
+    .seg input:checked + label{
+      color: var(--text);
+      background: linear-gradient(180deg, rgba(47,102,255,.33), rgba(47,102,255,.14));
+      border-color: rgba(120,170,255,.35);
+      box-shadow: 0 10px 26px rgba(47,102,255,.12);
+    }
+
+    /* Instrument buttons only */
+    .instGrid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:10px;
+    }
+    .instbtn{
+      padding: 12px 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(6,11,24,.55);
+      cursor:pointer;
+      font-weight: 800;
+      letter-spacing:.3px;
+    }
+    .instbtn.active{
+      border-color: rgba(120,170,255,.55);
+      background: linear-gradient(180deg, rgba(47,102,255,.28), rgba(47,102,255,.10));
+      box-shadow: 0 0 0 4px rgba(47,102,255,.14);
+    }
+    .instbtn:active{ transform: translateY(1px); }
+
+    .actions{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top: 6px;
+    }
+    .btn{
+      padding: 14px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      cursor:pointer;
+      font-weight: 850;
+      letter-spacing:.2px;
+      background: rgba(255,255,255,.04);
+    }
+    .btnPrimary{
+      background: linear-gradient(180deg, rgba(47,102,255,.85), rgba(28,75,219,.85));
+      border-color: rgba(120,170,255,.35);
+      box-shadow: 0 18px 40px rgba(47,102,255,.18);
+    }
+    .btn:active{ transform: translateY(1px); }
+
+    /* Optional link under actions */
+    .optionalLink{
+      display:inline-block;
+      margin-top: 10px;
+      font-size: 12px;
+      color: rgba(170,200,255,.9);
+      cursor:pointer;
+      text-decoration:none;
+      font-weight: 750;
+      opacity: .9;
+    }
+
+    /* Collapsible optional block (custom, not <details>) */
+    .optionalBlock{
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: var(--radius);
+      border: 1px dashed rgba(255,255,255,.12);
+      background: rgba(255,255,255,.02);
+      display:none;
+    }
+
+    .status{
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .ok{ color: var(--good); }
+    .warn{ color: var(--warn); }
+
+    /* hide iframe */
+    iframe{ display:none; }
+
+    .divider{
+      height:1px;
+      background: var(--line);
+      margin: 14px 0;
+    }
+
+    .mini{
+      font-size: 12px;
+      color: var(--muted2);
+      margin-top: 8px;
+    }
   </style>
 </head>
 <body>
-  <h1>Entry</h1>
+  <div class="shell">
+    <div class="topbar">
+      <div class="brand">
+        <h1>Trade Tracker</h1>
+        <div class="sub">Quick Entry (mobile)</div>
+      </div>
+      <a class="link" href="../index.html">View Dashboard</a>
+    </div>
 
-  <div class="tabs">
-    <button class="tabbtn active" type="button" data-tab="trade">Trade</button>
-    <button class="tabbtn" type="button" data-tab="adj">Daily / Cash</button>
+    <iframe name="hidden_iframe"></iframe>
+
+    <div class="card">
+      <div class="tabs">
+        <button class="tabbtn active" type="button" data-tab="trade">Trade Entry</button>
+        <button class="tabbtn" type="button" data-tab="adj">Daily P/L</button>
+      </div>
+
+      <!-- ===================== TRADE PANEL ===================== -->
+      <section id="panel-trade" class="panel active">
+        <form id="tradeForm" method="POST"
+          action="https://script.google.com/macros/s/AKfycbzoSoBKeaHy7c_DX8G1mnywgGAHjpEgbZdvtq0JM7OWKVSMG5BwO5WapaNgK5jWy2AyVw/exec"
+          target="hidden_iframe">
+
+          <input type="hidden" name="type" value="trade" />
+          <input type="hidden" name="trade_id" id="trade_id" />
+          <input type="hidden" name="date" id="trade_date" />
+          <input type="hidden" name="instrument" id="trade_instrument" />
+          <input type="hidden" name="include" id="trade_include" value="TRUE" />
+          <input type="hidden" name="result_r" id="trade_result_r" />
+
+          <div class="row">
+            <label>Date</label>
+            <div class="seg" role="tablist" aria-label="Date selection">
+              <input id="t_today" type="radio" name="tradeDateMode" value="today" checked>
+              <label for="t_today">today</label>
+
+              <input id="t_yday" type="radio" name="tradeDateMode" value="yesterday">
+              <label for="t_yday">yesterday</label>
+
+              <input id="t_custom" type="radio" name="tradeDateMode" value="custom">
+              <label for="t_custom">date</label>
+            </div>
+
+            <div id="tradeCustomDateWrap" style="display:none; margin-top:10px;">
+              <input class="input" type="date" id="tradeCustomDate" />
+            </div>
+          </div>
+
+          <div class="row">
+            <label>Instrument</label>
+            <div class="instGrid" id="instButtons">
+              <button type="button" class="instbtn active" data-inst="ES">ES</button>
+              <button type="button" class="instbtn" data-inst="NQ">NQ</button>
+              <button type="button" class="instbtn" data-inst="RTY">RTY</button>
+              <button type="button" class="instbtn" data-inst="YM">YM</button>
+              <button type="button" class="instbtn" data-inst="CL">CL</button>
+              <button type="button" class="instbtn" data-inst="GC">GC</button>
+            </div>
+          </div>
+
+          <div class="row">
+            <label>Result (R)</label>
+            <input class="input" id="tradeResultR" inputmode="decimal" placeholder="e.g. 1,6  or  -0,7" />
+          </div>
+
+          <div class="actions">
+            <button class="btn btnPrimary" type="submit">Save</button>
+            <button class="btn" type="button" id="tradeClear">Clear</button>
+          </div>
+
+          <a class="optionalLink" id="tradeOptionalToggle">Optional</a>
+
+          <div class="optionalBlock" id="tradeOptionalBlock">
+            <div class="row" style="margin-top:0;">
+              <label>Notes</label>
+              <input class="input" name="notes" id="tradeNotes" placeholder="optional" />
+            </div>
+            <div class="row" style="margin-bottom:0;">
+              <label>Include</label>
+              <select class="input" id="tradeIncludeSelect">
+                <option value="TRUE" selected>TRUE</option>
+                <option value="FALSE">FALSE</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="tradeStatus" class="status"></div>
+        </form>
+      </section>
+
+      <!-- ===================== ADJUSTMENT PANEL ===================== -->
+      <section id="panel-adj" class="panel">
+        <form id="adjForm" method="POST"
+          action="https://script.google.com/macros/s/AKfycbzoSoBKeaHy7c_DX8G1mnywgGAHjpEgbZdvtq0JM7OWKVSMG5BwO5WapaNgK5jWy2AyVw/exec"
+          target="hidden_iframe">
+
+          <input type="hidden" name="type" value="adjustment" />
+          <input type="hidden" name="event_id" id="adj_event_id" />
+          <input type="hidden" name="date" id="adj_date" />
+          <input type="hidden" name="include" id="adj_include" value="TRUE" />
+          <input type="hidden" name="amount_$" id="adj_amount_usd" />
+
+          <div class="row">
+            <label>Date</label>
+            <div class="seg" role="tablist" aria-label="Date selection">
+              <input id="a_today" type="radio" name="adjDateMode" value="today" checked>
+              <label for="a_today">today</label>
+
+              <input id="a_yday" type="radio" name="adjDateMode" value="yesterday">
+              <label for="a_yday">yesterday</label>
+
+              <input id="a_custom" type="radio" name="adjDateMode" value="custom">
+              <label for="a_custom">date</label>
+            </div>
+
+            <div id="adjCustomDateWrap" style="display:none; margin-top:10px;">
+              <input class="input" type="date" id="adjCustomDate" />
+            </div>
+          </div>
+
+          <div class="row">
+            <label>Type</label>
+            <select class="input" id="adjTypeSelect" name="adj_type">
+              <option value="daily_pnl" selected>daily_pnl</option>
+              <option value="withdrawal">withdrawal</option>
+              <option value="deposit">deposit</option>
+              <option value="fees">fees</option>
+              <option value="correction">correction</option>
+            </select>
+          </div>
+
+          <div class="row">
+            <label>Amount ($)</label>
+            <input class="input" id="adjAmount" inputmode="decimal" placeholder="e.g. -120,50  or  950" />
+          </div>
+
+          <div class="actions">
+            <button class="btn btnPrimary" type="submit">Save</button>
+            <button class="btn" type="button" id="adjClear">Clear</button>
+          </div>
+
+          <a class="optionalLink" id="adjOptionalToggle">Optional</a>
+
+          <div class="optionalBlock" id="adjOptionalBlock">
+            <div class="row" style="margin-top:0;">
+              <label>Notes</label>
+              <input class="input" name="notes" id="adjNotes" placeholder="optional" />
+            </div>
+            <div class="row" style="margin-bottom:0;">
+              <label>Include</label>
+              <select class="input" id="adjIncludeSelect">
+                <option value="TRUE" selected>TRUE</option>
+                <option value="FALSE">FALSE</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="adjStatus" class="status"></div>
+        </form>
+      </section>
+    </div>
   </div>
-
-  <!-- hidden iframe for CORS-safe form POST -->
-  <iframe name="hidden_iframe"></iframe>
-
-  <!-- ===================== TRADE PANEL ===================== -->
-  <section id="panel-trade" class="panel active">
-    <form id="tradeForm" method="POST" action="https://script.google.com/macros/s/AKfycbzoSoBKeaHy7c_DX8G1mnywgGAHjpEgbZdvtq0JM7OWKVSMG5BwO5WapaNgK5jWy2AyVw/exec" target="hidden_iframe">
-      <!-- required by Apps Script -->
-      <input type="hidden" name="type" value="trade" />
-      <input type="hidden" name="trade_id" id="trade_id" />
-      <input type="hidden" name="date" id="trade_date" />
-      <input type="hidden" name="instrument" id="trade_instrument" />
-      <input type="hidden" name="include" id="trade_include" value="TRUE" />
-
-      <div class="row">
-        <label>Datum</label>
-        <div class="radio">
-          <label><input type="radio" name="tradeDateMode" value="today" checked> today</label>
-          <label><input type="radio" name="tradeDateMode" value="yesterday"> yesterday</label>
-          <label><input type="radio" name="tradeDateMode" value="custom"> date</label>
-        </div>
-        <div id="tradeCustomDateWrap" style="display:none; margin-top:8px;">
-          <input type="date" id="tradeCustomDate" />
-          <div class="hint">Nur sichtbar, wenn “date” gewählt ist.</div>
-        </div>
-      </div>
-
-      <div class="row">
-        <label>Instrument</label>
-
-        <!-- Buttons (fast on mobile) -->
-        <div class="instruments" id="instButtons">
-          <button type="button" class="instbtn active" data-inst="ES">ES</button>
-          <button type="button" class="instbtn" data-inst="NQ">NQ</button>
-          <button type="button" class="instbtn" data-inst="RTY">RTY</button>
-          <button type="button" class="instbtn" data-inst="YM">YM</button>
-          <button type="button" class="instbtn" data-inst="CL">CL</button>
-          <button type="button" class="instbtn" data-inst="GC">GC</button>
-        </div>
-
-        <!-- Also keep a dropdown as fallback -->
-        <div style="margin-top:8px;">
-          <select id="tradeInstrumentSelect">
-            <option value="ES">ES</option>
-            <option value="NQ">NQ</option>
-            <option value="RTY">RTY</option>
-            <option value="YM">YM</option>
-            <option value="CL">CL</option>
-            <option value="GC">GC</option>
-          </select>
-          <div class="hint">Du kannst Buttons oder Dropdown benutzen – beides setzt dasselbe Feld.</div>
-        </div>
-      </div>
-
-      <div class="row">
-        <label>Result (R)</label>
-        <input id="tradeResultR" inputmode="decimal" placeholder="z.B. 1,2 oder -0,7" />
-        <div class="hint">Deutsch: Komma erlaubt (z.B. -0,7). Genau so wird es gesendet.</div>
-      </div>
-
-      <details class="row">
-        <summary>Optional (Notes / Include)</summary>
-        <div style="margin-top:10px;">
-          <label>Notes</label>
-          <input name="notes" id="tradeNotes" placeholder="optional" />
-        </div>
-
-        <div style="margin-top:10px;">
-          <label>Include</label>
-          <select id="tradeIncludeSelect">
-            <option value="TRUE" selected>TRUE</option>
-            <option value="FALSE">FALSE</option>
-          </select>
-          <div class="hint">Standard TRUE. FALSE = wird später von Berechnungen ignoriert.</div>
-        </div>
-      </details>
-
-      <!-- Apps Script expects result_r -->
-      <input type="hidden" name="result_r" id="trade_result_r" />
-
-      <div class="row actions">
-        <button type="submit">Save Trade</button>
-        <button type="button" id="tradeClear">Clear</button>
-      </div>
-
-      <div id="tradeStatus" class="status"></div>
-    </form>
-  </section>
-
-  <!-- ===================== ADJUSTMENT PANEL ===================== -->
-  <section id="panel-adj" class="panel">
-    <form id="adjForm" method="POST" action="https://script.google.com/macros/s/AKfycbzoSoBKeaHy7c_DX8G1mnywgGAHjpEgbZdvtq0JM7OWKVSMG5BwO5WapaNgK5jWy2AyVw/exec" target="hidden_iframe">
-      <input type="hidden" name="type" value="adjustment" />
-      <input type="hidden" name="event_id" id="adj_event_id" />
-      <input type="hidden" name="date" id="adj_date" />
-      <input type="hidden" name="include" id="adj_include" value="TRUE" />
-
-      <div class="row">
-        <label>Datum</label>
-        <div class="radio">
-          <label><input type="radio" name="adjDateMode" value="today" checked> today</label>
-          <label><input type="radio" name="adjDateMode" value="yesterday"> yesterday</label>
-          <label><input type="radio" name="adjDateMode" value="custom"> date</label>
-        </div>
-        <div id="adjCustomDateWrap" style="display:none; margin-top:8px;">
-          <input type="date" id="adjCustomDate" />
-        </div>
-      </div>
-
-      <div class="row">
-        <label>Type</label>
-        <select name="type" id="adjTypeSelect">
-          <option value="daily_pnl" selected>daily_pnl</option>
-          <option value="withdrawal">withdrawal</option>
-          <option value="deposit">deposit</option>
-          <option value="fees">fees</option>
-          <option value="correction">correction</option>
-        </select>
-      </div>
-
-      <div class="row">
-        <label>Amount ($)</label>
-        <input id="adjAmount" inputmode="decimal" placeholder="z.B. -120,50 oder 950" />
-        <div class="hint">Negative Werte für withdrawal/fees oder Verlust (daily_pnl).</div>
-      </div>
-
-      <details class="row">
-        <summary>Optional (Notes / Include)</summary>
-        <div style="margin-top:10px;">
-          <label>Notes</label>
-          <input name="notes" id="adjNotes" placeholder="optional" />
-        </div>
-
-        <div style="margin-top:10px;">
-          <label>Include</label>
-          <select id="adjIncludeSelect">
-            <option value="TRUE" selected>TRUE</option>
-            <option value="FALSE">FALSE</option>
-          </select>
-        </div>
-      </details>
-
-      <!-- Apps Script expects amount_$ -->
-      <input type="hidden" name="amount_$" id="adj_amount_usd" />
-      <!-- we already have "type" hidden in form, but here type is also a field.
-           To avoid conflicts, we send "type" as adjustment in hidden and "type" of adjustment as "type" too.
-           Apps Script uses payload.type to route. So we must ensure routing type remains "adjustment".
-           We'll send adjustment kind in separate param: adj_kind -->
-      <input type="hidden" name="adj_kind" id="adj_kind" />
-
-      <div class="row actions">
-        <button type="submit">Save Daily/Cash</button>
-        <button type="button" id="adjClear">Clear</button>
-      </div>
-
-      <div id="adjStatus" class="status"></div>
-    </form>
-  </section>
-
-<script>
-  // NOTE:
-  // In the adjustment form, there is a naming collision: Apps Script expects payload.type to be "adjustment"
-  // but we also want a field named "type" (daily_pnl / withdrawal / etc.).
-  // Solution: keep routing field "type=adjustment" fixed, and send actual adjustment type as "adj_kind".
-  //
-  // Your Apps Script currently reads p.type for adjustment type.
-  // Therefore we should update the Apps Script OR we adapt here to send "type" for adjustment kind
-  // and send routing as another field.
-  //
-  // Easiest fix without touching Apps Script: we will send:
-  // - type = adjustment (routing)  -> already in hidden input
-  // - and also send "type" = kind  -> but that would overwrite routing.
-  //
-  // So: we will POST JSON later OR update Apps Script slightly.
-  //
-  // For now, to keep everything consistent with your Apps Script, we will do:
-  // - keep routing: type=adjustment
-  // - send kind as "type" by renaming the dropdown field to "adj_type"
-  //
-  // We'll patch that now at runtime by removing name="type" from dropdown and setting name="adj_type".
-</script>
 
 <script>
   // --- Utility functions ---
   function pad2(n){ return String(n).padStart(2,"0"); }
 
   function formatDDMMYYYY(d){
-    // d is Date
     const dd = pad2(d.getDate());
     const mm = pad2(d.getMonth()+1);
     const yy = d.getFullYear();
@@ -240,7 +455,6 @@
       y.setDate(y.getDate() - 1);
       return y;
     }
-    // custom date input is yyyy-mm-dd
     if (mode === "custom") {
       const v = customDateInput.value;
       if (!v) return null;
@@ -278,17 +492,30 @@
     });
   });
 
-  // --- Trade date mode ---
+  // --- Optional toggles ---
+  const tradeOptToggle = document.getElementById("tradeOptionalToggle");
+  const tradeOptBlock = document.getElementById("tradeOptionalBlock");
+  tradeOptToggle.addEventListener("click", () => {
+    const open = tradeOptBlock.style.display === "block";
+    tradeOptBlock.style.display = open ? "none" : "block";
+  });
+
+  const adjOptToggle = document.getElementById("adjOptionalToggle");
+  const adjOptBlock = document.getElementById("adjOptionalBlock");
+  adjOptToggle.addEventListener("click", () => {
+    const open = adjOptBlock.style.display === "block";
+    adjOptBlock.style.display = open ? "none" : "block";
+  });
+
+  // --- Date mode show/hide custom date ---
   const tradeCustomWrap = document.getElementById("tradeCustomDateWrap");
   document.querySelectorAll('input[name="tradeDateMode"]').forEach(r => {
     r.addEventListener("change", () => {
-      tradeCustomWrap.style.display = (r.value === "custom" && r.checked) ? "block" : tradeCustomWrap.style.display;
       const checked = document.querySelector('input[name="tradeDateMode"]:checked').value;
       tradeCustomWrap.style.display = (checked === "custom") ? "block" : "none";
     });
   });
 
-  // --- Adj date mode ---
   const adjCustomWrap = document.getElementById("adjCustomDateWrap");
   document.querySelectorAll('input[name="adjDateMode"]').forEach(r => {
     r.addEventListener("change", () => {
@@ -297,51 +524,22 @@
     });
   });
 
-  // --- Instrument buttons <-> dropdown sync ---
+  // --- Instrument buttons only ---
   const instBtns = document.querySelectorAll(".instbtn");
-  const instSelect = document.getElementById("tradeInstrumentSelect");
   let selectedInst = "ES";
 
   function setInstrument(inst){
     selectedInst = inst;
     instBtns.forEach(b => b.classList.toggle("active", b.dataset.inst === inst));
-    instSelect.value = inst;
   }
-
-  instBtns.forEach(b => {
-    b.addEventListener("click", () => setInstrument(b.dataset.inst));
-  });
-
-  instSelect.addEventListener("change", () => setInstrument(instSelect.value));
-
-  // default
+  instBtns.forEach(b => b.addEventListener("click", () => setInstrument(b.dataset.inst)));
   setInstrument("ES");
 
-  // --- Fix adjustment dropdown name collision with Apps Script ---
-  // Apps Script expects: payload.type (routing) == "adjustment", and also uses p.type as adjustment kind.
-  // That collides. We solve it by renaming the adjustment kind field to "adj_type" and then mapping it
-  // into a hidden input named "type_kind" OR we update Apps Script.
-  //
-  // Simplest here: update Apps Script? Since it's easy, I'd prefer to update Apps Script to read p.adj_type
-  // for kind. But you asked to begin now and keep it simple.
-  //
-  // So: We'll change the dropdown field name from "type" to "adj_type" and ALSO create hidden input "type"
-  // for routing only (already exists). We'll then modify the Apps Script later to read adj_type.
-  //
-  // For now, we patch the form so it sends adj_type. Your current Apps Script expects p.type for kind,
-  // so adjustments would fail until we do the small Apps Script tweak.
-  //
-  // Let's implement that tweak next right after this page is in place.
-  const adjTypeSelect = document.getElementById("adjTypeSelect");
-  adjTypeSelect.removeAttribute("name");
-  adjTypeSelect.setAttribute("name","adj_type");
-
-  // --- Trade form submit ---
+  // --- Trade submit ---
   const tradeForm = document.getElementById("tradeForm");
   const tradeStatus = document.getElementById("tradeStatus");
 
   tradeForm.addEventListener("submit", (ev) => {
-    // Fill hidden fields right before submit
     const mode = document.querySelector('input[name="tradeDateMode"]:checked').value;
     const custom = document.getElementById("tradeCustomDate");
     const d = dateFromMode(mode, custom);
@@ -363,26 +561,29 @@
     document.getElementById("trade_instrument").value = selectedInst;
     document.getElementById("trade_result_r").value = rStr;
 
-    // include + notes (optional)
-    document.getElementById("trade_include").value = document.getElementById("tradeIncludeSelect").value;
+    // include
+    const incSel = document.getElementById("tradeIncludeSelect");
+    document.getElementById("trade_include").value = incSel ? incSel.value : "TRUE";
 
-    setStatus(tradeStatus, "Gesendet ✅ (Sheet wird aktualisiert).", "ok");
+    setStatus(tradeStatus, "Gesendet ✅", "ok");
 
-    // Clear input quickly (keep instrument & date mode)
     setTimeout(() => {
       document.getElementById("tradeResultR").value = "";
-      document.getElementById("tradeNotes").value = "";
+      const notes = document.getElementById("tradeNotes");
+      if (notes) notes.value = "";
     }, 50);
   });
 
   document.getElementById("tradeClear").addEventListener("click", () => {
     document.getElementById("tradeResultR").value = "";
-    document.getElementById("tradeNotes").value = "";
-    document.getElementById("tradeIncludeSelect").value = "TRUE";
+    const notes = document.getElementById("tradeNotes");
+    if (notes) notes.value = "";
+    const incSel = document.getElementById("tradeIncludeSelect");
+    if (incSel) incSel.value = "TRUE";
     setStatus(tradeStatus, "", "");
   });
 
-  // --- Adjustment form submit ---
+  // --- Adjustment submit ---
   const adjForm = document.getElementById("adjForm");
   const adjStatus = document.getElementById("adjStatus");
 
@@ -406,23 +607,27 @@
     document.getElementById("adj_event_id").value = makeId("E");
     document.getElementById("adj_date").value = formatDDMMYYYY(d);
     document.getElementById("adj_amount_usd").value = amtStr;
-    document.getElementById("adj_include").value = document.getElementById("adjIncludeSelect").value;
 
-    setStatus(adjStatus, "Gesendet ✅ (Sheet wird aktualisiert).", "ok");
+    const incSel = document.getElementById("adjIncludeSelect");
+    document.getElementById("adj_include").value = incSel ? incSel.value : "TRUE";
+
+    setStatus(adjStatus, "Gesendet ✅", "ok");
 
     setTimeout(() => {
       document.getElementById("adjAmount").value = "";
-      document.getElementById("adjNotes").value = "";
+      const notes = document.getElementById("adjNotes");
+      if (notes) notes.value = "";
     }, 50);
   });
 
   document.getElementById("adjClear").addEventListener("click", () => {
     document.getElementById("adjAmount").value = "";
-    document.getElementById("adjNotes").value = "";
-    document.getElementById("adjIncludeSelect").value = "TRUE";
+    const notes = document.getElementById("adjNotes");
+    if (notes) notes.value = "";
+    const incSel = document.getElementById("adjIncludeSelect");
+    if (incSel) incSel.value = "TRUE";
     setStatus(adjStatus, "", "");
   });
-
 </script>
 </body>
 </html>
