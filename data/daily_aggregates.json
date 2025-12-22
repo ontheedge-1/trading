@@ -41,7 +41,7 @@
   {
     "date": "2025-12-03",
     "trade_count": 2,
-    "daily_R": 400.0,
+    "daily_R": 100.0,
     "wins": 1,
     "losses": 1,
     "daily_adjustments_total_$": 70000.0,
@@ -80,7 +80,7 @@
   {
     "date": "2025-12-08",
     "trade_count": 3,
-    "daily_R": 1500.0,
+    "daily_R": -120.0,
     "wins": 2,
     "losses": 1,
     "daily_adjustments_total_$": 41000.0,
@@ -93,7 +93,7 @@
   {
     "date": "2025-12-09",
     "trade_count": 2,
-    "daily_R": 2300.0,
+    "daily_R": 320.0,
     "wins": 2,
     "losses": 0,
     "daily_adjustments_total_$": -22000.0,
@@ -119,7 +119,7 @@
   {
     "date": "2025-12-11",
     "trade_count": 3,
-    "daily_R": 4700.0,
+    "daily_R": 550.0,
     "wins": 3,
     "losses": 0,
     "daily_adjustments_total_$": 17000.0,
@@ -132,7 +132,7 @@
   {
     "date": "2025-12-12",
     "trade_count": 3,
-    "daily_R": 1900.0,
+    "daily_R": 280.0,
     "wins": 2,
     "losses": 1,
     "daily_adjustments_total_$": -20500.0,
