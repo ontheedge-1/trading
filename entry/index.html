@@ -573,89 +573,114 @@
   const tradeStatus = document.getElementById("tradeStatus");
 
   tradeForm.addEventListener("submit", (ev) => {
+    ev.preventDefault(); // IMPORTANT: stop browser navigation
+
     const mode = document.querySelector('input[name="tradeDateMode"]:checked').value;
     const custom = document.getElementById("tradeCustomDate");
     const d = dateFromMode(mode, custom);
     if (!d) {
-      ev.preventDefault();
       setStatus(tradeStatus, "Bitte Datum auswählen (bei 'date').", "warn");
+      return;
+    }
+
+    if (!selectedInst) {
+      setStatus(tradeStatus, "Bitte Instrument wählen.", "warn");
       return;
     }
 
     const rStr = document.getElementById("tradeResultR").value.trim();
     if (!rStr) {
-      ev.preventDefault();
       setStatus(tradeStatus, "Bitte Result (R) eingeben.", "warn");
       return;
     }
 
-    // Convert DE comma to dot and apply sign
+    // normalize German comma
     const normalizedR = rStr.replace(",", ".").replace(/\s+/g, "");
     const rValue = Number(normalizedR);
     if (!Number.isFinite(rValue)) {
-      ev.preventDefault();
       setStatus(tradeStatus, "Ungültige Zahl.", "warn");
       return;
     }
-    const signedR = (rValue * tradeSign);
 
+    const signedR = rValue * tradeSign;
 
+    // hidden fields
     document.getElementById("trade_id").value = makeId("T");
     document.getElementById("trade_date").value = formatDDMMYYYY(d);
     document.getElementById("trade_instrument").value = selectedInst;
     document.getElementById("trade_result_r").value = String(signedR);
 
-
-    // include
     const incSel = document.getElementById("tradeIncludeSelect");
     document.getElementById("trade_include").value = incSel ? incSel.value : "TRUE";
 
-    // Status with instrument, R, date
-    setStatus(tradeStatus, `Gesendet ✅  ${selectedInst} ${signedR} R, ${formatDDMMYYYY(d)}`, "ok");
+    // SEND via fetch (prevents Google echo redirect → 403)
+    const formData = new FormData(tradeForm);
 
-    setTimeout(() => {
-      document.getElementById("tradeResultR").value = "";
-      const notes = document.getElementById("tradeNotes");
-      if (notes) notes.value = "";
-      // reset sign to plus
-      tradeSign = 1;
-      tradeSignBtn.textContent = "+";
-      tradeSignBtn.classList.add("plus","active");
-      tradeSignBtn.classList.remove("minus");
-    }, 50);
+    fetch(tradeForm.action, {
+      method: "POST",
+      body: new URLSearchParams(formData),
+    })
+    .then((res) => {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.text();
+    })
+    .then(() => {
+      setStatus(
+        tradeStatus,
+        `Gesendet ✅  ${selectedInst} ${signedR} R, ${formatDDMMYYYY(d)}`,
+        "ok"
+      );
+
+      setTimeout(() => {
+        document.getElementById("tradeResultR").value = "";
+        const notes = document.getElementById("tradeNotes");
+        if (notes) notes.value = "";
+
+        tradeSign = 1;
+        tradeSignBtn.textContent = "+";
+        tradeSignBtn.classList.add("plus", "active");
+        tradeSignBtn.classList.remove("minus");
+      }, 50);
+    })
+    .catch((err) => {
+      setStatus(tradeStatus, `Fehler ❌ ${err.message}`, "warn");
+    });
   });
 
   document.getElementById("tradeClear").addEventListener("click", () => {
     document.getElementById("tradeResultR").value = "";
     const notes = document.getElementById("tradeNotes");
     if (notes) notes.value = "";
+
     const incSel = document.getElementById("tradeIncludeSelect");
     if (incSel) incSel.value = "TRUE";
-    // reset sign to plus
+
     tradeSign = 1;
     tradeSignBtn.textContent = "+";
-    tradeSignBtn.classList.add("plus","active");
+    tradeSignBtn.classList.add("plus", "active");
     tradeSignBtn.classList.remove("minus");
+
     setStatus(tradeStatus, "", "");
   });
+
 
   // --- Adjustment submit ---
   const adjForm = document.getElementById("adjForm");
   const adjStatus = document.getElementById("adjStatus");
 
   adjForm.addEventListener("submit", (ev) => {
+    ev.preventDefault(); // IMPORTANT
+
     const mode = document.querySelector('input[name="adjDateMode"]:checked').value;
     const custom = document.getElementById("adjCustomDate");
     const d = dateFromMode(mode, custom);
     if (!d) {
-      ev.preventDefault();
       setStatus(adjStatus, "Bitte Datum auswählen (bei 'date').", "warn");
       return;
     }
 
     const amtStr = document.getElementById("adjAmount").value.trim();
     if (!amtStr) {
-      ev.preventDefault();
       setStatus(adjStatus, "Bitte Amount ($) eingeben.", "warn");
       return;
     }
@@ -663,11 +688,11 @@
     const normalizedAmt = amtStr.replace(",", ".").replace(/\s+/g, "");
     const amtValue = Number(normalizedAmt);
     if (!Number.isFinite(amtValue)) {
-      ev.preventDefault();
       setStatus(adjStatus, "Ungültige Zahl.", "warn");
       return;
     }
-    const signedAmt = (amtValue * adjSign);
+
+    const signedAmt = amtValue * adjSign;
 
     document.getElementById("adj_event_id").value = makeId("E");
     document.getElementById("adj_date").value = formatDDMMYYYY(d);
@@ -676,33 +701,53 @@
     const incSel = document.getElementById("adjIncludeSelect");
     document.getElementById("adj_include").value = incSel ? incSel.value : "TRUE";
 
-    // extra info: amount, type, date
-    const adjType = document.getElementById("adjTypeSelect").value;
-    setStatus(adjStatus, `Gesendet ✅  ${signedAmt} $, ${adjType}, ${formatDDMMYYYY(d)}`, "ok");
+    const formData = new FormData(adjForm);
 
-    setTimeout(() => {
-      document.getElementById("adjAmount").value = "";
-      const notes = document.getElementById("adjNotes");
-      if (notes) notes.value = "";
-      // reset sign to plus
-      adjSign = 1;
-      adjSignBtn.textContent = "+";
-      adjSignBtn.classList.add("plus","active");
-      adjSignBtn.classList.remove("minus");
-    }, 50);
+    fetch(adjForm.action, {
+      method: "POST",
+      body: new URLSearchParams(formData),
+    })
+    .then((res) => {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.text();
+    })
+    .then(() => {
+      const adjType = document.getElementById("adjTypeSelect").value;
+      setStatus(
+        adjStatus,
+        `Gesendet ✅  ${signedAmt} $, ${adjType}, ${formatDDMMYYYY(d)}`,
+        "ok"
+      );
+
+      setTimeout(() => {
+        document.getElementById("adjAmount").value = "";
+        const notes = document.getElementById("adjNotes");
+        if (notes) notes.value = "";
+
+        adjSign = 1;
+        adjSignBtn.textContent = "+";
+        adjSignBtn.classList.add("plus", "active");
+        adjSignBtn.classList.remove("minus");
+      }, 50);
+    })
+    .catch((err) => {
+      setStatus(adjStatus, `Fehler ❌ ${err.message}`, "warn");
+    });
   });
 
   document.getElementById("adjClear").addEventListener("click", () => {
     document.getElementById("adjAmount").value = "";
     const notes = document.getElementById("adjNotes");
     if (notes) notes.value = "";
+
     const incSel = document.getElementById("adjIncludeSelect");
     if (incSel) incSel.value = "TRUE";
-    // reset sign to plus
+
     adjSign = 1;
     adjSignBtn.textContent = "+";
-    adjSignBtn.classList.add("plus","active");
+    adjSignBtn.classList.add("plus", "active");
     adjSignBtn.classList.remove("minus");
+
     setStatus(adjStatus, "", "");
   });
 </script>
