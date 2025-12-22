@@ -81,14 +81,35 @@ def truthy_include(row: dict):
   return v != "FALSE"
 
 def parse_date_ddmmyyyy(s: str):
-  """Returns ISO date string YYYY-MM-DD. Raises if invalid."""
+  """
+  Returns ISO date string YYYY-MM-DD.
+
+  Accepts:
+  - DD.MM.YYYY  (German)
+  - MM/DD/YYYY  (US, can appear from Sheets)
+  - YYYY-MM-DD  (ISO)
+  """
   s = str(s or "").strip()
-  # Accept DD.MM.YYYY
+
+  # DD.MM.YYYY
   m = re.match(r"^(\d{2})\.(\d{2})\.(\d{4})$", s)
-  if not m:
-    raise ValueError(f"Invalid date format (expected DD.MM.YYYY): {s}")
-  dd, mm, yyyy = m.group(1), m.group(2), m.group(3)
-  return f"{yyyy}-{mm}-{dd}"
+  if m:
+    dd, mm, yyyy = m.group(1), m.group(2), m.group(3)
+    return f"{yyyy}-{mm}-{dd}"
+
+  # MM/DD/YYYY
+  m = re.match(r"^(\d{1,2})/(\d{1,2})/(\d{4})$", s)
+  if m:
+    mm, dd, yyyy = m.group(1).zfill(2), m.group(2).zfill(2), m.group(3)
+    return f"{yyyy}-{mm}-{dd}"
+
+  # YYYY-MM-DD
+  m = re.match(r"^(\d{4})-(\d{2})-(\d{2})$", s)
+  if m:
+    yyyy, mm, dd = m.group(1), m.group(2), m.group(3)
+    return f"{yyyy}-{mm}-{dd}"
+
+  raise ValueError(f"Invalid date format (expected DD.MM.YYYY): {s}")
 
 def ensure_data_dir():
   os.makedirs(DATA_DIR, exist_ok=True)
