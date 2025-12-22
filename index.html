@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trading Dashboard</title>
+  <style>
+    :root{
+      --bg:#070b12;
+      --panel:#0c1220;
+      --panel2:#0a1020;
+      --txt:#dbe7ff;
+      --muted:#8aa4d6;
+      --blue:#2d6bff;
+      --blue2:#29b6ff;
+      --green:#35d07f;
+      --red:#ff4d6d;
+      --border: rgba(120,160,255,.18);
+    }
+    body{
+      margin:0; background:radial-gradient(1200px 500px at 20% -10%, rgba(45,107,255,.18), transparent 60%),
+             radial-gradient(900px 450px at 80% 0%, rgba(41,182,255,.12), transparent 55%),
+             var(--bg);
+      color:var(--txt);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    }
+    .wrap{ max-width:1100px; margin:0 auto; padding:22px; }
+    .top{
+      display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:16px;
+    }
+    .title{ font-size:20px; font-weight:700; letter-spacing:.2px; }
+    .sub{ color:var(--muted); font-size:13px; margin-top:4px; }
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap:14px;
+    }
+    .card{
+      grid-column: span 4;
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+      border: 1px solid var(--border);
+      border-radius:14px;
+      padding:14px 14px 12px 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    .card.big{ grid-column: span 12; }
+    .k{ color:var(--muted); font-size:12px; }
+    .v{ font-size:22px; font-weight:800; margin-top:6px; }
+    .row{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .pill{
+      font-size:12px; padding:6px 10px; border-radius:999px;
+      background: rgba(45,107,255,.14);
+      border: 1px solid rgba(45,107,255,.28);
+      color: #bcd2ff;
+      white-space:nowrap;
+    }
+    .good{ color:var(--green); }
+    .bad{ color:var(--red); }
+    pre{
+      margin:0; overflow:auto; padding:12px;
+      background: rgba(10,16,32,.6);
+      border: 1px solid var(--border);
+      border-radius:12px;
+      color:#cfe0ff;
+      font-size:12px;
+    }
+    @media (max-width: 900px){
+      .card{ grid-column: span 12; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <div class="title">Trading Dashboard</div>
+        <div class="sub" id="subtitle">Lade Daten…</div>
+      </div>
+      <div class="pill" id="statusPill">DATA: loading</div>
+    </div>
+
+    <div class="grid" id="cards">
+      <!-- cards inserted by JS -->
+    </div>
+
+    <div style="margin-top:14px;">
+      <div class="k" style="margin:10px 0 8px;">Debug (raw snapshot)</div>
+      <pre id="debug">…</pre>
+    </div>
+  </div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+
+  const fmtUSD = (n) => {
+    if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
+    return Number(n).toLocaleString("en-US", { style:"currency", currency:"USD" });
+  };
+
+  const fmtPct = (p) => {
+    if (p === null || p === undefined || Number.isNaN(Number(p))) return "—";
+    return (Number(p) * 100).toFixed(2) + "%";
+  };
+
+  async function loadJSON(path){
+    const res = await fetch(path, { cache: "no-store" });
+    if(!res.ok) throw new Error(`${path} HTTP ${res.status}`);
+    return await res.json();
+  }
+
+  function renderCards(latestEquityRow, meta){
+    const cards = $("cards");
+    cards.innerHTML = "";
+
+    const dd = latestEquityRow?.drawdown_pct ?? null;
+    const ddClass = (dd !== null && dd < 0) ? "bad" : "good";
+
+    const items = [
+      { k:"Current Equity", v: fmtUSD(latestEquityRow?.cash_equity_$) },
+      { k:"All-Time High", v: fmtUSD(latestEquityRow?.ath_$) },
+      { k:"Drawdown", v: `<span class="${ddClass}">${fmtPct(dd)}</span>` },
+
+      { k:"DD Tier", v: `${latestEquityRow?.dd_tier ?? "—"}` },
+      { k:"DD Multiplier", v: `${latestEquityRow?.dd_multiplier ?? "—"}` },
+      { k:"Next Trade Risk ($)", v: fmtUSD(latestEquityRow?.effective_risk_$) },
+    ];
+
+    for (const it of items){
+      const div = document.createElement("div");
+      div.className = "card";
+      div.innerHTML = `<div class="k">${it.k}</div><div class="v">${it.v}</div>`;
+      cards.appendChild(div);
+    }
+
+    const info = document.createElement("div");
+    info.className = "card big";
+    info.innerHTML = `
+      <div class="row">
+        <div>
+          <div class="k">Meta</div>
+          <div class="v" style="font-size:16px; font-weight:700; margin-top:6px;">
+            Last updated (UTC): ${meta?.last_updated_utc ?? "—"}
+          </div>
+          <div class="sub" style="margin-top:6px;">
+            Dates processed: ${meta?.counts?.unique_dates ?? "—"} · Trades: ${meta?.counts?.trades_rows_included ?? "—"} · Adjustments: ${meta?.counts?.adjustment_rows_included ?? "—"}
+          </div>
+        </div>
+        <div class="pill">Mode: Broker-truth equity (Option A)</div>
+      </div>
+    `;
+    cards.appendChild(info);
+  }
+
+  async function main(){
+    try{
+      const [meta, equity, kpis] = await Promise.all([
+        loadJSON("data/meta.json"),
+        loadJSON("data/equity.json"),
+        loadJSON("data/kpis_full.json"),
+      ]);
+
+      const latest = Array.isArray(equity) && equity.length ? equity[equity.length - 1] : null;
+
+      $("subtitle").textContent = latest
+        ? `Stand: ${latest.date} · Tier ${latest.dd_tier} · Risk ${fmtUSD(latest.effective_risk_$)}`
+        : "Keine Equity-Daten gefunden.";
+
+      $("statusPill").textContent = "DATA: OK";
+      $("statusPill").style.background = "rgba(53,208,127,.12)";
+      $("statusPill").style.borderColor = "rgba(53,208,127,.25)";
+      $("statusPill").style.color = "#bff2d9";
+
+      renderCards(latest, meta);
+
+      $("debug").textContent = JSON.stringify({
+        meta,
+        latest_equity_row: latest,
+        kpis_full: kpis
+      }, null, 2);
+
+    } catch(err){
+      $("subtitle").textContent = "Fehler beim Laden der Daten.";
+      $("statusPill").textContent = "DATA: ERROR";
+      $("statusPill").style.background = "rgba(255,77,109,.12)";
+      $("statusPill").style.borderColor = "rgba(255,77,109,.25)";
+      $("statusPill").style.color = "#ffd1db";
+      $("debug").textContent = String(err);
+      console.error(err);
+    }
+  }
+
+  main();
+</script>
+</body>
+</html>
