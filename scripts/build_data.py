@@ -93,14 +93,13 @@ def parse_de_number(s):
       s = s.replace(".", "")   # just in case
       s = s.replace(",", ".")
     else:
-      # Only dot or only digits: keep dot as decimal, remove stray thousands commas none
+      # Only dot or only digits: keep dot as decimal
       pass
 
   try:
     return float(s)
   except:
     return None
-
 
 def truthy_include(row: dict):
   v = str(row.get("include", "TRUE")).strip().upper()
@@ -153,7 +152,6 @@ def read_starting_equity(settings_rows):
   headers_norm = [norm_key(h) for h in headers]
   header_map = {norm_key(h): h for h in headers}
 
-  # Direct column candidates (incl. variants)
   direct_candidates = [
     "starting_equity_$",
     "starting_equity_",
@@ -250,7 +248,6 @@ def compute_streak_stats(is_win_list):
     elif is_win == cur_is_win:
       cur += 1
     else:
-      # close run
       if cur_is_win:
         win_runs.append(cur)
       else:
@@ -258,7 +255,6 @@ def compute_streak_stats(is_win_list):
       cur_is_win = is_win
       cur = 1
 
-  # close final
   if cur_is_win:
     win_runs.append(cur)
   else:
@@ -269,6 +265,30 @@ def compute_streak_stats(is_win_list):
   avg_win = (sum(win_runs) / len(win_runs)) if win_runs else 0.0
   avg_loss = (sum(loss_runs) / len(loss_runs)) if loss_runs else 0.0
   return (longest_win, avg_win, longest_loss, avg_loss)
+
+def apply_equity_step_resizing(base_equity: float, equity_end: float, step_pct: float) -> float:
+  """
+  True 5% step resizing up AND down, based on EQUITY END.
+  - If equity_end >= base*(1+step): step base up repeatedly.
+  - If equity_end <= base*(1-step): step base down repeatedly.
+  """
+  if base_equity is None:
+    return equity_end
+  if step_pct is None or step_pct <= 0:
+    return base_equity
+
+  up = 1.0 + step_pct
+  down = 1.0 - step_pct
+
+  # Step up in discrete levels
+  while equity_end >= base_equity * up:
+    base_equity *= up
+
+  # Step down in discrete levels
+  while equity_end <= base_equity * down:
+    base_equity *= down
+
+  return base_equity
 
 
 # --------------------- Core build ---------------------
@@ -291,7 +311,6 @@ def main():
     instrument = str(r.get("instrument", "")).strip()
     result_r = parse_de_number(r.get("result_r"))
     if result_r is None:
-      # skip invalid numeric rows
       continue
     trades.append({
       "date": date_iso,
@@ -306,7 +325,7 @@ def main():
     if not truthy_include(r):
       continue
     date_iso = parse_date_ddmmyyyy(r.get("date", ""))
-    adj_type = str(r.get("type", "")).strip().lower()  # in sheet column is "type"
+    adj_type = str(r.get("type", "")).strip().lower()
     amt = parse_de_number(r.get("amount_$"))
     if amt is None:
       continue
@@ -331,7 +350,6 @@ def main():
   all_dates = sorted(set(list(trades_by_date.keys()) + list(adjs_by_date.keys())))
 
   # ---- Daily aggregates from inputs ----
-  # Trades daily: count, sum R, win/loss counts, gross profit/loss R
   daily_trade_count = defaultdict(int)
   daily_r_sum = defaultdict(float)
   daily_win_count = defaultdict(int)
@@ -346,7 +364,6 @@ def main():
     elif t["result_r"] < 0:
       daily_loss_count[d] += 1
 
-  # Adjustments daily sums by type
   daily_adj_sum_total = defaultdict(float)
   daily_adj_sum_by_type = defaultdict(lambda: defaultdict(float))
   for a in adjustments:
@@ -358,9 +375,8 @@ def main():
   cash_equity = starting_equity
   ath = starting_equity
 
-  # Resizing base equity
+  # Resizing base equity (TRUE step sizing up/down)
   base_equity_for_sizing = starting_equity
-  next_resize_threshold = base_equity_for_sizing * (1.0 - RESIZE_STEP_PCT)
 
   # Sticky tier multiplier state
   dd_multiplier = 1.0
@@ -372,9 +388,6 @@ def main():
   for d in all_dates:
     day_start = cash_equity
 
-    # "Apply daily_pnl after trades" is conceptually true,
-    # but in Option A trades do not affect cash equity,
-    # so we just apply adjustments for that date.
     day_adj_total = daily_adj_sum_total.get(d, 0.0)
     cash_equity += day_adj_total
     day_end = cash_equity
@@ -397,11 +410,12 @@ def main():
       dd_tier = tier_label
       dd_multiplier = tier_mult
 
-    # equity-step resizing on EQUITY END
-    # Resizing is independent of tier; it changes base_equity_for_sizing downward in 5% steps.
-    if day_end <= next_resize_threshold:
-      base_equity_for_sizing = day_end
-      next_resize_threshold = base_equity_for_sizing * (1.0 - RESIZE_STEP_PCT)
+    # ✅ TRUE equity-step resizing on EQUITY END (up & down)
+    base_equity_for_sizing = apply_equity_step_resizing(
+      base_equity_for_sizing, day_end, RESIZE_STEP_PCT
+    )
+    next_resize_up = base_equity_for_sizing * (1.0 + RESIZE_STEP_PCT)
+    next_resize_down = base_equity_for_sizing * (1.0 - RESIZE_STEP_PCT)
 
     base_risk = base_equity_for_sizing * RISK_PCT
     effective_risk = base_risk * dd_multiplier
@@ -416,7 +430,8 @@ def main():
       "dd_tier": dd_tier,
       "dd_multiplier": dd_multiplier,
       "base_equity_for_sizing_$": round(base_equity_for_sizing, 2),
-      "next_resize_threshold_$": round(next_resize_threshold, 2),
+      "next_resize_up_threshold_$": round(next_resize_up, 2),
+      "next_resize_down_threshold_$": round(next_resize_down, 2),
       "base_risk_$": round(base_risk, 2),
       "effective_risk_$": round(effective_risk, 2),
     })
@@ -436,8 +451,6 @@ def main():
     })
 
   # ---- Trades enriched (R-only analytics + streak context) ----
-  # Sort trades by (date, instrument, trade_id fallback) to get deterministic order.
-  # Note: streaks are computed on this sorted list; filtered streaks will be recomputed in-browser.
   trades_sorted = sorted(
     trades,
     key=lambda t: (
@@ -450,7 +463,6 @@ def main():
 
   trades_enriched = []
   cum_R = 0.0
-  # streak counters (global)
   win_streak = 0
   loss_streak = 0
   is_win_list = []
@@ -469,7 +481,6 @@ def main():
       loss_streak += 1
       win_streak = 0
     else:
-      # breakeven breaks both streaks
       win_streak = 0
       loss_streak = 0
 
@@ -503,18 +514,16 @@ def main():
   winrate = (win_count / trade_count) if trade_count else None
 
   gross_profit = sum(wins)
-  gross_loss_abs = abs(sum(losses))  # losses are negative
+  gross_loss_abs = abs(sum(losses))
   profit_factor = (gross_profit / gross_loss_abs) if gross_loss_abs > 0 else (None if trade_count == 0 else float("inf"))
 
   avg_win_R = (sum(wins) / win_count) if win_count else None
-  avg_loss_R = (sum(losses) / loss_count) if loss_count else None  # negative number
+  avg_loss_R = (sum(losses) / loss_count) if loss_count else None
 
   expectancy_R = (sum(trade_rs) / trade_count) if trade_count else None
 
   longest_win_streak, avg_win_streak, longest_loss_streak, avg_loss_streak = compute_streak_stats(is_win_list)
 
-  # Recovery factor (cash equity based): net profit / max drawdown (absolute)
-  # net profit = last equity - starting equity
   net_profit_cash = (equity_daily[-1]["cash_equity_$"] - starting_equity) if equity_daily else 0.0
   max_dd_abs = 0.0
   for e in equity_daily:
@@ -545,7 +554,7 @@ def main():
     "starting_equity_$": round(starting_equity, 2),
     "ending_equity_$": round(equity_daily[-1]["cash_equity_$"], 2) if equity_daily else round(starting_equity, 2),
     "net_profit_$": round(net_profit_cash, 2),
-    "max_drawdown_pct": round(-max_dd_abs, 6) if max_dd_abs > 0 else 0.0,  # negative
+    "max_drawdown_pct": round(-max_dd_abs, 6) if max_dd_abs > 0 else 0.0,
     "recovery_factor": round(recovery_factor, 6) if recovery_factor is not None else None,
   }
 
@@ -577,7 +586,6 @@ def main():
     },
   }
 
-  # Write outputs
   write_json("meta.json", meta)
   write_json("equity.json", equity_daily)
   write_json("daily_aggregates.json", daily_aggregates)
