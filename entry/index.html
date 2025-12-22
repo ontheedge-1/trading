@@ -608,7 +608,7 @@
     document.getElementById("trade_id").value = makeId("T");
     document.getElementById("trade_date").value = formatDDMMYYYY(d);
     document.getElementById("trade_instrument").value = selectedInst;
-    document.getElementById("trade_result_r").value = signedR.toFixed(2);
+    document.getElementById("trade_result_r").value = signedR.toFixed(2).replace(".", ",");
 
     const incSel = document.getElementById("tradeIncludeSelect");
     document.getElementById("trade_include").value = incSel ? incSel.value : "TRUE";
@@ -696,7 +696,7 @@
 
     document.getElementById("adj_event_id").value = makeId("E");
     document.getElementById("adj_date").value = formatDDMMYYYY(d);
-    document.getElementById("adj_amount_usd").value = signedAmt.toFixed(2);
+    document.getElementById("adj_amount_usd").value = signedAmt.toFixed(2).replace(".", ",");
 
     const incSel = document.getElementById("adjIncludeSelect");
     document.getElementById("adj_include").value = incSel ? incSel.value : "TRUE";
