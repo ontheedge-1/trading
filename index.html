@@ -8,7 +8,6 @@
     :root{
       --bg:#070b12;
       --panel:#0c1220;
-      --panel2:#0a1020;
       --txt:#dbe7ff;
       --muted:#8aa4d6;
       --blue:#2d6bff;
@@ -18,9 +17,11 @@
       --border: rgba(120,160,255,.18);
     }
     body{
-      margin:0; background:radial-gradient(1200px 500px at 20% -10%, rgba(45,107,255,.18), transparent 60%),
-             radial-gradient(900px 450px at 80% 0%, rgba(41,182,255,.12), transparent 55%),
-             var(--bg);
+      margin:0;
+      background:
+        radial-gradient(1200px 500px at 20% -10%, rgba(45,107,255,.18), transparent 60%),
+        radial-gradient(900px 450px at 80% 0%, rgba(41,182,255,.12), transparent 55%),
+        var(--bg);
       color:var(--txt);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
     }
@@ -56,6 +57,64 @@
     }
     .good{ color:var(--green); }
     .bad{ color:var(--red); }
+
+    /* Chart */
+    .chartHead{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      margin-bottom:10px;
+    }
+    .seg{
+      display:inline-flex;
+      background: rgba(10,16,32,.55);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 4px;
+      gap: 4px;
+    }
+    .seg button{
+      appearance:none; border:0; cursor:pointer;
+      background: transparent;
+      color: #bcd2ff;
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .2px;
+    }
+    .seg button.active{
+      background: rgba(45,107,255,.22);
+      border: 1px solid rgba(45,107,255,.32);
+      color: #e7f0ff;
+    }
+    .chartWrap{
+      position:relative;
+      border-radius:14px;
+      overflow:hidden;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+    }
+    canvas{ display:block; width:100%; height:360px; }
+    .tooltip{
+      position:absolute;
+      pointer-events:none;
+      transform: translate(-50%, -110%);
+      background: rgba(10,16,32,.92);
+      border: 1px solid rgba(120,160,255,.25);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 12px;
+      color: #e7f0ff;
+      box-shadow: 0 12px 30px rgba(0,0,0,.45);
+      white-space: nowrap;
+      display:none;
+    }
+    .tooltip .muted{ color: var(--muted); font-size: 11px; margin-top: 2px; }
+    .hint{
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 10px;
+    }
+
     pre{
       margin:0; overflow:auto; padding:12px;
       background: rgba(10,16,32,.6);
@@ -66,6 +125,7 @@
     }
     @media (max-width: 900px){
       .card{ grid-column: span 12; }
+      canvas{ height:300px; }
     }
   </style>
 </head>
@@ -79,8 +139,30 @@
       <div class="pill" id="statusPill">DATA: loading</div>
     </div>
 
-    <div class="grid" id="cards">
-      <!-- cards inserted by JS -->
+    <div class="grid" id="cards"></div>
+
+    <!-- Chart -->
+    <div class="card big" style="margin-top:14px;">
+      <div class="chartHead">
+        <div>
+          <div class="k">Curve</div>
+          <div class="v" style="font-size:16px; font-weight:800; margin-top:6px;" id="curveTitle">Equity Curve</div>
+          <div class="sub" id="curveSub">Daily (Calendar spine, carry-forward)</div>
+        </div>
+        <div class="seg" role="tablist" aria-label="Curve Toggle">
+          <button id="btnEquity" class="active" type="button">Equity ($)</button>
+          <button id="btnR" type="button">Cum R</button>
+        </div>
+      </div>
+
+      <div class="chartWrap" id="chartWrap">
+        <canvas id="curveCanvas"></canvas>
+        <div class="tooltip" id="tooltip"></div>
+      </div>
+
+      <div class="hint">
+        X-Achse: Kalendertage (Ticks am 1. &amp; 15.). Equity basiert auf Daily P/L (Broker-truth). R-Curve basiert auf Tages-Summe R (Trades only).
+      </div>
     </div>
 
     <div style="margin-top:14px;">
@@ -96,10 +178,15 @@
     if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
     return Number(n).toLocaleString("en-US", { style:"currency", currency:"USD" });
   };
-
   const fmtPct = (p) => {
     if (p === null || p === undefined || Number.isNaN(Number(p))) return "—";
     return (Number(p) * 100).toFixed(2) + "%";
+  };
+  const fmtR = (n) => {
+    if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
+    const x = Number(n);
+    const s = (Math.abs(x) >= 10 ? x.toFixed(1) : x.toFixed(2));
+    return `${s} R`;
   };
 
   async function loadJSON(path){
@@ -115,6 +202,8 @@
     const dd = latestEquityRow?.drawdown_pct ?? null;
     const ddClass = (dd !== null && dd < 0) ? "bad" : "good";
 
+    const risk = Math.abs(Number(latestEquityRow?.effective_risk_$ ?? 0));
+
     const items = [
       { k:"Current Equity", v: fmtUSD(latestEquityRow?.cash_equity_$) },
       { k:"All-Time High", v: fmtUSD(latestEquityRow?.ath_$) },
@@ -122,7 +211,7 @@
 
       { k:"DD Tier", v: `${latestEquityRow?.dd_tier ?? "—"}` },
       { k:"DD Multiplier", v: `${latestEquityRow?.dd_multiplier ?? "—"}` },
-      { k:"Next Trade Risk ($)", v: fmtUSD(latestEquityRow?.effective_risk_$) },
+      { k:"Next Trade Risk ($)", v: fmtUSD(risk) },
     ];
 
     for (const it of items){
@@ -151,18 +240,366 @@
     cards.appendChild(info);
   }
 
+  // ---- Date spine helpers ----
+  function parseISO(s){ // YYYY-MM-DD
+    const [y,m,d] = String(s).split("-").map(Number);
+    return new Date(Date.UTC(y, (m||1)-1, d||1));
+  }
+  function isoFromDate(dt){
+    const y = dt.getUTCFullYear();
+    const m = String(dt.getUTCMonth()+1).padStart(2,"0");
+    const d = String(dt.getUTCDate()).padStart(2,"0");
+    return `${y}-${m}-${d}`;
+  }
+  function addDays(dt, n){
+    const x = new Date(dt.getTime());
+    x.setUTCDate(x.getUTCDate() + n);
+    return x;
+  }
+  const MONTHS_DE = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+  function labelForTick(iso){
+    const dt = parseISO(iso);
+    const day = dt.getUTCDate();
+    const mon = MONTHS_DE[dt.getUTCMonth()];
+    // show month on 1st, show just day on 15th
+    if(day === 1) return `1 ${mon}`;
+    if(day === 15) return `15`;
+    return "";
+  }
+
+  function buildCalendarSpine(equityRows, dailyAggRows, startingEquity){
+    const equityMap = new Map(); // date -> cash_equity_$
+    for(const r of (equityRows||[])){
+      if(r?.date) equityMap.set(r.date, Number(r.cash_equity_$));
+    }
+
+    const rMap = new Map(); // date -> daily_R
+    for(const r of (dailyAggRows||[])){
+      if(r?.date) rMap.set(r.date, Number(r.daily_R ?? 0));
+    }
+
+    const allDates = [];
+    const datesSource = [
+      ...(equityRows||[]).map(x=>x.date).filter(Boolean),
+      ...(dailyAggRows||[]).map(x=>x.date).filter(Boolean),
+    ];
+    if(!datesSource.length){
+      return { spine: [], seriesEquity: [], seriesCumR: [], seriesDailyR: [] };
+    }
+
+    const minIso = datesSource.reduce((a,b)=> a < b ? a : b);
+    const maxIso = datesSource.reduce((a,b)=> a > b ? a : b);
+
+    let cur = parseISO(minIso);
+    const end = parseISO(maxIso);
+
+    // carry-forward equity (start from startingEquity until first known)
+    let lastEquity = Number.isFinite(Number(startingEquity)) ? Number(startingEquity) : null;
+    let cumR = 0;
+
+    while(cur <= end){
+      const iso = isoFromDate(cur);
+      allDates.push(iso);
+
+      if(equityMap.has(iso)){
+        const v = equityMap.get(iso);
+        if(Number.isFinite(v)) lastEquity = v;
+      }
+      const dailyR = rMap.has(iso) ? (Number(rMap.get(iso)) || 0) : 0;
+      cumR += dailyR;
+
+      cur = addDays(cur, 1);
+    }
+
+    // Build series aligned to allDates
+    const seriesEquity = [];
+    const seriesDailyR = [];
+    const seriesCumR = [];
+    lastEquity = Number.isFinite(Number(startingEquity)) ? Number(startingEquity) : null;
+    cumR = 0;
+
+    for(const iso of allDates){
+      if(equityMap.has(iso)){
+        const v = equityMap.get(iso);
+        if(Number.isFinite(v)) lastEquity = v;
+      }
+      seriesEquity.push(lastEquity);
+
+      const dailyR = rMap.has(iso) ? (Number(rMap.get(iso)) || 0) : 0;
+      seriesDailyR.push(dailyR);
+
+      cumR += dailyR;
+      seriesCumR.push(cumR);
+    }
+
+    return { spine: allDates, seriesEquity, seriesCumR, seriesDailyR };
+  }
+
+  // ---- Canvas chart (simple, performant) ----
+  function drawLineChart(canvas, spine, values, opts){
+    const ctx = canvas.getContext("2d");
+    const wrap = $("chartWrap");
+    const tooltip = $("tooltip");
+
+    const DPR = Math.max(1, Math.floor(window.devicePixelRatio || 1));
+    const cssW = wrap.clientWidth;
+    const cssH = canvas.clientHeight; // from CSS (height:360px)
+    canvas.width = cssW * DPR;
+    canvas.height = cssH * DPR;
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+
+    ctx.clearRect(0,0,cssW,cssH);
+
+    // chart area padding
+    const padL = 56, padR = 16, padT = 16, padB = 40;
+    const W = cssW - padL - padR;
+    const H = cssH - padT - padB;
+
+    // compute min/max ignoring nulls
+    const clean = values.filter(v => Number.isFinite(Number(v)));
+    let minV = clean.length ? Math.min(...clean) : 0;
+    let maxV = clean.length ? Math.max(...clean) : 1;
+    if(minV === maxV){
+      // flat line padding
+      minV -= 1;
+      maxV += 1;
+    } else {
+      const pad = (maxV - minV) * 0.08;
+      minV -= pad;
+      maxV += pad;
+    }
+
+    const xFor = (i) => padL + (i/(spine.length-1 || 1)) * W;
+    const yFor = (v) => padT + (1 - ((v - minV)/(maxV - minV))) * H;
+
+    // grid + y labels (4 lines)
+    ctx.strokeStyle = "rgba(120,160,255,.10)";
+    ctx.lineWidth = 1;
+
+    const yTicks = 4;
+    ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    ctx.fillStyle = "rgba(138,164,214,.95)";
+
+    for(let k=0;k<=yTicks;k++){
+      const t = k / yTicks;
+      const y = padT + t * H;
+      ctx.beginPath();
+      ctx.moveTo(padL, y);
+      ctx.lineTo(padL+W, y);
+      ctx.stroke();
+
+      const val = maxV - t*(maxV-minV);
+      const label = opts.yFmt(val);
+      ctx.fillText(label, 10, y + 4);
+    }
+
+    // x ticks at 1st and 15th
+    ctx.fillStyle = "rgba(138,164,214,.95)";
+    ctx.strokeStyle = "rgba(120,160,255,.12)";
+
+    for(let i=0;i<spine.length;i++){
+      const iso = spine[i];
+      const dt = parseISO(iso);
+      const day = dt.getUTCDate();
+      if(day !== 1 && day !== 15) continue;
+
+      const x = xFor(i);
+      ctx.beginPath();
+      ctx.moveTo(x, padT);
+      ctx.lineTo(x, padT+H);
+      ctx.stroke();
+
+      const lab = labelForTick(iso);
+      if(lab){
+        ctx.fillText(lab, x - 12, padT + H + 22);
+      }
+    }
+
+    // line
+    ctx.strokeStyle = "rgba(45,107,255,.95)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+
+    let started = False;
+    function moveOrLine(x,y, first){
+      if(first) ctx.moveTo(x,y);
+      else ctx.lineTo(x,y);
+    }
+
+    let first = true;
+    for(let i=0;i<spine.length;i++){
+      const v = values[i];
+      if(!Number.isFinite(Number(v))) continue;
+      const x = xFor(i);
+      const y = yFor(Number(v));
+      if(first){
+        ctx.moveTo(x,y);
+        first = false;
+      } else {
+        ctx.lineTo(x,y);
+      }
+    }
+    ctx.stroke();
+
+    // hover interaction
+    let hoverIndex = null;
+
+    function showAt(clientX, clientY){
+      const rect = canvas.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+
+      // clamp into plot area
+      const clampedX = Math.min(padL+W, Math.max(padL, x));
+      const t = (clampedX - padL) / (W || 1);
+      const idx = Math.round(t * (spine.length-1));
+      hoverIndex = Math.min(spine.length-1, Math.max(0, idx));
+
+      const vx = xFor(hoverIndex);
+      const vv = values[hoverIndex];
+      const vy = Number.isFinite(Number(vv)) ? yFor(Number(vv)) : (padT+H);
+
+      // crosshair
+      drawLineChart._lastCrosshair = { vx, vy, vv, iso: spine[hoverIndex] };
+
+      // tooltip
+      const dateLabel = spine[hoverIndex];
+      tooltip.innerHTML = `
+        <div><b>${opts.title}</b>: ${opts.vFmt(vv)}</div>
+        <div class="muted">${dateLabel}</div>
+      `;
+      tooltip.style.left = `${vx}px`;
+      tooltip.style.top = `${vy}px`;
+      tooltip.style.display = "block";
+
+      // redraw with crosshair
+      redrawWithCrosshair();
+    }
+
+    function hide(){
+      tooltip.style.display = "none";
+      hoverIndex = null;
+      drawLineChart._lastCrosshair = null;
+      // redraw without crosshair
+      redrawNoCrosshair();
+    }
+
+    function redrawNoCrosshair(){
+      // re-draw quickly by calling itself (cheap enough for our data sizes)
+      // but avoid re-binding events: just call drawLineChartCore-like behavior by re-invoking drawLineChart
+      // We'll instead draw crosshair as overlay in-place:
+      // easiest: just call drawLineChart with a flag off — but we are inside it.
+      // So: simply clear tooltip/crosshair and redraw from scratch using stored opts.
+      // (We rely on outer caller to redraw; for now do a fast full redraw.)
+      // To keep it simple, the outer code calls render() on toggle/resize.
+      // Here we draw crosshair overlay only; to remove, just re-render via opts.onRequestRender if present.
+      if(opts.onRequestRender) opts.onRequestRender();
+    }
+
+    function redrawWithCrosshair(){
+      if(opts.onRequestRender) opts.onRequestRender(true);
+    }
+
+    // Bind events (remove previous by replacing handlers)
+    canvas.onmousemove = (e) => showAt(e.clientX, e.clientY);
+    canvas.onmouseleave = hide;
+
+    canvas.ontouchstart = (e) => {
+      if(e.touches && e.touches[0]){
+        showAt(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    };
+    canvas.ontouchmove = (e) => {
+      if(e.touches && e.touches[0]){
+        showAt(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    };
+    canvas.ontouchend = hide;
+
+    // draw crosshair if requested by external re-render
+    function drawCrosshair(){
+      const c = drawLineChart._lastCrosshair;
+      if(!c) return;
+      ctx.strokeStyle = "rgba(231,240,255,.28)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(c.vx, padT);
+      ctx.lineTo(c.vx, padT+H);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(c.vx, c.vy, 3.5, 0, Math.PI*2);
+      ctx.fillStyle = "rgba(231,240,255,.95)";
+      ctx.fill();
+    }
+
+    // Expose overlay draw function and bounds so caller can re-render with crosshair
+    drawLineChart._overlay = { drawCrosshair };
+    drawLineChart._state = { spine, values, opts };
+  }
+
+  function yFmtUSD(v){ return fmtUSD(v).replace("$",""); }
+  function yFmtR(v){ return (Number(v)).toFixed(0) + "R"; } // y-axis coarse labels
+
+  // ---- Main ----
+  let GLOBAL = {
+    meta:null, equity:null, dailyAgg:null, kpis:null,
+    spine:[], seriesEquity:[], seriesCumR:[], seriesDailyR:[],
+    mode:"equity"
+  };
+
+  function renderCurve(withCrosshair=false){
+    const canvas = $("curveCanvas");
+    const { spine, seriesEquity, seriesCumR } = GLOBAL;
+    if(!spine.length){
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      return;
+    }
+
+    const isEquity = (GLOBAL.mode === "equity");
+    const values = isEquity ? seriesEquity : seriesCumR;
+
+    $("curveTitle").textContent = isEquity ? "Equity Curve" : "Cumulative R Curve";
+    $("curveSub").textContent = isEquity
+      ? "Daily (Calendar spine, carry-forward) · Source: Daily_Adjustments"
+      : "Daily (Calendar spine) · Source: Trades (daily R summed, then cumulative)";
+
+    const opts = {
+      title: isEquity ? "Equity" : "Cum R",
+      yFmt: isEquity ? yFmtUSD : yFmtR,
+      vFmt: (v) => isEquity ? fmtUSD(v) : fmtR(v),
+      onRequestRender: (keepCrosshair=false) => {
+        // re-render
+        drawLineChart(canvas, spine, values, opts);
+        if(keepCrosshair && drawLineChart._overlay) drawLineChart._overlay.drawCrosshair();
+      }
+    };
+
+    drawLineChart(canvas, spine, values, opts);
+    if(withCrosshair && drawLineChart._overlay) drawLineChart._overlay.drawCrosshair();
+  }
+
   async function main(){
     try{
-      const [meta, equity, kpis] = await Promise.all([
+      const [meta, equity, dailyAgg, kpis] = await Promise.all([
         loadJSON("data/meta.json"),
         loadJSON("data/equity.json"),
+        loadJSON("data/daily_aggregates.json"),
         loadJSON("data/kpis_full.json"),
       ]);
 
+      GLOBAL.meta = meta;
+      GLOBAL.equity = equity;
+      GLOBAL.dailyAgg = dailyAgg;
+      GLOBAL.kpis = kpis;
+
       const latest = Array.isArray(equity) && equity.length ? equity[equity.length - 1] : null;
 
+      const risk = Math.abs(Number(latest?.effective_risk_$ ?? 0));
+
       $("subtitle").textContent = latest
-        ? `Stand: ${latest.date} · Tier ${latest.dd_tier} · Risk ${fmtUSD(latest.effective_risk_$)}`
+        ? `Stand: ${latest.date} · Tier ${latest.dd_tier} · Risk ${fmtUSD(risk)}`
         : "Keine Equity-Daten gefunden.";
 
       $("statusPill").textContent = "DATA: OK";
@@ -172,10 +609,24 @@
 
       renderCards(latest, meta);
 
+      // Build calendar spine (ALL days) + series
+      const startingEquity = Number(kpis?.starting_equity_$ ?? (equity?.[0]?.equity_start_$ ?? null));
+      const { spine, seriesEquity, seriesCumR, seriesDailyR } = buildCalendarSpine(equity, dailyAgg, startingEquity);
+      GLOBAL.spine = spine;
+      GLOBAL.seriesEquity = seriesEquity;
+      GLOBAL.seriesCumR = seriesCumR;
+      GLOBAL.seriesDailyR = seriesDailyR;
+
+      renderCurve();
+
+      // Debug snapshot
       $("debug").textContent = JSON.stringify({
         meta,
         latest_equity_row: latest,
-        kpis_full: kpis
+        kpis_full: kpis,
+        calendar_spine_days: spine.length,
+        spine_start: spine[0],
+        spine_end: spine[spine.length-1],
       }, null, 2);
 
     } catch(err){
@@ -188,6 +639,27 @@
       console.error(err);
     }
   }
+
+  // Toggle wiring
+  $("btnEquity").addEventListener("click", () => {
+    GLOBAL.mode = "equity";
+    $("btnEquity").classList.add("active");
+    $("btnR").classList.remove("active");
+    renderCurve();
+  });
+  $("btnR").addEventListener("click", () => {
+    GLOBAL.mode = "r";
+    $("btnR").classList.add("active");
+    $("btnEquity").classList.remove("active");
+    renderCurve();
+  });
+
+  // Redraw on resize (debounced)
+  let _t = null;
+  window.addEventListener("resize", () => {
+    clearTimeout(_t);
+    _t = setTimeout(() => renderCurve(), 150);
+  });
 
   main();
 </script>
