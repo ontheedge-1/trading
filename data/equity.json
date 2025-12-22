@@ -9,7 +9,8 @@
     "dd_tier": "0–12%",
     "dd_multiplier": 1.0,
     "base_equity_for_sizing_$": 35000.0,
-    "next_resize_threshold_$": 33250.0,
+    "next_resize_up_threshold_$": 36750.0,
+    "next_resize_down_threshold_$": 33250.0,
     "base_risk_$": 350.0,
     "effective_risk_$": 350.0
   },
@@ -22,10 +23,11 @@
     "drawdown_pct": 0.0,
     "dd_tier": "0–12%",
     "dd_multiplier": 1.0,
-    "base_equity_for_sizing_$": 35000.0,
-    "next_resize_threshold_$": 33250.0,
-    "base_risk_$": 350.0,
-    "effective_risk_$": 350.0
+    "base_equity_for_sizing_$": 36750.0,
+    "next_resize_up_threshold_$": 38587.5,
+    "next_resize_down_threshold_$": 34912.5,
+    "base_risk_$": 367.5,
+    "effective_risk_$": 367.5
   },
   {
     "date": "2025-11-28",
@@ -36,10 +38,11 @@
     "drawdown_pct": 0.0,
     "dd_tier": "0–12%",
     "dd_multiplier": 1.0,
-    "base_equity_for_sizing_$": 35000.0,
-    "next_resize_threshold_$": 33250.0,
-    "base_risk_$": 350.0,
-    "effective_risk_$": 350.0
+    "base_equity_for_sizing_$": 36750.0,
+    "next_resize_up_threshold_$": 38587.5,
+    "next_resize_down_threshold_$": 34912.5,
+    "base_risk_$": 367.5,
+    "effective_risk_$": 367.5
   },
   {
     "date": "2025-12-01",
@@ -50,10 +53,11 @@
     "drawdown_pct": 0.0,
     "dd_tier": "0–12%",
     "dd_multiplier": 1.0,
-    "base_equity_for_sizing_$": 35000.0,
-    "next_resize_threshold_$": 33250.0,
-    "base_risk_$": 350.0,
-    "effective_risk_$": 350.0
+    "base_equity_for_sizing_$": 36750.0,
+    "next_resize_up_threshold_$": 38587.5,
+    "next_resize_down_threshold_$": 34912.5,
+    "base_risk_$": 367.5,
+    "effective_risk_$": 367.5
   },
   {
     "date": "2025-12-02",
@@ -64,10 +68,11 @@
     "drawdown_pct": -0.005398,
     "dd_tier": "0–12%",
     "dd_multiplier": 1.0,
-    "base_equity_for_sizing_$": 35000.0,
-    "next_resize_threshold_$": 33250.0,
-    "base_risk_$": 350.0,
-    "effective_risk_$": 350.0
+    "base_equity_for_sizing_$": 36750.0,
+    "next_resize_up_threshold_$": 38587.5,
+    "next_resize_down_threshold_$": 34912.5,
+    "base_risk_$": 367.5,
+    "effective_risk_$": 367.5
   },
   {
     "date": "2025-12-03",
@@ -78,10 +83,11 @@
     "drawdown_pct": 0.0,
     "dd_tier": "0–12%",
     "dd_multiplier": 1.0,
-    "base_equity_for_sizing_$": 35000.0,
-    "next_resize_threshold_$": 33250.0,
-    "base_risk_$": 350.0,
-    "effective_risk_$": 350.0
+    "base_equity_for_sizing_$": 36750.0,
+    "next_resize_up_threshold_$": 38587.5,
+    "next_resize_down_threshold_$": 34912.5,
+    "base_risk_$": 367.5,
+    "effective_risk_$": 367.5
   },
   {
     "date": "2025-12-04",
@@ -92,10 +98,11 @@
     "drawdown_pct": -0.007457,
     "dd_tier": "0–12%",
     "dd_multiplier": 1.0,
-    "base_equity_for_sizing_$": 35000.0,
-    "next_resize_threshold_$": 33250.0,
-    "base_risk_$": 350.0,
-    "effective_risk_$": 350.0
+    "base_equity_for_sizing_$": 36750.0,
+    "next_resize_up_threshold_$": 38587.5,
+    "next_resize_down_threshold_$": 34912.5,
+    "base_risk_$": 367.5,
+    "effective_risk_$": 367.5
   },
   {
     "date": "2025-12-05",
@@ -106,10 +113,11 @@
     "drawdown_pct": -0.005326,
     "dd_tier": "0–12%",
     "dd_multiplier": 1.0,
-    "base_equity_for_sizing_$": 35000.0,
-    "next_resize_threshold_$": 33250.0,
-    "base_risk_$": 350.0,
-    "effective_risk_$": 350.0
+    "base_equity_for_sizing_$": 36750.0,
+    "next_resize_up_threshold_$": 38587.5,
+    "next_resize_down_threshold_$": 34912.5,
+    "base_risk_$": 367.5,
+    "effective_risk_$": 367.5
   },
   {
     "date": "2025-12-08",
@@ -120,10 +128,11 @@
     "drawdown_pct": 0.0,
     "dd_tier": "0–12%",
     "dd_multiplier": 1.0,
-    "base_equity_for_sizing_$": 35000.0,
-    "next_resize_threshold_$": 33250.0,
-    "base_risk_$": 350.0,
-    "effective_risk_$": 350.0
+    "base_equity_for_sizing_$": 36750.0,
+    "next_resize_up_threshold_$": 38587.5,
+    "next_resize_down_threshold_$": 34912.5,
+    "base_risk_$": 367.5,
+    "effective_risk_$": 367.5
   },
   {
     "date": "2025-12-09",
@@ -134,10 +143,11 @@
     "drawdown_pct": -0.005826,
     "dd_tier": "0–12%",
     "dd_multiplier": 1.0,
-    "base_equity_for_sizing_$": 35000.0,
-    "next_resize_threshold_$": 33250.0,
-    "base_risk_$": 350.0,
-    "effective_risk_$": 350.0
+    "base_equity_for_sizing_$": 36750.0,
+    "next_resize_up_threshold_$": 38587.5,
+    "next_resize_down_threshold_$": 34912.5,
+    "base_risk_$": 367.5,
+    "effective_risk_$": 367.5
   },
   {
     "date": "2025-12-10",
@@ -148,10 +158,11 @@
     "drawdown_pct": 0.0,
     "dd_tier": "0–12%",
     "dd_multiplier": 1.0,
-    "base_equity_for_sizing_$": 35000.0,
-    "next_resize_threshold_$": 33250.0,
-    "base_risk_$": 350.0,
-    "effective_risk_$": 350.0
+    "base_equity_for_sizing_$": 36750.0,
+    "next_resize_up_threshold_$": 38587.5,
+    "next_resize_down_threshold_$": 34912.5,
+    "base_risk_$": 367.5,
+    "effective_risk_$": 367.5
   },
   {
     "date": "2025-12-11",
@@ -162,10 +173,11 @@
     "drawdown_pct": 0.0,
     "dd_tier": "0–12%",
     "dd_multiplier": 1.0,
-    "base_equity_for_sizing_$": 35000.0,
-    "next_resize_threshold_$": 33250.0,
-    "base_risk_$": 350.0,
-    "effective_risk_$": 350.0
+    "base_equity_for_sizing_$": 36750.0,
+    "next_resize_up_threshold_$": 38587.5,
+    "next_resize_down_threshold_$": 34912.5,
+    "base_risk_$": 367.5,
+    "effective_risk_$": 367.5
   },
   {
     "date": "2025-12-12",
@@ -176,10 +188,11 @@
     "drawdown_pct": -0.005364,
     "dd_tier": "0–12%",
     "dd_multiplier": 1.0,
-    "base_equity_for_sizing_$": 35000.0,
-    "next_resize_threshold_$": 33250.0,
-    "base_risk_$": 350.0,
-    "effective_risk_$": 350.0
+    "base_equity_for_sizing_$": 36750.0,
+    "next_resize_up_threshold_$": 38587.5,
+    "next_resize_down_threshold_$": 34912.5,
+    "base_risk_$": 367.5,
+    "effective_risk_$": 367.5
   },
   {
     "date": "2025-12-15",
@@ -190,10 +203,11 @@
     "drawdown_pct": -0.005364,
     "dd_tier": "0–12%",
     "dd_multiplier": 1.0,
-    "base_equity_for_sizing_$": 35000.0,
-    "next_resize_threshold_$": 33250.0,
-    "base_risk_$": 350.0,
-    "effective_risk_$": 350.0
+    "base_equity_for_sizing_$": 36750.0,
+    "next_resize_up_threshold_$": 38587.5,
+    "next_resize_down_threshold_$": 34912.5,
+    "base_risk_$": 367.5,
+    "effective_risk_$": 367.5
   },
   {
     "date": "2025-12-16",
@@ -204,10 +218,11 @@
     "drawdown_pct": -0.005364,
     "dd_tier": "0–12%",
     "dd_multiplier": 1.0,
-    "base_equity_for_sizing_$": 35000.0,
-    "next_resize_threshold_$": 33250.0,
-    "base_risk_$": 350.0,
-    "effective_risk_$": 350.0
+    "base_equity_for_sizing_$": 36750.0,
+    "next_resize_up_threshold_$": 38587.5,
+    "next_resize_down_threshold_$": 34912.5,
+    "base_risk_$": 367.5,
+    "effective_risk_$": 367.5
   },
   {
     "date": "2025-12-17",
@@ -218,10 +233,11 @@
     "drawdown_pct": -0.005364,
     "dd_tier": "0–12%",
     "dd_multiplier": 1.0,
-    "base_equity_for_sizing_$": 35000.0,
-    "next_resize_threshold_$": 33250.0,
-    "base_risk_$": 350.0,
-    "effective_risk_$": 350.0
+    "base_equity_for_sizing_$": 36750.0,
+    "next_resize_up_threshold_$": 38587.5,
+    "next_resize_down_threshold_$": 34912.5,
+    "base_risk_$": 367.5,
+    "effective_risk_$": 367.5
   },
   {
     "date": "2025-12-18",
@@ -232,10 +248,11 @@
     "drawdown_pct": -0.005364,
     "dd_tier": "0–12%",
     "dd_multiplier": 1.0,
-    "base_equity_for_sizing_$": 35000.0,
-    "next_resize_threshold_$": 33250.0,
-    "base_risk_$": 350.0,
-    "effective_risk_$": 350.0
+    "base_equity_for_sizing_$": 36750.0,
+    "next_resize_up_threshold_$": 38587.5,
+    "next_resize_down_threshold_$": 34912.5,
+    "base_risk_$": 367.5,
+    "effective_risk_$": 367.5
   },
   {
     "date": "2025-12-20",
@@ -246,10 +263,11 @@
     "drawdown_pct": 0.0,
     "dd_tier": "0–12%",
     "dd_multiplier": 1.0,
-    "base_equity_for_sizing_$": 35000.0,
-    "next_resize_threshold_$": 33250.0,
-    "base_risk_$": 350.0,
-    "effective_risk_$": 350.0
+    "base_equity_for_sizing_$": 36750.0,
+    "next_resize_up_threshold_$": 38587.5,
+    "next_resize_down_threshold_$": 34912.5,
+    "base_risk_$": 367.5,
+    "effective_risk_$": 367.5
   },
   {
     "date": "2025-12-21",
@@ -260,10 +278,11 @@
     "drawdown_pct": 0.0,
     "dd_tier": "0–12%",
     "dd_multiplier": 1.0,
-    "base_equity_for_sizing_$": 35000.0,
-    "next_resize_threshold_$": 33250.0,
-    "base_risk_$": 350.0,
-    "effective_risk_$": 350.0
+    "base_equity_for_sizing_$": 38587.5,
+    "next_resize_up_threshold_$": 40516.88,
+    "next_resize_down_threshold_$": 36658.12,
+    "base_risk_$": 385.88,
+    "effective_risk_$": 385.88
   },
   {
     "date": "2025-12-22",
@@ -274,9 +293,10 @@
     "drawdown_pct": 0.0,
     "dd_tier": "0–12%",
     "dd_multiplier": 1.0,
-    "base_equity_for_sizing_$": 35000.0,
-    "next_resize_threshold_$": 33250.0,
-    "base_risk_$": 350.0,
-    "effective_risk_$": 350.0
+    "base_equity_for_sizing_$": 38587.5,
+    "next_resize_up_threshold_$": 40516.88,
+    "next_resize_down_threshold_$": 36658.12,
+    "base_risk_$": 385.88,
+    "effective_risk_$": 385.88
   }
 ]
