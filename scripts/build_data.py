@@ -57,24 +57,50 @@ def norm_key(s: str) -> str:
 
 def parse_de_number(s):
   """
-  Robust parse:
-  - accepts "100000", "100.000", "100.000,50", "100000,50"
-  - if you ever add currency symbols, it will still work
+  Robust number parser:
+  Accepts:
+    - 35000
+    - 35.000,00  (DE)
+    - 35,000.00  (US)
+    - 35 000,00  (spaces)
   """
   if s is None:
     return None
   s = str(s).strip()
   if not s:
     return None
-  s = re.sub(r"[^0-9,\.\-]", "", s)  # keep digits minus dot comma
+
+  # remove currency/letters but keep separators and minus
+  s = re.sub(r"[^0-9,\.\-\s]", "", s)
+  s = s.replace("\u00a0", " ").replace("\u202f", " ")  # NBSP variants
+  s = re.sub(r"\s+", "", s)  # remove all spaces
+
   if not s or s in {"-", ",", "."}:
     return None
-  s = s.replace(".", "")
-  s = s.replace(",", ".")
+
+  # If both comma and dot exist, decide which is decimal by last occurrence.
+  if "," in s and "." in s:
+    if s.rfind(",") > s.rfind("."):
+      # DE style: 35.000,00 -> remove thousands dots, comma decimal
+      s = s.replace(".", "")
+      s = s.replace(",", ".")
+    else:
+      # US style: 35,000.00 -> remove thousands commas
+      s = s.replace(",", "")
+  else:
+    # Only comma present: treat comma as decimal (DE)
+    if "," in s:
+      s = s.replace(".", "")   # just in case
+      s = s.replace(",", ".")
+    else:
+      # Only dot or only digits: keep dot as decimal, remove stray thousands commas none
+      pass
+
   try:
     return float(s)
   except:
     return None
+
 
 def truthy_include(row: dict):
   v = str(row.get("include", "TRUE")).strip().upper()
