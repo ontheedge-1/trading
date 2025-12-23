@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trading Dashboard (Mobile)</title>
+  <meta name="theme-color" content="#061021" />
+
+  <style>
+    :root{
+      --bg0:#040812;
+      --bg1:#061021;
+      --card:#0b162b;
+      --card2:#0a1426;
+      --line:#1a2e55;
+      --line2:#12305b;
+      --text:#eaf2ff;
+      --muted:#a9b8d6;
+      --blue:#2c7cff;
+      --blue2:#00a3ff;
+      --good:#2be7a3;
+      --bad:#ff5b6b;
+      --warn:#ffb020;
+      --glow: 0 0 0 1px rgba(44,124,255,.12), 0 20px 60px rgba(0,0,0,.35);
+      --r: 18px;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 20% 0%, rgba(44,124,255,.22), transparent 60%),
+        radial-gradient(900px 700px at 80% 10%, rgba(0,163,255,.14), transparent 55%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    .wrap{
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 18px 14px 24px;
+    }
+
+    .top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom: 14px;
+    }
+
+    .title{
+      font-weight: 800;
+      font-size: 28px;
+      letter-spacing:.2px;
+      line-height: 1.15;
+      margin: 6px 0 0;
+    }
+
+    .pill{
+      margin-top: 6px;
+      border-radius: 999px;
+      padding: 10px 12px;
+      font-size: 13px;
+      color: rgba(200,255,240,.9);
+      background: rgba(43,231,163,.10);
+      border: 1px solid rgba(43,231,163,.22);
+      box-shadow: 0 10px 40px rgba(0,0,0,.25);
+      white-space:nowrap;
+    }
+
+    .grid{
+      display:grid;
+      gap: 12px;
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+      border: 1px solid rgba(44,124,255,.18);
+      border-radius: var(--r);
+      box-shadow: var(--glow);
+      overflow:hidden;
+      position:relative;
+    }
+    .card::before{
+      content:"";
+      position:absolute;
+      inset:-2px -2px auto -2px;
+      height: 70px;
+      background: radial-gradient(400px 80px at 20% 0%, rgba(44,124,255,.30), transparent 65%);
+      pointer-events:none;
+    }
+    .card-inner{
+      padding: 14px 14px 12px;
+      position:relative;
+      z-index:1;
+    }
+
+    .k-title{
+      font-size: 14px;
+      color: rgba(190,210,255,.85);
+      letter-spacing:.2px;
+      margin: 0 0 8px;
+    }
+    .k-main{
+      font-size: 38px;
+      font-weight: 900;
+      margin: 0;
+      letter-spacing:.3px;
+    }
+    .k-sub{
+      margin-top: 6px;
+      font-size: 14px;
+      color: rgba(175,195,235,.82);
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .k-sub .tag{
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(44,124,255,.12);
+      border: 1px solid rgba(44,124,255,.22);
+      color: rgba(200,220,255,.95);
+      font-size: 12px;
+    }
+
+    .good{ color: var(--good); }
+    .bad{ color: var(--bad); }
+    .muted{ color: var(--muted); }
+
+    .row2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .tinyline{
+      margin-top: 8px;
+      display:flex;
+      justify-content:space-between;
+      gap: 10px;
+      font-size: 13px;
+      color: rgba(175,195,235,.82);
+    }
+    .tinyline .v{ font-weight: 700; color: rgba(235,245,255,.95); }
+    .tinyline .v.good{ color: var(--good); }
+    .tinyline .v.bad{ color: var(--bad); }
+
+    .chart-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .chart-title{
+      margin:0;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing:.2px;
+    }
+
+    .toggle{
+      display:flex;
+      gap: 6px;
+      padding: 4px;
+      border-radius: 999px;
+      background: rgba(10,20,38,.65);
+      border: 1px solid rgba(44,124,255,.18);
+    }
+    .toggle button{
+      appearance:none;
+      border:0;
+      cursor:pointer;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 13px;
+      color: rgba(195,215,255,.85);
+      background: transparent;
+    }
+    .toggle button.active{
+      background: rgba(44,124,255,.18);
+      border: 1px solid rgba(44,124,255,.25);
+      color: rgba(235,245,255,.98);
+      box-shadow: 0 12px 30px rgba(0,0,0,.22);
+    }
+
+    canvas{
+      width: 100%;
+      height: 230px;
+      display:block;
+      border-radius: 14px;
+      background: rgba(5,10,20,.18);
+      border: 1px solid rgba(44,124,255,.12);
+    }
+
+    .foot{
+      margin-top: 10px;
+      font-size: 12px;
+      color: rgba(160,180,220,.75);
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    a{
+      color: rgba(170,210,255,.95);
+      text-decoration:none;
+    }
+    a:hover{ text-decoration:underline; }
+
+    .err{
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255,91,107,.10);
+      border: 1px solid rgba(255,91,107,.22);
+      color: rgba(255,210,215,.95);
+      font-size: 13px;
+      white-space: pre-wrap;
+      display:none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <div class="title">Trading Dashboard</div>
+      </div>
+      <div id="dataPill" class="pill">DATA: …</div>
+    </div>
+
+    <div class="grid">
+      <!-- Current Equity -->
+      <div class="card">
+        <div class="card-inner">
+          <div class="k-title">Current Equity</div>
+          <div id="kCurrentEquity" class="k-main">$—</div>
+          <div class="k-sub">
+            <span class="muted">ATH</span>
+            <span id="kATH" class="tag">$—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Next Trade Size -->
+      <div class="card">
+        <div class="card-inner">
+          <div class="k-title">Next Trade Size ($)</div>
+          <div id="kRisk" class="k-main">$—</div>
+          <div class="k-sub">
+            <span id="kTier" class="tag">Tier —</span>
+            <span id="kTierInfo" class="muted">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row with Avg R/Trade + Winrate -->
+      <div class="row2">
+        <div class="card">
+          <div class="card-inner">
+            <div class="k-title">Avg. R / Trade</div>
+            <div id="kAvgR" class="k-main">— R</div>
+
+            <!-- klein unter der großen Zahl -->
+            <div class="tinyline">
+              <div><span class="v good" id="kAvgWin">— R</span> <span class="muted">Avg Win</span></div>
+            </div>
+            <div class="tinyline" style="margin-top:6px;">
+              <div><span class="v bad" id="kAvgLoss">— R</span> <span class="muted">Avg Loss</span></div>
+            </div>
+
+            <div class="k-sub" style="margin-top:10px;">
+              <span id="kTradeCount" class="muted">— Trades</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-inner">
+            <div class="k-title">Winrate</div>
+            <div id="kWinrate" class="k-main">—%</div>
+            <div class="k-sub">
+              <span id="kWLCounts" class="muted">— Wins / — Losses</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="card">
+        <div class="card-inner">
+          <div class="chart-head">
+            <div class="chart-title" id="chartTitle">Equity ($)</div>
+            <div class="toggle">
+              <button id="btnEquity" class="active" type="button">Equity ($)</button>
+              <button id="btnR" type="button">Cum R</button>
+            </div>
+          </div>
+
+          <canvas id="chart" width="900" height="420"></canvas>
+
+          <div class="foot">
+            <div id="metaLine">Stand: —</div>
+            <div><a href="../" title="Desktop Dashboard">Desktop</a></div>
+          </div>
+
+          <div id="errBox" class="err"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/**
+ * Data sources (aus deinem Repo):
+ * - /trading/data/equity.json
+ * - /trading/data/kpis_full.json
+ * - /trading/data/daily_aggregates.json
+ * - /trading/data/meta.json
+ */
+const DATA_BASE = "/trading/data";
+
+const $ = (id) => document.getElementById(id);
+
+function fmtUSD(n){
+  if (n === null || n === undefined || !Number.isFinite(n)) return "$—";
+  return n.toLocaleString("en-US", { style:"currency", currency:"USD", maximumFractionDigits:2 });
+}
+function fmtPct(n){
+  if (n === null || n === undefined || !Number.isFinite(n)) return "—%";
+  return (n*100).toFixed(1) + "%";
+}
+function fmtR(n){
+  if (n === null || n === undefined || !Number.isFinite(n)) return "— R";
+  const s = (n>=0?"+":"") + n.toFixed(2);
+  return s + " R";
+}
+function toNum(x){
+  if (x === null || x === undefined) return null;
+  const n = Number(x);
+  return Number.isFinite(n) ? n : null;
+}
+
+async function fetchJSON(path){
+  const url = DATA_BASE + "/" + path;
+  const res = await fetch(url, { cache:"no-store" });
+  if (!res.ok) throw new Error(`Fetch failed ${res.status}: ${url}`);
+  return await res.json();
+}
+
+/**
+ * Daily series:
+ * daily_aggregates.json sollte idealerweise pro Kalendertag einen Eintrag haben
+ * (carry-forward ist ok). Wir versuchen mehrere Feldnamen robust.
+ */
+function buildSeries(dailyAgg){
+  const rows = Array.isArray(dailyAgg) ? dailyAgg : (dailyAgg?.rows || []);
+  const out = [];
+
+  for (const r of rows){
+    const date = r.date || r.day || r.dt;
+    if (!date) continue;
+
+    // Equity (USD)
+    const eq =
+      toNum(r.equity_end_$) ??
+      toNum(r.equity_end) ??
+      toNum(r.equity_$) ??
+      toNum(r.equity) ??
+      null;
+
+    // Cum R
+    const cr =
+      toNum(r.cum_r) ??
+      toNum(r.cum_R) ??
+      toNum(r.cumulative_r) ??
+      toNum(r.cumulative_R) ??
+      null;
+
+    // Daily R (falls wir cum aus daily bauen müssten)
+    const dr =
+      toNum(r.daily_r) ??
+      toNum(r.daily_R) ??
+      toNum(r.sum_r) ??
+      null;
+
+    out.push({ date, equity:eq, cumR:cr, dailyR:dr });
+  }
+
+  // falls cumR fehlt: aus dailyR kumulieren
+  let running = 0;
+  for (const p of out){
+    if (p.cumR === null || p.cumR === undefined){
+      if (Number.isFinite(p.dailyR)) running += p.dailyR;
+      p.cumR = running;
+    }
+  }
+
+  return out;
+}
+
+/**
+ * Canvas line chart (simple, no libs)
+ * - X-Achse: alle Kalendertage, aber Labels nur am 1. und 15.
+ */
+function drawLineChart(canvas, series, mode){
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+
+  ctx.clearRect(0,0,W,H);
+
+  // margins
+  const m = { l:70, r:18, t:18, b:46 };
+  const iw = W - m.l - m.r;
+  const ih = H - m.t - m.b;
+
+  // background
+  const bg = ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0, "rgba(255,255,255,0.02)");
+  bg.addColorStop(1, "rgba(255,255,255,0.00)");
+  ctx.fillStyle = bg;
+  ctx.fillRect(0,0,W,H);
+
+  const values = series.map(p => mode === "equity" ? p.equity : p.cumR).filter(v => Number.isFinite(v));
+  if (values.length < 2){
+    // no data
+    ctx.fillStyle = "rgba(190,210,255,.75)";
+    ctx.font = "700 16px system-ui";
+    ctx.fillText("No data yet", m.l, m.t + 22);
+    return;
+  }
+
+  let vMin = Math.min(...values);
+  let vMax = Math.max(...values);
+  if (vMin === vMax){
+    vMin -= 1;
+    vMax += 1;
+  }
+
+  // pad range
+  const pad = (vMax - vMin) * 0.08;
+  vMin -= pad;
+  vMax += pad;
+
+  const xAt = (i) => m.l + (i/(series.length-1))*iw;
+  const yAt = (v) => m.t + (1 - (v - vMin)/(vMax - vMin))*ih;
+
+  // grid
+  ctx.strokeStyle = "rgba(44,124,255,.10)";
+  ctx.lineWidth = 1;
+  ctx.setLineDash([6,6]);
+
+  const gridN = 5;
+  for (let i=0;i<=gridN;i++){
+    const y = m.t + (i/gridN)*ih;
+    ctx.beginPath();
+    ctx.moveTo(m.l, y);
+    ctx.lineTo(W - m.r, y);
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  // y labels
+  ctx.fillStyle = "rgba(170,190,230,.75)";
+  ctx.font = "600 12px system-ui";
+  for (let i=0;i<=gridN;i++){
+    const v = vMax - (i/gridN)*(vMax - vMin);
+    const y = m.t + (i/gridN)*ih;
+    const label = (mode==="equity") ? fmtUSD(v).replace("$","") : (v>=0?"+":"") + v.toFixed(1);
+    ctx.fillText(label, 10, y+4);
+  }
+
+  // x labels: 1. & 15.
+  ctx.fillStyle = "rgba(170,190,230,.72)";
+  ctx.font = "600 12px system-ui";
+  for (let i=0;i<series.length;i++){
+    const d = series[i].date; // expected YYYY-MM-DD
+    const day = Number(String(d).slice(8,10));
+    if (day !== 1 && day !== 15) continue;
+
+    const x = xAt(i);
+    ctx.strokeStyle = "rgba(44,124,255,.14)";
+    ctx.beginPath();
+    ctx.moveTo(x, m.t);
+    ctx.lineTo(x, m.t+ih);
+    ctx.stroke();
+
+    const mon = String(d).slice(5,7);
+    const label = (day===1) ? `1.${mon}` : "15";
+    ctx.fillText(label, x-10, H-18);
+  }
+
+  // line
+  const grad = ctx.createLinearGradient(m.l,0,W-m.r,0);
+  grad.addColorStop(0, "rgba(44,124,255,.95)");
+  grad.addColorStop(1, "rgba(0,163,255,.95)");
+
+  ctx.strokeStyle = grad;
+  ctx.lineWidth = 3;
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  for (let i=0;i<series.length;i++){
+    const v = mode==="equity" ? series[i].equity : series[i].cumR;
+    if (!Number.isFinite(v)) continue;
+    const x = xAt(i);
+    const y = yAt(v);
+    if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+
+  // subtle fill
+  ctx.globalAlpha = 0.16;
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  let started = false;
+  for (let i=0;i<series.length;i++){
+    const v = mode==="equity" ? series[i].equity : series[i].cumR;
+    if (!Number.isFinite(v)) continue;
+    const x = xAt(i);
+    const y = yAt(v);
+    if (!started){
+      ctx.moveTo(x, m.t+ih);
+      ctx.lineTo(x,y);
+      started = true;
+    } else {
+      ctx.lineTo(x,y);
+    }
+  }
+  ctx.lineTo(m.l+iw, m.t+ih);
+  ctx.closePath();
+  ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+function calcTierInfo(eqRow){
+  // aus equity.json / latest_equity_row
+  // wir zeigen die Schwellen 12% / 18% als Text
+  const t1 = toNum(eqRow?.dd_t1) ?? 0.12;
+  const t2 = toNum(eqRow?.dd_t2) ?? 0.18;
+  const pct1 = Math.round(t1*100);
+  const pct2 = Math.round(t2*100);
+  return `Tier 0 | Above 0% to ${pct1}% | ${pct1}–${pct2}% | >${pct2}%`;
+}
+
+async function main(){
+  const errBox = $("errBox");
+
+  try{
+    const [equity, kpis, dailyAgg, meta] = await Promise.all([
+      fetchJSON("equity.json"),
+      fetchJSON("kpis_full.json"),
+      fetchJSON("daily_aggregates.json"),
+      fetchJSON("meta.json"),
+    ]);
+
+    // --- Top cards data ---
+    const latest = equity?.latest_equity_row || {};
+    const curEq = toNum(latest.equity_end_$) ?? toNum(latest.equity_end) ?? toNum(latest.cash_equity_$) ?? null;
+    const ath = toNum(latest.ath_$) ?? toNum(latest.ath) ?? curEq;
+
+    const effRisk = toNum(latest.effective_risk_$) ?? toNum(latest.effective_risk) ?? null;
+    const ddTier = latest.dd_tier || latest.dd_tier_label || "—";
+
+    $("kCurrentEquity").textContent = fmtUSD(curEq);
+    $("kATH").textContent = fmtUSD(ath);
+
+    $("kRisk").textContent = fmtUSD(effRisk);
+    $("kTier").textContent = String(ddTier);
+    $("kTierInfo").textContent = calcTierInfo({
+      dd_t1: equity?.meta?.config?.dd_tiers?.t1 ?? 0.12,
+      dd_t2: equity?.meta?.config?.dd_tiers?.t2 ?? 0.18
+    });
+
+    // KPIs (Trades only)
+    const winrate = toNum(kpis?.winrate);
+    const winCount = toNum(kpis?.win_count);
+    const lossCount = toNum(kpis?.loss_count);
+    const tradeCount = toNum(kpis?.trade_count);
+
+    const avgR = toNum(kpis?.avg_R) ?? toNum(kpis?.avg_r) ?? toNum(kpis?.avg_result_r) ?? null;
+    const avgWin = toNum(kpis?.avg_win_R) ?? toNum(kpis?.avg_win_r) ?? null;
+    const avgLoss = toNum(kpis?.avg_loss_R) ?? toNum(kpis?.avg_loss_r) ?? null;
+
+    $("kWinrate").textContent = (Number.isFinite(winrate) ? (winrate*100).toFixed(0) + "%" : "—%");
+    $("kWLCounts").textContent = `${Number.isFinite(winCount)?winCount:"—"} Wins / ${Number.isFinite(lossCount)?lossCount:"—"} Losses`;
+
+    $("kAvgR").textContent = fmtR(avgR);
+    $("kAvgWin").textContent = fmtR(avgWin);
+    $("kAvgLoss").textContent = fmtR(avgLoss).replace("+",""); // avg loss ist i.d.R negativ, aber falls nicht: ok
+    $("kTradeCount").textContent = `${Number.isFinite(tradeCount)?tradeCount:"—"} Trades`;
+
+    // Meta
+    const last = meta?.last_updated_utc || equity?.meta?.last_updated_utc || "—";
+    const standDate = latest?.date || equity?.latest_equity_row?.date || "—";
+    $("metaLine").textContent = `Stand: ${standDate} · Updated: ${last}`;
+
+    // Data OK pill
+    $("dataPill").textContent = "DATA: OK";
+    $("dataPill").style.background = "rgba(43,231,163,.10)";
+    $("dataPill").style.borderColor = "rgba(43,231,163,.22)";
+    $("dataPill").style.color = "rgba(200,255,240,.9)";
+
+    // --- Chart ---
+    const series = buildSeries(dailyAgg);
+
+    let mode = "equity";
+    const canvas = $("chart");
+    const btnEquity = $("btnEquity");
+    const btnR = $("btnR");
+    const title = $("chartTitle");
+
+    function setMode(m){
+      mode = m;
+      btnEquity.classList.toggle("active", mode==="equity");
+      btnR.classList.toggle("active", mode==="r");
+      title.textContent = (mode==="equity") ? "Equity ($)" : "Cum R";
+      drawLineChart(canvas, series, mode==="equity" ? "equity" : "r");
+    }
+
+    btnEquity.addEventListener("click", () => setMode("equity"));
+    btnR.addEventListener("click", () => setMode("r"));
+
+    setMode("equity");
+
+  } catch (e){
+    console.error(e);
+    $("dataPill").textContent = "DATA: ERROR";
+    $("dataPill").style.background = "rgba(255,91,107,.10)";
+    $("dataPill").style.borderColor = "rgba(255,91,107,.22)";
+    $("dataPill").style.color = "rgba(255,210,215,.95)";
+    $("errBox").style.display = "block";
+    $("errBox").textContent = String(e?.message || e);
+  }
+}
+
+main();
+</script>
+</body>
+</html>
