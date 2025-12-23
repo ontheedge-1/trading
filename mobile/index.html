@@ -2,734 +2,810 @@
 <html lang="de">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Trading Dashboard (Mobile)</title>
 
   <style>
     :root{
-      --bg0:#040814;
-      --bg1:#061022;
-      --bg2:#081a33;
-      --card0: rgba(10,24,48,.65);
-      --card1: rgba(8,18,36,.55);
-      --stroke: rgba(85,160,255,.18);
-      --stroke2: rgba(85,160,255,.12);
-      --text: rgba(235,245,255,.95);
-      --muted: rgba(215,235,255,.60);
-      --muted2: rgba(215,235,255,.42);
+      --bg0: #050a12;
+      --bg1: #071224;
+      --card0: rgba(12, 26, 54, 0.72);
+      --card1: rgba(9, 20, 40, 0.72);
+      --stroke: rgba(120, 170, 255, 0.18);
+      --stroke2: rgba(120, 170, 255, 0.10);
+      --text: #eaf2ff;
+      --muted: rgba(234,242,255,0.58);
+      --muted2: rgba(234,242,255,0.35);
+      --blue: #3a8cff;
+      --green: #40f7c2;
+      --red: #ff5a6a;
 
-      --blue:#4aa3ff;
-      --blue2:#2f7cff;
-
-      --green:#2be7a3;
-      --red:#ff5b6b;
-
-      --pill: rgba(14,38,74,.65);
-      --pillStroke: rgba(85,160,255,.18);
-
-      --radius: 22px;
+      --radius: 26px;
       --radius2: 18px;
-      --pad: 16px;
+      --shadow: 0 18px 55px rgba(0,0,0,0.45);
+      --inner: inset 0 1px 0 rgba(255,255,255,0.06);
     }
 
-    html,body{height:100%;}
+    *{ box-sizing: border-box; }
     body{
-      margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      margin: 0;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial;
       color: var(--text);
       background:
-        radial-gradient(1200px 900px at 20% -10%, rgba(80,140,255,.18), transparent 55%),
-        radial-gradient(900px 900px at 90% 20%, rgba(40,220,170,.08), transparent 55%),
-        linear-gradient(180deg, var(--bg1), var(--bg0) 55%, #02040a);
-    }
-
-    .wrap{
-      max-width: 480px;
-      margin: 0 auto;
-      padding: 18px 14px 26px;
+        radial-gradient(1000px 700px at 15% -10%, rgba(58,140,255,0.22), transparent 55%),
+        radial-gradient(900px 600px at 100% 35%, rgba(64,247,194,0.10), transparent 60%),
+        linear-gradient(180deg, var(--bg1), var(--bg0) 55%, #03060c);
+      min-height: 100vh;
+      padding: 18px 16px 28px;
     }
 
     .topbar{
       display:flex;
-      align-items:center;
+      align-items:flex-start;
       justify-content:space-between;
-      gap:10px;
-      margin: 8px 2px 16px;
+      gap: 12px;
+      margin-bottom: 14px;
     }
 
-    .title{
-      font-weight: 800;
-      letter-spacing: .2px;
-      font-size: 44px;
-      line-height: 1.02;
+    h1{
       margin: 0;
+      font-size: 46px;
+      line-height: 1.02;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      text-shadow: 0 12px 45px rgba(0,0,0,0.55);
     }
 
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
+    .pillOk{
+      flex: 0 0 auto;
+      margin-top: 6px;
       padding: 10px 14px;
       border-radius: 999px;
-      background: rgba(18,50,66,.65);
-      border: 1px solid rgba(45,210,170,.22);
-      box-shadow: 0 10px 24px rgba(0,0,0,.30), inset 0 0 0 1px rgba(255,255,255,.04);
-      color: rgba(190,255,238,.95);
-      font-weight: 700;
-      font-size: 14px;
-      white-space:nowrap;
+      background: rgba(16, 60, 78, 0.72);
+      border: 1px solid rgba(64,247,194,0.18);
+      color: rgba(234,242,255,0.78);
+      font-weight: 650;
+      letter-spacing: 0.02em;
+      box-shadow: var(--inner), 0 10px 30px rgba(0,0,0,0.35);
     }
 
     .grid{
-      display:grid;
-      grid-template-columns: 1fr;
+      display:flex;
+      flex-direction: column;
       gap: 14px;
     }
 
     .card{
       border-radius: var(--radius);
-      padding: 18px;
       background:
-        radial-gradient(600px 300px at 35% 10%, rgba(70,140,255,.22), transparent 60%),
-        linear-gradient(180deg, rgba(10,26,55,.72), rgba(7,14,28,.62));
+        radial-gradient(900px 320px at 20% 10%, rgba(58,140,255,0.22), transparent 58%),
+        radial-gradient(700px 260px at 100% 0%, rgba(64,247,194,0.08), transparent 60%),
+        linear-gradient(180deg, var(--card0), var(--card1));
       border: 1px solid var(--stroke);
-      box-shadow: 0 18px 34px rgba(0,0,0,.40), inset 0 0 0 1px rgba(255,255,255,.04);
+      box-shadow: var(--shadow), var(--inner);
+      padding: 18px 18px 16px;
       position: relative;
-      overflow:hidden;
+      overflow: hidden;
     }
 
-    .card:before{
-      content:"";
-      position:absolute;
-      inset:-1px;
-      background: radial-gradient(900px 220px at 30% 0%, rgba(90,160,255,.18), transparent 60%);
-      pointer-events:none;
-      opacity:.9;
-    }
-
-    .k-label{
-      position:relative;
-      font-size: 22px;
+    .cardTitle{
+      font-size: 20px;
       color: var(--muted);
-      letter-spacing:.2px;
+      letter-spacing: 0.01em;
       margin-bottom: 10px;
     }
 
-    /* Big numbers: slightly smaller & glow driven by --kcolor */
-    .k-main{
-      position:relative;
-      font-weight: 900;
-      font-size: 56px; /* adjust here if still too big */
-      letter-spacing: .2px;
-      color: var(--kcolor, var(--text));
+    /* === KPI value sizing + glow === */
+    .kpiValue{
+      font-size: 56px;          /* kleiner als vorher */
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      font-weight: 850;
+      color: var(--text);
       text-shadow:
-        0 0 16px rgba(80,140,255,.18),
-        0 0 26px rgba(80,140,255,.10);
+        0 0 10px rgba(90,160,255,0.20),
+        0 0 18px rgba(70,240,200,0.12);
     }
 
-    /* extra subtle glow only on big numbers, tinted by current color */
-    .k-glow{
-      filter: drop-shadow(0 0 10px rgba(80,140,255,.22)) drop-shadow(0 0 18px rgba(45,231,163,.10));
+    .kpiValue--small{
+      font-size: 46px;          /* kompakter */
     }
 
-    .subrow{
-      position:relative;
+    .kpiRow{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap: 12px;
+    }
+
+    .kpiSub{
       margin-top: 10px;
       display:flex;
       align-items:center;
-      gap: 12px;
-      flex-wrap:wrap;
+      gap: 10px;
       color: var(--muted);
       font-size: 18px;
     }
 
-    .chip{
-      padding: 8px 12px;
+    .athBadge{
+      display:inline-flex;
+      align-items:center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      padding: 10px 14px;
       border-radius: 999px;
-      background: var(--pill);
-      border: 1px solid var(--pillStroke);
-      color: rgba(220,240,255,.78);
-      font-weight: 700;
-      font-size: 16px;
+      border: 1px solid var(--stroke);
+      background: rgba(20, 56, 105, 0.42);
+      color: rgba(234,242,255,0.70);
+      box-shadow: var(--inner);
+      min-width: 90px;
+      justify-content:center;
     }
 
-    .smalltext{
-      position:relative;
-      margin-top: 10px;
-      color: var(--muted2);
-      font-size: 16px;
+    .tierBadge{
+      display:inline-flex;
+      align-items:center;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke);
+      background: rgba(20, 56, 105, 0.38);
+      color: rgba(234,242,255,0.75);
+      box-shadow: var(--inner);
+      font-weight: 750;
+      letter-spacing: 0.01em;
     }
 
-    .row2{
+    .smallText{
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.25;
+    }
+
+    .miniGrid{
       display:grid;
       grid-template-columns: 1fr 1fr;
       gap: 14px;
     }
 
-    .mini .k-main{ font-size: 52px; }
-    .mini .k-label{ font-size: 22px; }
+    .miniCard{
+      border-radius: var(--radius);
+      background:
+        radial-gradient(800px 260px at 20% 10%, rgba(58,140,255,0.20), transparent 60%),
+        radial-gradient(700px 240px at 100% 0%, rgba(64,247,194,0.07), transparent 60%),
+        linear-gradient(180deg, rgba(12,26,54,0.72), rgba(9,20,40,0.72));
+      border: 1px solid var(--stroke);
+      box-shadow: var(--shadow), var(--inner);
+      padding: 18px;
+      overflow:hidden;
+    }
 
-    .kv{
-      position:relative;
+    .miniTitle{
+      font-size: 22px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .avgLines{
+      margin-top: 10px;
       display:flex;
-      align-items:baseline;
+      flex-direction: column;
       gap: 10px;
-      margin-top: 14px;
+      font-size: 18px;
+      color: var(--muted);
+    }
+    .avgLines .pos{ color: var(--green); font-weight: 750; }
+    .avgLines .neg{ color: var(--red); font-weight: 750; }
+    .avgFooter{
+      margin-top: 12px;
+      color: var(--muted2);
       font-size: 18px;
     }
-    .kv .pos{ color: rgba(70,240,190,.95); font-weight: 800; }
-    .kv .neg{ color: rgba(255,110,125,.95); font-weight: 800; }
-    .kv span{ color: var(--muted); }
 
-    /* Chart card: remove “full-width blue background” feel */
-    .chart-card{
-      background: transparent !important;
-      border: 1px solid var(--stroke2);
-      box-shadow: none;
-      padding: 16px;
+    /* Chart */
+    .chartCard{
+      padding: 16px 16px 14px;
     }
-    .chart-head{
+    .chartHeader{
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap: 10px;
+      gap: 12px;
       margin-bottom: 10px;
+      background: transparent;      /* verhindert blauen Balken */
+      box-shadow: none;
     }
-    .chart-title{
-      font-weight: 900;
-      font-size: 28px;
-      letter-spacing:.2px;
-      color: rgba(235,245,255,.92);
+    .chartTitle{
+      font-size: 40px;
+      font-weight: 850;
+      letter-spacing: -0.02em;
+      margin: 0;
     }
 
-    .toggle{
-      display:inline-flex;
-      gap: 6px;
-      background: rgba(12,28,54,.65);
-      border: 1px solid rgba(85,160,255,.18);
-      border-radius: 999px;
+    .segToggle{
+      display:flex;
+      align-items:center;
+      gap: 10px;
       padding: 6px;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.03);
-    }
-    .tbtn{
-      border:0;
-      cursor:pointer;
-      padding: 10px 14px;
       border-radius: 999px;
-      background: transparent;
-      color: rgba(215,235,255,.70);
-      font-weight: 800;
-      font-size: 16px;
+      border: 1px solid var(--stroke);
+      background: rgba(10, 25, 48, 0.30);
+      box-shadow: var(--inner);
     }
-    .tbtn.active{
-      background: rgba(30,95,210,.28);
-      border: 1px solid rgba(85,160,255,.18);
-      color: rgba(235,245,255,.95);
-      box-shadow: 0 10px 20px rgba(0,0,0,.25), inset 0 0 0 1px rgba(255,255,255,.04);
+    .segToggle button{
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight: 800;
+      font-size: 18px;
+      background: transparent;
+      color: rgba(234,242,255,0.55);
+      cursor:pointer;
+    }
+    .segToggle button.active{
+      background: rgba(26, 94, 196, 0.35);
+      color: var(--text);
+      box-shadow: inset 0 0 0 1px rgba(120,170,255,0.20), 0 10px 25px rgba(0,0,0,0.30);
     }
 
+    .canvasWrap{
+      border-radius: var(--radius);
+      border: 1px solid var(--stroke2);
+      background: transparent !important;  /* wichtig */
+      overflow:hidden;
+      position: relative;
+    }
     canvas{
-      width:100%;
-      height: 240px;
+      width: 100%;
+      height: 280px;
       display:block;
-      border-radius: 18px;
-      background: rgba(5,10,20,.14); /* neutral plot background */
-      border: 1px solid rgba(85,160,255,.10);
+      background: transparent;            /* wichtig */
     }
 
     .footer{
       margin-top: 12px;
-      color: rgba(215,235,255,.45);
+      color: rgba(234,242,255,0.40);
       font-size: 16px;
-      line-height: 1.35;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .footer a{
+      color: rgba(120,170,255,0.85);
+      text-decoration:none;
+      font-weight: 750;
     }
 
-    a{ color: rgba(140,200,255,.88); text-decoration:none; font-weight:800; }
-    a:hover{ text-decoration:underline; }
-
-    @media (max-width: 390px){
-      .title{ font-size: 40px; }
-      .k-main{ font-size: 52px; } /* still large but a bit smaller on tiny phones */
-      .mini .k-main{ font-size: 48px; }
-      canvas{ height: 220px; }
+    /* Slight “glass” vignette */
+    .card:before, .miniCard:before{
+      content:"";
+      position:absolute;
+      inset:-1px;
+      background:
+        radial-gradient(900px 320px at 20% 0%, rgba(255,255,255,0.06), transparent 55%),
+        radial-gradient(700px 260px at 100% 0%, rgba(255,255,255,0.03), transparent 65%);
+      pointer-events:none;
     }
   </style>
 </head>
 
 <body>
-  <div class="wrap">
-    <div class="topbar">
-      <h1 class="title">Trading<br/>Dashboard</h1>
-      <div class="pill" id="dataPill">DATA: …</div>
+  <div class="topbar">
+    <h1>Trading<br/>Dashboard</h1>
+    <div id="dataPill" class="pillOk">DATA: OK</div>
+  </div>
+
+  <div class="grid">
+    <!-- Current Equity -->
+    <div class="card">
+      <div class="cardTitle">Current Equity</div>
+      <div id="curEquity" class="kpiValue">$—</div>
+      <div class="kpiSub">
+        <span class="athBadge">ATH</span>
+        <span id="athEquity" class="badge">$—</span>
+      </div>
     </div>
 
-    <div class="grid">
+    <!-- Next Trade Size -->
+    <div class="card">
+      <div class="cardTitle">Next Trade Size ($)</div>
+      <div class="kpiRow">
+        <div id="nextRisk" class="kpiValue">$—</div>
+        <div class="smallText" id="riskPctText"></div>
+      </div>
 
-      <!-- Current Equity -->
-      <div class="card" id="cardEquity">
-        <div class="k-label">Current Equity</div>
-        <div class="k-main k-glow" id="kEquity" style="--kcolor: rgba(235,245,255,.95)">$—</div>
-        <div class="subrow">
-          <div style="opacity:.75">ATH</div>
-          <div class="chip" id="kAth">$—</div>
+      <div class="kpiSub" style="justify-content: space-between;">
+        <span id="tierBadge" class="tierBadge">—</span>
+        <span id="tierText" class="smallText">Tier 0 | Above 0% to 12% | 12–18% | &gt;18%</span>
+      </div>
+    </div>
+
+    <!-- Avg R / Trade + Winrate -->
+    <div class="miniGrid">
+      <div class="miniCard">
+        <div class="miniTitle">Avg. R / Trade</div>
+
+        <div id="avgRValue" class="kpiValue kpiValue--small">—</div>
+        <div class="kpiValue kpiValue--small" style="margin-top:-6px;">R</div>
+
+        <div class="avgLines">
+          <div><span id="avgWin" class="pos">+— R</span> &nbsp;Avg Win</div>
+          <div><span id="avgLoss" class="neg">-— R</span> &nbsp;Avg Loss</div>
+        </div>
+
+        <div class="avgFooter"><span id="tradeCount">—</span> Trades</div>
+      </div>
+
+      <div class="miniCard">
+        <div class="miniTitle">Winrate</div>
+
+        <div id="winrateValue" class="kpiValue kpiValue--small">—%</div>
+        <div class="smallText" style="margin-top: 10px;">
+          <span id="winsLosses">— Wins / — Losses</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="card chartCard">
+      <div class="chartHeader">
+        <div class="chartTitle" id="chartTitle">Equity ($)</div>
+        <div class="segToggle" role="tablist" aria-label="Curve toggle">
+          <button id="btnEquity" class="active" type="button">Equity ($)</button>
+          <button id="btnCumR" type="button">Cum R</button>
         </div>
       </div>
 
-      <!-- Next Trade Size -->
-      <div class="card" id="cardRisk">
-        <div class="k-label">Next Trade Size ($)</div>
-        <div class="k-main k-glow" id="kRisk" style="--kcolor: rgba(235,245,255,.95)">$—</div>
-        <div class="subrow">
-          <div class="chip" id="kTier">—</div>
-          <div style="opacity:.78" id="kTierText">Tier 0 | Above 0% to 12% | 12–18% | &gt;18%</div>
-        </div>
+      <div class="canvasWrap">
+        <canvas id="curveCanvas" width="900" height="420"></canvas>
       </div>
 
-      <!-- Avg R + Winrate -->
-      <div class="row2">
-        <div class="card mini" id="cardAvgR">
-          <div class="k-label">Avg. R / Trade</div>
-          <div class="k-main k-glow" id="kAvgR" style="--kcolor: rgba(235,245,255,.95)">— R</div>
-
-          <div class="kv">
-            <div class="pos" id="kAvgWin">+— R</div><span>Avg Win</span>
-          </div>
-          <div class="kv" style="margin-top:8px;">
-            <div class="neg" id="kAvgLoss">-— R</div><span>Avg Loss</span>
-          </div>
-
-          <div class="smalltext"><span id="kTradeCount">—</span> Trades</div>
-        </div>
-
-        <div class="card mini" id="cardWinrate">
-          <div class="k-label">Winrate</div>
-          <div class="k-main k-glow" id="kWinrate" style="--kcolor: rgba(235,245,255,.95)">—%</div>
-          <div class="smalltext" id="kWL">— Wins / — Losses</div>
-        </div>
+      <div class="footer">
+        <span id="metaLine">Stand: — · Updated: —</span>
+        <span><a href="../index.html">Desktop</a> · <a href="../entry/index.html">Zurück</a></span>
       </div>
-
-      <!-- Chart -->
-      <div class="card chart-card" id="cardChart">
-        <div class="chart-head">
-          <div class="chart-title">Equity ($)</div>
-          <div class="toggle" role="tablist" aria-label="Curve toggle">
-            <button class="tbtn active" id="btnEquity" type="button">Equity ($)</button>
-            <button class="tbtn" id="btnR" type="button">Cum R</button>
-          </div>
-        </div>
-
-        <canvas id="curve" width="900" height="420"></canvas>
-
-        <div class="footer" id="metaLine">
-          Stand: — · Updated: —
-          <div style="margin-top:6px;"><a href="../index.html">Desktop</a> · <a href="../entry/index.html">Zurück</a></div>
-        </div>
-      </div>
-
     </div>
   </div>
 
 <script>
-/* =========================
-   Helpers
-========================= */
-function $(id){ return document.getElementById(id); }
-function clamp01(x){ return Math.max(0, Math.min(1, x)); }
-function lerp(a,b,t){ return a + (b-a)*t; }
-function toNum(x){
-  const n = Number(x);
-  return Number.isFinite(n) ? n : NaN;
-}
-function fmtMoney(x){
-  if (!Number.isFinite(x)) return "$—";
-  return x.toLocaleString("en-US", {style:"currency", currency:"USD", maximumFractionDigits:2});
-}
-function fmtPct(x){
-  if (!Number.isFinite(x)) return "—%";
-  return (x*100).toFixed(0) + "%";
-}
-function fmtR(x){
-  if (!Number.isFinite(x)) return "— R";
-  const sign = x >= 0 ? "+" : "";
-  return sign + x.toFixed(2) + " R";
-}
-function fmtRSmall(x){
-  if (!Number.isFinite(x)) return "— R";
-  const sign = x >= 0 ? "+" : "";
-  return sign + x.toFixed(2) + " R";
-}
+  // ---------------------------
+  // Config / Data endpoints
+  // ---------------------------
+  const DATA_BASE = "../data";
+  const URL_EQUITY = `${DATA_BASE}/equity.json`;
+  const URL_META   = `${DATA_BASE}/meta.json`;
+  const URL_KPIS   = `${DATA_BASE}/kpis_full.json`;
+  const URL_DAILY  = `${DATA_BASE}/daily_aggregates.json`;
+  const URL_TRADES = `${DATA_BASE}/trades_enriched.json`;
 
-/* smooth red/white/green ramp */
-function lerpRGB(c1,c2,t){
-  return `rgb(${Math.round(lerp(c1[0],c2[0],t))},${Math.round(lerp(c1[1],c2[1],t))},${Math.round(lerp(c1[2],c2[2],t))})`;
-}
-function rampRedWhiteGreen(x, lo, midLo, midHi, hi){
-  const RED   = [255,  91, 107];
-  const WHITE = [234, 242, 255];
-  const GREEN = [ 43, 231, 163];
+  // ---------------------------
+  // Utilities
+  // ---------------------------
+  function clamp01(x){ return Math.max(0, Math.min(1, x)); }
 
-  if (!Number.isFinite(x)) return "rgba(234,242,255,.95)";
-
-  if (x <= lo) return lerpRGB(RED, RED, 0);
-  if (x >= hi) return lerpRGB(GREEN, GREEN, 0);
-
-  if (x < midLo){
-    const t = clamp01((x - lo) / (midLo - lo));
-    return lerpRGB(RED, WHITE, t);
+  function lerp(a,b,t){ return a + (b-a)*t; }
+  function rgbToHex(r,g,b){
+    const toHex = (n)=> n.toString(16).padStart(2,"0");
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
   }
-  if (x <= midHi){
-    return lerpRGB(WHITE, WHITE, 0);
-  }
-  const t = clamp01((x - midHi) / (hi - midHi));
-  return lerpRGB(WHITE, GREEN, t);
-}
-
-/* for chart segment colors: blue -> green */
-function blueToGreen(t){
-  // base blue and target green
-  const BLUE  = [ 74, 163, 255]; // #4aa3ff
-  const GREEN = [ 43, 231, 163]; // #2be7a3
-  t = clamp01(t);
-  return lerpRGB(BLUE, GREEN, t);
-}
-
-/* =========================
-   Fetch data
-========================= */
-async function loadJSON(url){
-  const res = await fetch(url, {cache:"no-store"});
-  if(!res.ok) throw new Error("HTTP " + res.status + " for " + url);
-  return await res.json();
-}
-
-/* =========================
-   Chart drawing
-========================= */
-function drawLineChart(canvas, series, labels, mode){
-  // mode: "equity" or "cumr"
-  const ctx = canvas.getContext("2d");
-  const W = canvas.width, H = canvas.height;
-  ctx.clearRect(0,0,W,H);
-
-  // padding
-  const padL = 70, padR = 22, padT = 18, padB = 56;
-  const plotW = W - padL - padR;
-  const plotH = H - padT - padB;
-
-  // guard
-  if(!series || series.length < 2){
-    ctx.fillStyle = "rgba(215,235,255,.55)";
-    ctx.font = "700 18px system-ui";
-    ctx.fillText("No data yet", padL + 10, padT + 40);
-    return;
+  function mix(c1, c2, t){
+    const a = c1.match(/\\w\\w/g).map(x=>parseInt(x,16));
+    const b = c2.match(/\\w\\w/g).map(x=>parseInt(x,16));
+    return rgbToHex(
+      Math.round(lerp(a[0],b[0],t)),
+      Math.round(lerp(a[1],b[1],t)),
+      Math.round(lerp(a[2],b[2],t))
+    );
   }
 
-  // range
-  let minY = Infinity, maxY = -Infinity;
-  for(const v of series){
-    if(Number.isFinite(v)){
-      if(v < minY) minY = v;
-      if(v > maxY) maxY = v;
+  function fmtMoney(x){
+    if (!Number.isFinite(x)) return "$—";
+    return x.toLocaleString("en-US",{style:"currency",currency:"USD",minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+  function fmtPct(x){
+    if (!Number.isFinite(x)) return "—%";
+    return (x*100).toFixed(2) + "%";
+  }
+  function fmtNum(x, digits=2){
+    if (!Number.isFinite(x)) return "—";
+    return x.toFixed(digits);
+  }
+  function fmtSignedR(x){
+    if (!Number.isFinite(x)) return "—";
+    const s = x >= 0 ? "+" : "";
+    return s + x.toFixed(2);
+  }
+
+  async function fetchJSON(url){
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error(`Fetch failed ${res.status}: ${url}`);
+    return await res.json();
+  }
+
+  // ---------------------------
+  // Color rules (your spec)
+  // ---------------------------
+  function colorForAvgR(r){
+    const RED   = "#ff5a6a";
+    const WHITE = "#eaf2ff";
+    const GREEN = "#40f7c2";
+    if (!Number.isFinite(r)) return WHITE;
+
+    if (r <= 0){
+      // [-1..0] => red->white
+      const t = clamp01((r + 1) / 1);
+      return mix(RED, WHITE, t);
     }
-  }
-  if(!Number.isFinite(minY) || !Number.isFinite(maxY) || minY === maxY){
-    minY = minY - 1;
-    maxY = maxY + 1;
-  }
-
-  // slight margins
-  const yPad = (maxY - minY) * 0.08;
-  minY -= yPad;
-  maxY += yPad;
-
-  // axis mappers
-  const xOf = (i)=> padL + (i/(series.length-1))*plotW;
-  const yOf = (v)=> padT + (1 - (v - minY)/(maxY - minY))*plotH;
-
-  // grid lines
-  ctx.strokeStyle = "rgba(85,160,255,.10)";
-  ctx.lineWidth = 1;
-
-  const gridY = 5;
-  for(let k=0;k<=gridY;k++){
-    const y = padT + (k/gridY)*plotH;
-    ctx.beginPath();
-    ctx.moveTo(padL, y);
-    ctx.lineTo(W-padR, y);
-    ctx.stroke();
-  }
-
-  // Y labels
-  ctx.fillStyle = "rgba(215,235,255,.60)";
-  ctx.font = "600 14px system-ui";
-  for(let k=0;k<=gridY;k++){
-    const v = maxY - (k/gridY)*(maxY-minY);
-    const y = padT + (k/gridY)*plotH;
-    let txt;
-    if(mode==="equity"){
-      txt = v.toLocaleString("en-US",{maximumFractionDigits:0});
-    }else{
-      txt = v.toFixed(1);
+    if (r < 0.5){
+      // [0..0.5] => white->green
+      const t = clamp01(r / 0.5);
+      return mix(WHITE, GREEN, t);
     }
-    ctx.fillText(txt, 10, y+5);
+    return GREEN;
   }
 
-  // X ticks (all calendar days but label only 1st and 15th)
-  ctx.fillStyle = "rgba(215,235,255,.45)";
-  ctx.font = "600 14px system-ui";
-  const n = labels.length;
+  function colorForWinrate(wPct){
+    // input: percent (0..100)
+    const RED   = "#ff5a6a";
+    const WHITE = "#eaf2ff";
+    const GREEN = "#40f7c2";
+    if (!Number.isFinite(wPct)) return WHITE;
 
-  for(let i=0;i<n;i++){
-    const lab = labels[i]; // "YYYY-MM-DD"
-    if(!lab) continue;
-    const day = Number(lab.slice(8,10));
-    if(day !== 1 && day !== 15) continue;
+    if (wPct < 50){
+      // [40..50] => red->white
+      const t = clamp01((wPct - 40) / 10);
+      return mix(RED, WHITE, t);
+    }
+    if (wPct < 60){
+      // [50..60] => white->green
+      const t = clamp01((wPct - 50) / 10);
+      return mix(WHITE, GREEN, t);
+    }
+    return GREEN;
+  }
 
-    const x = xOf(i);
-    // small tick line
-    ctx.strokeStyle = "rgba(85,160,255,.10)";
+  // chart segment coloring: blue -> green
+  function colorForCurveValue(v, minV, maxV){
+    const BLUE  = "#3a8cff";
+    const GREEN = "#40f7c2";
+    const t = (maxV > minV) ? clamp01((v - minV) / (maxV - minV)) : 0;
+    return mix(BLUE, GREEN, t);
+  }
+
+  // ---------------------------
+  // Chart drawing
+  // ---------------------------
+  function drawChart(ctx, canvas, series, modeLabel){
+    // series: [{date, value}]
+    const W = canvas.width;
+    const H = canvas.height;
+
+    // clear
+    ctx.clearRect(0,0,W,H);
+
+    // padding
+    const padL = 72;
+    const padR = 22;
+    const padT = 26;
+    const padB = 52;
+
+    const innerW = W - padL - padR;
+    const innerH = H - padT - padB;
+
+    // no data
+    if (!series || series.length < 2){
+      ctx.fillStyle = "rgba(234,242,255,0.35)";
+      ctx.font = "600 18px ui-sans-serif";
+      ctx.fillText("No data yet", padL, padT + 30);
+      return;
+    }
+
+    const values = series.map(d=>d.value);
+    let minV = Math.min(...values);
+    let maxV = Math.max(...values);
+    if (minV === maxV){
+      minV -= 1; maxV += 1;
+    }
+    const yPad = (maxV - minV) * 0.06;
+    minV -= yPad; maxV += yPad;
+
+    // grid
+    ctx.strokeStyle = "rgba(120,170,255,0.10)";
+    ctx.lineWidth = 1;
+
+    const gridLines = 5;
+    ctx.font = "600 14px ui-sans-serif";
+    ctx.fillStyle = "rgba(234,242,255,0.35)";
+
+    for (let i=0;i<=gridLines;i++){
+      const y = padT + (innerH * i / gridLines);
+      ctx.beginPath();
+      ctx.moveTo(padL, y);
+      ctx.lineTo(padL + innerW, y);
+      ctx.stroke();
+
+      const v = maxV - (maxV-minV) * (i/gridLines);
+      const label = (modeLabel === "Equity") ? Math.round(v).toLocaleString("en-US") : (v).toFixed(1);
+      ctx.fillText(label, 12, y + 5);
+    }
+
+    // X ticks: show daily tick marks, label only on 1st + 15th
+    ctx.strokeStyle = "rgba(120,170,255,0.10)";
+    ctx.fillStyle = "rgba(234,242,255,0.35)";
+
+    const n = series.length;
+    function xAt(i){ return padL + (innerW * (i/(n-1))); }
+    function yAt(val){
+      const t = (val - minV) / (maxV - minV);
+      return padT + innerH - innerH * t;
+    }
+
+    for (let i=0;i<n;i++){
+      const x = xAt(i);
+      // small tick
+      ctx.beginPath();
+      ctx.moveTo(x, padT + innerH);
+      ctx.lineTo(x, padT + innerH + 6);
+      ctx.stroke();
+
+      const d = new Date(series[i].date);
+      const day = d.getDate();
+      const month = d.getMonth()+1;
+
+      if (day === 1 || day === 15){
+        const label = (day === 1) ? `${day}.${month}` : `${day}`;
+        ctx.fillText(label, x-10, padT + innerH + 28);
+      }
+    }
+
+    // Build pixel points
+    const pts = series.map((p,i)=>({x:xAt(i), y:yAt(p.value)}));
+
+    // draw segments with color grading
+    ctx.lineWidth = 3;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
+    const rawMin = Math.min(...values);
+    const rawMax = Math.max(...values);
+
+    for (let i=1;i<pts.length;i++){
+      const v = series[i].value; // color by current point
+      ctx.strokeStyle = colorForCurveValue(v, rawMin, rawMax);
+      ctx.beginPath();
+      ctx.moveTo(pts[i-1].x, pts[i-1].y);
+      ctx.lineTo(pts[i].x, pts[i].y);
+      ctx.stroke();
+    }
+
+    // last dot glow
+    const last = pts[pts.length-1];
+    ctx.fillStyle = "#40f7c2";
+    ctx.shadowColor = "rgba(64,247,194,0.35)";
+    ctx.shadowBlur = 14;
     ctx.beginPath();
-    ctx.moveTo(x, padT+plotH);
-    ctx.lineTo(x, padT+plotH+8);
-    ctx.stroke();
-
-    // label
-    let show = day===1 ? (lab.slice(5,7) + "." ) : "15";
-    // if day==1 show month as "MM."
-    ctx.fillText(show, x-10, H-18);
-  }
-
-  // Fill under curve (subtle)
-  ctx.save();
-  ctx.beginPath();
-  ctx.moveTo(xOf(0), yOf(series[0]));
-  for(let i=1;i<series.length;i++){
-    ctx.lineTo(xOf(i), yOf(series[i]));
-  }
-  ctx.lineTo(xOf(series.length-1), padT+plotH);
-  ctx.lineTo(xOf(0), padT+plotH);
-  ctx.closePath();
-
-  const gradFill = ctx.createLinearGradient(0,padT,0,padT+plotH);
-  gradFill.addColorStop(0, "rgba(74,163,255,.10)");
-  gradFill.addColorStop(1, "rgba(0,0,0,0)");
-  ctx.fillStyle = gradFill;
-  ctx.fill();
-  ctx.restore();
-
-  // Determine series max for coloring (ATH should be max green)
-  const trueMax = Math.max(...series.filter(Number.isFinite));
-  const denom = (trueMax === 0) ? 1 : trueMax;
-
-  // line with per-segment color: blue -> green as value approaches max
-  ctx.lineWidth = 3.2;
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-
-  // glow
-  ctx.shadowColor = "rgba(74,163,255,.35)";
-  ctx.shadowBlur = 10;
-  ctx.shadowOffsetX = 0;
-  ctx.shadowOffsetY = 0;
-
-  for(let i=1;i<series.length;i++){
-    const v0 = series[i-1], v1 = series[i];
-    if(!Number.isFinite(v0) || !Number.isFinite(v1)) continue;
-
-    // t based on current point vs max => at ATH => 1 => green
-    const t = clamp01(v1 / denom);
-    ctx.strokeStyle = blueToGreen(t);
-
-    ctx.beginPath();
-    ctx.moveTo(xOf(i-1), yOf(v0));
-    ctx.lineTo(xOf(i), yOf(v1));
-    ctx.stroke();
-  }
-
-  // last point marker
-  const last = series.length-1;
-  const vLast = series[last];
-  if(Number.isFinite(vLast)){
-    const t = clamp01(vLast/denom);
-    ctx.shadowBlur = 16;
-    ctx.fillStyle = blueToGreen(t);
-    ctx.beginPath();
-    ctx.arc(xOf(last), yOf(vLast), 4.6, 0, Math.PI*2);
+    ctx.arc(last.x, last.y, 3.6, 0, Math.PI*2);
     ctx.fill();
-  }
-}
-
-/* =========================
-   Main render
-========================= */
-let curveMode = "equity"; // "equity" or "cumr"
-let started = false;
-
-async function main(){
-  if(started) return;
-  started = true;
-
-  const dataPill = $("dataPill");
-  dataPill.textContent = "DATA: …";
-
-  let equityRows=[], kpis=null, meta=null;
-
-  try{
-    [equityRows, kpis, meta] = await Promise.all([
-      loadJSON("../data/equity.json"),
-      loadJSON("../data/kpis_full.json"),
-      loadJSON("../data/meta.json"),
-    ]);
-    dataPill.textContent = "DATA: OK";
-  }catch(e){
-    console.error(e);
-    dataPill.textContent = "DATA: ERR";
-    dataPill.style.borderColor = "rgba(255,91,107,.35)";
-    dataPill.style.color = "rgba(255,200,205,.95)";
+    ctx.shadowBlur = 0;
   }
 
-  // latest equity row
-  const lastRow = Array.isArray(equityRows) && equityRows.length ? equityRows[equityRows.length-1] : null;
+  // ---------------------------
+  // Cum-R building (fallback)
+  // ---------------------------
+  function buildCumRSeriesFromTradesAndEquityDates(trades, equitySeries){
+    // Build r_day map
+    const rDay = new Map();
+    for (const t of trades){
+      const d = t.date;
+      const r = Number(t.result_r);
+      if (!d || !Number.isFinite(r)) continue;
+      rDay.set(d, (rDay.get(d) || 0) + r);
+    }
 
-  // Current Equity + ATH
-  const curEq = toNum(lastRow?.equity_end_$);
-  const ath = toNum(lastRow?.ath_$);
-  $("kEquity").textContent = fmtMoney(curEq);
-  $("kAth").textContent = fmtMoney(ath);
-
-  // Next trade size + tier chip
-  const risk = toNum(lastRow?.effective_risk_$);
-  $("kRisk").textContent = fmtMoney(risk);
-  $("kTier").textContent = (lastRow?.dd_tier ?? "—").replace("–","–");
-
-  // KPIs
-  const tradeCount = toNum(kpis?.trade_count);
-  const winCount = toNum(kpis?.win_count);
-  const lossCount = toNum(kpis?.loss_count);
-
-  // Avg win/loss (R)
-  const avgWin = toNum(kpis?.avg_win_R ?? kpis?.avg_win_r);
-  const avgLoss = toNum(kpis?.avg_loss_R ?? kpis?.avg_loss_r);
-
-  $("kTradeCount").textContent = Number.isFinite(tradeCount) ? String(tradeCount) : "—";
-  $("kWL").textContent = `${Number.isFinite(winCount)?winCount:"—"} Wins / ${Number.isFinite(lossCount)?lossCount:"—"} Losses`;
-  $("kAvgWin").textContent = fmtRSmall(avgWin);
-  $("kAvgLoss").textContent = fmtRSmall(avgLoss);
-
-  // Avg R per trade (robust)
-  let avgR =
-    toNum(kpis?.avg_R) ??
-    toNum(kpis?.avg_r) ??
-    toNum(kpis?.avg_result_r) ??
-    toNum(kpis?.expectancy_R) ??
-    toNum(kpis?.expectancy_r) ??
-    NaN;
-
-  if (!Number.isFinite(avgR)) {
-    const totalR = toNum(kpis?.total_R) ?? toNum(kpis?.total_r) ?? NaN;
-    if (Number.isFinite(totalR) && Number.isFinite(tradeCount) && tradeCount > 0) avgR = totalR / tradeCount;
+    let cum = 0;
+    const out = [];
+    for (const e of equitySeries){
+      const d = e.date;
+      const dayR = rDay.get(d) || 0;
+      cum += dayR;
+      out.push({date: d, value: cum});
+    }
+    return out;
   }
 
-  if (!Number.isFinite(avgR)) {
-    const bc = toNum(kpis?.breakeven_count) ?? 0;
-    if ([winCount, lossCount, tradeCount, avgWin, avgLoss].every(Number.isFinite) && tradeCount > 0) {
-      avgR = ((winCount * avgWin) + (lossCount * avgLoss) + (bc * 0)) / tradeCount;
+  // ---------------------------
+  // Main render
+  // ---------------------------
+  let MODE = "Equity"; // "Equity" or "CumR"
+  let cached = { equity: null, kpis: null, meta: null, daily: null, trades: null };
+
+  const el = {
+    dataPill: document.getElementById("dataPill"),
+    curEquity: document.getElementById("curEquity"),
+    athEquity: document.getElementById("athEquity"),
+    nextRisk: document.getElementById("nextRisk"),
+    riskPctText: document.getElementById("riskPctText"),
+    tierBadge: document.getElementById("tierBadge"),
+    tierText: document.getElementById("tierText"),
+    avgRValue: document.getElementById("avgRValue"),
+    avgWin: document.getElementById("avgWin"),
+    avgLoss: document.getElementById("avgLoss"),
+    tradeCount: document.getElementById("tradeCount"),
+    winrateValue: document.getElementById("winrateValue"),
+    winsLosses: document.getElementById("winsLosses"),
+    metaLine: document.getElementById("metaLine"),
+    chartTitle: document.getElementById("chartTitle"),
+    btnEquity: document.getElementById("btnEquity"),
+    btnCumR: document.getElementById("btnCumR"),
+    canvas: document.getElementById("curveCanvas"),
+  };
+
+  function setPill(ok, text){
+    el.dataPill.textContent = text;
+    el.dataPill.style.borderColor = ok ? "rgba(64,247,194,0.20)" : "rgba(255,90,106,0.28)";
+    el.dataPill.style.background = ok ? "rgba(16,60,78,0.72)" : "rgba(80,20,30,0.55)";
+  }
+
+  function applyNumberColorAndGlow(node, colorHex){
+    node.style.color = colorHex;
+    node.style.textShadow =
+      "0 0 10px rgba(90,160,255,0.20), 0 0 22px rgba(64,247,194,0.16)";
+  }
+
+  function resizeCanvasToDisplaySize(canvas){
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const w = Math.round(rect.width * dpr);
+    const h = Math.round(rect.height * dpr);
+    if (canvas.width !== w || canvas.height !== h){
+      canvas.width = w;
+      canvas.height = h;
     }
   }
 
-  $("kAvgR").textContent = fmtR(avgR);
+  function render(){
+    const ctx = el.canvas.getContext("2d");
 
-  // Winrate
-  let winrate = toNum(kpis?.winrate);
-  if(!Number.isFinite(winrate) && Number.isFinite(winCount) && Number.isFinite(tradeCount) && tradeCount>0){
-    winrate = winCount / tradeCount;
+    // latest equity row
+    const equityArr = cached.equity || [];
+    const latest = equityArr.length ? equityArr[equityArr.length - 1] : null;
+
+    if (!latest){
+      setPill(false, "DATA: MISSING");
+      return;
+    }
+
+    // KPI cards
+    el.curEquity.textContent = fmtMoney(latest.equity_end_$);
+    el.athEquity.textContent = fmtMoney(latest.ath_$);
+
+    el.nextRisk.textContent = fmtMoney(latest.effective_risk_$);
+    // optional: risk pct display
+    const riskPct = (latest.base_equity_for_sizing_$ && latest.base_risk_$)
+      ? (latest.base_risk_$ / latest.base_equity_for_sizing_$)
+      : null;
+    el.riskPctText.textContent = riskPct ? `${(riskPct*100).toFixed(0)}% of equity` : "";
+
+    el.tierBadge.textContent = latest.dd_tier || "—";
+
+    // KPIs from kpis_full.json (trades only)
+    const k = cached.kpis || {};
+    const tradeCount = Number(k.trade_count);
+    const winCount = Number(k.win_count);
+    const lossCount = Number(k.loss_count);
+    const winrate = Number(k.winrate); // maybe 0..1
+    const winratePct = Number.isFinite(winrate) ? (winrate * 100) : NaN;
+
+    // Avg R/Trade:
+    // prefer expectancy_R if present, else total_R/trade_count
+    let avgR = Number(k.expectancy_R);
+    if (!Number.isFinite(avgR)){
+      const totalR = Number(k.total_R);
+      if (Number.isFinite(totalR) && Number.isFinite(tradeCount) && tradeCount > 0){
+        avgR = totalR / tradeCount;
+      }
+    }
+
+    const avgWinR = Number(k.avg_win_R);
+    const avgLossR = Number(k.avg_loss_R);
+
+    el.avgRValue.textContent = fmtSignedR(avgR);
+    el.avgWin.textContent = fmtSignedR(avgWinR) + " R";
+    el.avgLoss.textContent = fmtSignedR(avgLossR) + " R";
+    el.tradeCount.textContent = Number.isFinite(tradeCount) ? tradeCount : "—";
+
+    el.winrateValue.textContent = Number.isFinite(winratePct) ? `${Math.round(winratePct)}%` : "—%";
+    el.winsLosses.textContent =
+      (Number.isFinite(winCount) && Number.isFinite(lossCount))
+        ? `${winCount} Wins / ${lossCount} Losses`
+        : "— Wins / — Losses";
+
+    // Apply color gradients for AvgR & Winrate + glow
+    applyNumberColorAndGlow(el.avgRValue, colorForAvgR(avgR));
+    applyNumberColorAndGlow(el.winrateValue, colorForWinrate(winratePct));
+
+    // Meta footer
+    const lastUpd = cached.meta?.last_updated_utc || cached.meta?.meta?.last_updated_utc || "";
+    const stand = latest.date || "—";
+    el.metaLine.textContent = `Stand: ${stand} · Updated: ${lastUpd || "—"}`;
+
+    // Chart series build
+    const equitySeries = equityArr.map(r=>({date: r.date, value: Number(r.equity_end_$)}))
+                                 .filter(p=>p.date && Number.isFinite(p.value));
+
+    let cumRSeries = null;
+
+    // Preferred: daily_aggregates has r_cum
+    const daily = cached.daily || [];
+    const hasRCum = daily.length && daily.some(x => Number.isFinite(Number(x.r_cum)));
+    if (hasRCum){
+      cumRSeries = daily.map(d=>({date: d.date, value: Number(d.r_cum)}))
+                        .filter(p=>p.date && Number.isFinite(p.value));
+    } else {
+      // fallback: compute from trades_enriched + equity dates
+      const trades = cached.trades || [];
+      cumRSeries = buildCumRSeriesFromTradesAndEquityDates(trades, equityArr);
+    }
+
+    // Render chart
+    resizeCanvasToDisplaySize(el.canvas);
+    const series = (MODE === "Equity") ? equitySeries : cumRSeries;
+
+    el.chartTitle.textContent = (MODE === "Equity") ? "Equity ($)" : "Cum R";
+    drawChart(ctx, el.canvas, series, (MODE === "Equity") ? "Equity" : "CumR");
   }
-  $("kWinrate").textContent = Number.isFinite(winrate) ? (winrate*100).toFixed(0) + "%" : "—%";
 
-  // ==== Color formatting (smooth) + glow uses current text color ====
-  // Avg R: red < 0, white ~0..0.5, green >=0.5
-  const avgRColor = rampRedWhiteGreen(avgR, 0.0, 0.15, 0.35, 0.5);
-  $("kAvgR").style.color = avgRColor;
-  $("kAvgR").style.setProperty("--kcolor", avgRColor);
-  $("kAvgR").style.textShadow =
-    `0 0 12px ${avgRColor}33, 0 0 22px ${avgRColor}22`;
+  async function loadAll(){
+    try{
+      setPill(true, "DATA: LOADING");
 
-  // Winrate: red <50%, white 50–60, green >=60
-  const wrPct = Number.isFinite(winrate) ? winrate*100 : NaN;
-  const wrColor = rampRedWhiteGreen(wrPct, 50, 53, 57, 60);
-  $("kWinrate").style.color = wrColor;
-  $("kWinrate").style.setProperty("--kcolor", wrColor);
-  $("kWinrate").style.textShadow =
-    `0 0 12px ${wrColor}33, 0 0 22px ${wrColor}22`;
+      const [equity, meta, kpis, daily, trades] = await Promise.all([
+        fetchJSON(URL_EQUITY),
+        fetchJSON(URL_META).catch(()=> ({})),
+        fetchJSON(URL_KPIS).catch(()=> ({})),
+        fetchJSON(URL_DAILY).catch(()=> ([])),
+        fetchJSON(URL_TRADES).catch(()=> ([])),
+      ]);
 
-  // Keep equity + risk mostly white but with subtle blue glow
-  const white = "rgba(235,245,255,.95)";
-  $("kEquity").style.color = white;
-  $("kEquity").style.textShadow = "0 0 14px rgba(74,163,255,.18), 0 0 22px rgba(74,163,255,.10)";
-  $("kRisk").style.color = white;
-  $("kRisk").style.textShadow = "0 0 14px rgba(74,163,255,.18), 0 0 22px rgba(74,163,255,.10)";
+      cached.equity = Array.isArray(equity) ? equity : [];
+      cached.meta   = meta || {};
+      cached.kpis   = kpis || {};
+      cached.daily  = Array.isArray(daily) ? daily : [];
+      cached.trades = Array.isArray(trades) ? trades : [];
 
-  // Meta line
-  const stand = lastRow?.date ?? "—";
-  const updated = meta?.meta?.last_updated_utc ?? meta?.last_updated_utc ?? "—";
-  $("metaLine").firstChild.textContent = `Stand: ${stand} · Updated: ${updated}  `;
-
-  // Chart data build (calendar spine, carry-forward)
-  const labels = equityRows.map(r => r.date);
-  const equitySeries = equityRows.map(r => toNum(r.equity_end_$));
-
-  // Cum R by date: sum daily R from trades_enriched if present in meta? -> for now:
-  // We'll build from kpis/trades_enriched if you later add a daily R series file.
-  // Here we compute CumR from equityRows if they contain daily_r_sum, else fallback to 0 line.
-  let cumR = [];
-  let running = 0;
-  for(const r of equityRows){
-    // if build_data later provides daily_r_sum, this will work automatically
-    const dr = toNum(r.daily_r_sum ?? r.day_r_sum ?? r.r_sum ?? NaN);
-    if(Number.isFinite(dr)) running += dr;
-    cumR.push(running);
-  }
-
-  const canvas = $("curve");
-  const btnEq = $("btnEquity");
-  const btnR = $("btnR");
-  const chartTitle = document.querySelector(".chart-title");
-
-  function renderChart(){
-    if(curveMode === "equity"){
-      chartTitle.textContent = "Equity ($)";
-      drawLineChart(canvas, equitySeries, labels, "equity");
-    }else{
-      chartTitle.textContent = "Cum R";
-      drawLineChart(canvas, cumR, labels, "cumr");
+      setPill(true, "DATA: OK");
+      render();
+    } catch(err){
+      console.error(err);
+      setPill(false, "DATA: ERROR");
     }
   }
 
-  btnEq.addEventListener("click", ()=>{
-    curveMode = "equity";
-    btnEq.classList.add("active");
-    btnR.classList.remove("active");
-    renderChart();
+  // Toggle handlers
+  el.btnEquity.addEventListener("click", ()=>{
+    MODE = "Equity";
+    el.btnEquity.classList.add("active");
+    el.btnCumR.classList.remove("active");
+    render();
   });
-  btnR.addEventListener("click", ()=>{
-    curveMode = "cumr";
-    btnR.classList.add("active");
-    btnEq.classList.remove("active");
-    renderChart();
+  el.btnCumR.addEventListener("click", ()=>{
+    MODE = "CumR";
+    el.btnCumR.classList.add("active");
+    el.btnEquity.classList.remove("active");
+    render();
   });
 
-  // First render
-  renderChart();
+  window.addEventListener("resize", ()=> render());
 
-  // Re-render on resize for better crispness (optional)
-  window.addEventListener("resize", ()=>{
-    // keep same fixed internal canvas size; this is just a repaint
-    renderChart();
-  });
-}
-
-main();
+  // init
+  loadAll();
 </script>
-
 </body>
 </html>
