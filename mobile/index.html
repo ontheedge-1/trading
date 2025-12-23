@@ -19,7 +19,6 @@
       --glow: 0 0 0 1px rgba(44,124,255,.12), 0 20px 60px rgba(0,0,0,.35);
       --r: 18px;
     }
-
     *{ box-sizing:border-box; }
     html,body{ height:100%; }
     body{
@@ -29,33 +28,13 @@
         radial-gradient(1200px 700px at 20% 0%, rgba(44,124,255,.22), transparent 60%),
         radial-gradient(900px 700px at 80% 10%, rgba(0,163,255,.14), transparent 55%),
         linear-gradient(180deg, var(--bg1), var(--bg0));
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
-
-    .wrap{
-      max-width: 520px;
-      margin: 0 auto;
-      padding: 18px 14px 24px;
-    }
-
-    .top{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:12px;
-      margin-bottom: 14px;
-    }
-
-    .title{
-      font-weight: 800;
-      font-size: 28px;
-      letter-spacing:.2px;
-      line-height: 1.15;
-      margin: 6px 0 0;
-    }
-
+    .wrap{ max-width:520px; margin:0 auto; padding:18px 14px 24px; }
+    .top{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:14px; }
+    .title{ font-weight:900; font-size:34px; letter-spacing:.2px; line-height:1.05; margin: 6px 0 0; }
     .pill{
-      margin-top: 6px;
+      margin-top: 10px;
       border-radius: 999px;
       padding: 10px 12px;
       font-size: 13px;
@@ -65,11 +44,7 @@
       box-shadow: 0 10px 40px rgba(0,0,0,.25);
       white-space:nowrap;
     }
-
-    .grid{
-      display:grid;
-      gap: 12px;
-    }
+    .grid{ display:grid; gap:12px; }
 
     .card{
       background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
@@ -83,30 +58,15 @@
       content:"";
       position:absolute;
       inset:-2px -2px auto -2px;
-      height: 70px;
-      background: radial-gradient(400px 80px at 20% 0%, rgba(44,124,255,.30), transparent 65%);
+      height: 80px;
+      background: radial-gradient(420px 90px at 20% 0%, rgba(44,124,255,.32), transparent 65%);
       pointer-events:none;
     }
-    .card-inner{
-      padding: 14px 14px 12px;
-      position:relative;
-      z-index:1;
-    }
-
-    .k-title{
-      font-size: 14px;
-      color: rgba(190,210,255,.85);
-      letter-spacing:.2px;
-      margin: 0 0 8px;
-    }
-    .k-main{
-      font-size: 38px;
-      font-weight: 900;
-      margin: 0;
-      letter-spacing:.3px;
-    }
+    .card-inner{ padding: 16px 16px 14px; position:relative; z-index:1; }
+    .k-title{ font-size:15px; color: rgba(190,210,255,.85); letter-spacing:.2px; margin:0 0 10px; }
+    .k-main{ font-size: 46px; font-weight: 950; margin:0; letter-spacing:.4px; }
     .k-sub{
-      margin-top: 6px;
+      margin-top: 8px;
       font-size: 14px;
       color: rgba(175,195,235,.82);
       display:flex;
@@ -115,33 +75,28 @@
       flex-wrap:wrap;
     }
     .k-sub .tag{
-      padding: 6px 10px;
+      padding: 7px 11px;
       border-radius: 999px;
       background: rgba(44,124,255,.12);
       border: 1px solid rgba(44,124,255,.22);
       color: rgba(200,220,255,.95);
       font-size: 12px;
     }
-
     .good{ color: var(--good); }
     .bad{ color: var(--bad); }
     .muted{ color: var(--muted); }
 
-    .row2{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
+    .row2{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
 
     .tinyline{
-      margin-top: 8px;
+      margin-top: 10px;
       display:flex;
       justify-content:space-between;
       gap: 10px;
       font-size: 13px;
       color: rgba(175,195,235,.82);
     }
-    .tinyline .v{ font-weight: 800; color: rgba(235,245,255,.95); }
+    .tinyline .v{ font-weight: 900; color: rgba(235,245,255,.95); }
     .tinyline .v.good{ color: var(--good); }
     .tinyline .v.bad{ color: var(--bad); }
 
@@ -152,13 +107,7 @@
       gap: 10px;
       margin-bottom: 10px;
     }
-    .chart-title{
-      margin:0;
-      font-size: 16px;
-      font-weight: 800;
-      letter-spacing:.2px;
-    }
-
+    .chart-title{ margin:0; font-size: 16px; font-weight: 900; letter-spacing:.2px; }
     .toggle{
       display:flex;
       gap: 6px;
@@ -171,9 +120,9 @@
       appearance:none;
       border:0;
       cursor:pointer;
-      padding: 8px 12px;
+      padding: 9px 12px;
       border-radius: 999px;
-      font-weight: 800;
+      font-weight: 900;
       font-size: 13px;
       color: rgba(195,215,255,.85);
       background: transparent;
@@ -187,7 +136,7 @@
 
     canvas{
       width: 100%;
-      height: 230px;
+      height: 240px;
       display:block;
       border-radius: 14px;
       background: rgba(5,10,20,.18);
@@ -203,11 +152,6 @@
       gap:10px;
       flex-wrap:wrap;
     }
-    a{
-      color: rgba(170,210,255,.95);
-      text-decoration:none;
-    }
-    a:hover{ text-decoration:underline; }
 
     .err{
       margin-top: 10px;
@@ -220,20 +164,19 @@
       white-space: pre-wrap;
       display:none;
     }
+    a{ color: rgba(170,210,255,.95); text-decoration:none; }
+    a:hover{ text-decoration:underline; }
   </style>
 </head>
 
 <body>
   <div class="wrap">
     <div class="top">
-      <div>
-        <div class="title">Trading Dashboard</div>
-      </div>
+      <div class="title">Trading Dashboard</div>
       <div id="dataPill" class="pill">DATA: …</div>
     </div>
 
     <div class="grid">
-      <!-- Current Equity -->
       <div class="card">
         <div class="card-inner">
           <div class="k-title">Current Equity</div>
@@ -245,7 +188,6 @@
         </div>
       </div>
 
-      <!-- Next Trade Size -->
       <div class="card">
         <div class="card-inner">
           <div class="k-title">Next Trade Size ($)</div>
@@ -257,7 +199,6 @@
         </div>
       </div>
 
-      <!-- Avg R + Winrate -->
       <div class="row2">
         <div class="card">
           <div class="card-inner">
@@ -271,7 +212,7 @@
               <div><span class="v bad" id="kAvgLoss">— R</span> <span class="muted">Avg Loss</span></div>
             </div>
 
-            <div class="k-sub" style="margin-top:10px;">
+            <div class="k-sub" style="margin-top:12px;">
               <span id="kTradeCount" class="muted">— Trades</span>
             </div>
           </div>
@@ -288,7 +229,6 @@
         </div>
       </div>
 
-      <!-- Chart -->
       <div class="card">
         <div class="card-inner">
           <div class="chart-head">
@@ -313,13 +253,7 @@
   </div>
 
 <script>
-/**
- * Mobile ist unter /trading/mobile/
- * -> Daten liegen unter /trading/data/
- * -> relativ sicher: ../data
- */
 const DATA_BASE = "../data";
-
 const $ = (id) => document.getElementById(id);
 
 function fmtUSD(n){
@@ -331,51 +265,27 @@ function fmtR(n){
   const s = (n>=0?"+":"") + n.toFixed(2);
   return s + " R";
 }
-
-/**
- * Robust number parsing:
- * - "39,042.00" -> 39042
- * - "$385.88" -> 385.88
- * - "1,6" -> 1.6
- */
 function toNum(x){
   if (x === null || x === undefined) return null;
-
   if (typeof x === "number") return Number.isFinite(x) ? x : null;
-
   if (typeof x === "string"){
     let s = x.trim();
     if (!s) return null;
-
-    s = s.replace(/\$/g, "");
-    s = s.replace(/\s+/g, "");
-
-    if (s.includes(".") && s.includes(",")) {
-      // assume comma = thousands separator
-      s = s.replace(/,/g, "");
-    } else {
-      // assume comma = decimal separator
-      s = s.replace(/,/g, ".");
-    }
-
+    s = s.replace(/\$/g, "").replace(/\s+/g, "");
+    if (s.includes(".") && s.includes(",")) s = s.replace(/,/g, "");
+    else s = s.replace(/,/g, ".");
     const n = Number(s);
     return Number.isFinite(n) ? n : null;
   }
-
   const n = Number(x);
   return Number.isFinite(n) ? n : null;
 }
-
 async function fetchJSON(filename){
   const url = `${DATA_BASE}/${filename}`;
   const res = await fetch(url, { cache:"no-store" });
   if (!res.ok) throw new Error(`Fetch failed ${res.status}: ${url}`);
   return await res.json();
 }
-
-/**
- * helper: pick first numeric field from object (keys in priority order)
- */
 function pickNum(obj, keys){
   for (const k of keys){
     if (obj && Object.prototype.hasOwnProperty.call(obj, k)){
@@ -385,71 +295,136 @@ function pickNum(obj, keys){
   }
   return null;
 }
+function tierInfoText(config){
+  const t1 = toNum(config?.dd_tiers?.t1) ?? 0.12;
+  const t2 = toNum(config?.dd_tiers?.t2) ?? 0.18;
+  const p1 = Math.round(t1*100);
+  const p2 = Math.round(t2*100);
+  return `Tier 0 | Above 0% to ${p1}% | ${p1}–${p2}% | >${p2}%`;
+}
 
-/**
- * daily_aggregates.json can be:
- * - array
- * - {rows:[...]}
- * - {data:[...]}
- */
-function buildSeries(dailyAgg){
-  const rows =
-    (Array.isArray(dailyAgg) ? dailyAgg : null) ??
-    (Array.isArray(dailyAgg?.rows) ? dailyAgg.rows : null) ??
-    (Array.isArray(dailyAgg?.data) ? dailyAgg.data : null) ??
-    [];
+/** ---- Date helpers ---- */
+function pad2(n){ return String(n).padStart(2,"0"); }
+function toISODate(y,m,d){ return `${y}-${pad2(m)}-${pad2(d)}`; }
 
-  const out = [];
+function parseDateAny(s){
+  // Accept:
+  // - "YYYY-MM-DD"
+  // - "MM/DD/YYYY"
+  // - "DD.MM.YYYY"
+  if (!s) return null;
+  const str = String(s).trim();
 
-  for (const r of rows){
-    const date = r.date || r.day || r.dt;
-    if (!date) continue;
+  // YYYY-MM-DD
+  let m = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return { y:+m[1], mo:+m[2], d:+m[3], iso:str };
 
-    const eq =
-      toNum(r.equity_end_$) ??
-      toNum(r.equity_end) ??
-      toNum(r.cash_equity_$) ??
-      toNum(r.cash_equity) ??
-      toNum(r.equity_$) ??
-      toNum(r.equity) ??
-      null;
-
-    const cr =
-      toNum(r.cum_r) ??
-      toNum(r.cum_R) ??
-      toNum(r.cumulative_r) ??
-      toNum(r.cumulative_R) ??
-      null;
-
-    const dr =
-      toNum(r.daily_r) ??
-      toNum(r.daily_R) ??
-      toNum(r.sum_r) ??
-      null;
-
-    out.push({ date, equity:eq, cumR:cr, dailyR:dr });
+  // MM/DD/YYYY
+  m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m){
+    const mo = +m[1], d = +m[2], y = +m[3];
+    return { y, mo, d, iso: toISODate(y,mo,d) };
   }
 
-  // If cumR missing, build from dailyR
-  let running = 0;
-  for (const p of out){
-    if (p.cumR === null || p.cumR === undefined){
-      if (Number.isFinite(p.dailyR)) running += p.dailyR;
-      p.cumR = running;
-    }
+  // DD.MM.YYYY
+  m = str.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  if (m){
+    const d = +m[1], mo = +m[2], y = +m[3];
+    return { y, mo, d, iso: toISODate(y,mo,d) };
+  }
+
+  return null;
+}
+
+function addDaysISO(iso, delta){
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  const dt = new Date(Date.UTC(+m[1], +m[2]-1, +m[3]));
+  dt.setUTCDate(dt.getUTCDate() + delta);
+  return toISODate(dt.getUTCFullYear(), dt.getUTCMonth()+1, dt.getUTCDate());
+}
+
+/**
+ * Build calendar spine: all days between minDate and maxDate (inclusive)
+ */
+function buildCalendarSpine(minISO, maxISO){
+  if (!minISO || !maxISO) return [];
+  const out = [];
+  let cur = minISO;
+  while (cur <= maxISO){
+    out.push(cur);
+    cur = addDaysISO(cur, 1);
+    if (!cur) break;
+  }
+  return out;
+}
+
+/**
+ * Build series:
+ * - equity.json provides equity_end_$ on some days (not all calendar days)
+ * - trades_enriched.json provides trades with result_r and date -> sum per day
+ * -> fill ALL calendar days, carry forward equity and cumR
+ */
+function buildDailySeries(equityArr, tradesArr){
+  const eqMap = new Map(); // date -> equity_end
+  let minISO = null, maxISO = null;
+
+  for (const r of (Array.isArray(equityArr) ? equityArr : [])){
+    if (!r?.date) continue;
+    const di = parseDateAny(r.date)?.iso;
+    if (!di) continue;
+    const eq = toNum(r["equity_end_$"]) ?? toNum(r.cash_equity_$) ?? null;
+    if (Number.isFinite(eq)) eqMap.set(di, eq);
+    if (!minISO || di < minISO) minISO = di;
+    if (!maxISO || di > maxISO) maxISO = di;
+  }
+
+  // daily R sums by date (Trades-only)
+  const rMap = new Map(); // date -> daily sum R
+  for (const t of (Array.isArray(tradesArr) ? tradesArr : [])){
+    // include flag (default TRUE if missing)
+    const incRaw = (t?.include ?? t?.Include ?? t?.included ?? "TRUE");
+    const inc = String(incRaw).trim().toUpperCase() !== "FALSE";
+    if (!inc) continue;
+
+    const di = parseDateAny(t?.date)?.iso ?? parseDateAny(t?.trade_date)?.iso ?? null;
+    if (!di) continue;
+
+    const r = toNum(t?.result_r) ?? toNum(t?.trade_result_r) ?? toNum(t?.r) ?? toNum(t?.R) ?? null;
+    if (!Number.isFinite(r)) continue;
+
+    rMap.set(di, (rMap.get(di) ?? 0) + r);
+
+    if (!minISO || di < minISO) minISO = di;
+    if (!maxISO || di > maxISO) maxISO = di;
+  }
+
+  const spine = buildCalendarSpine(minISO, maxISO);
+  const out = [];
+
+  let lastEq = null;
+  let cumR = 0;
+
+  for (const d of spine){
+    const eqHere = eqMap.has(d) ? eqMap.get(d) : null;
+    if (Number.isFinite(eqHere)) lastEq = eqHere; // update carry-forward
+    const dailyR = rMap.get(d) ?? 0;
+    cumR += dailyR;
+
+    out.push({
+      date: d,
+      equity: Number.isFinite(lastEq) ? lastEq : null,
+      dailyR,
+      cumR
+    });
   }
 
   return out;
 }
 
-/**
- * Canvas line chart (simple, no libs)
- * X-Axis: all calendar days, but show labels only on 1st & 15th.
- */
 function drawLineChart(canvas, series, mode){
   const ctx = canvas.getContext("2d");
   const W = canvas.width, H = canvas.height;
-
   ctx.clearRect(0,0,W,H);
 
   const m = { l:70, r:18, t:18, b:46 };
@@ -470,10 +445,8 @@ function drawLineChart(canvas, series, mode){
   let vMin = Math.min(...values);
   let vMax = Math.max(...values);
   if (vMin === vMax){ vMin -= 1; vMax += 1; }
-
   const pad = (vMax - vMin) * 0.08;
-  vMin -= pad;
-  vMax += pad;
+  vMin -= pad; vMax += pad;
 
   const xAt = (i) => m.l + (i/(series.length-1))*iw;
   const yAt = (v) => m.t + (1 - (v - vMin)/(vMax - vMin))*ih;
@@ -482,14 +455,10 @@ function drawLineChart(canvas, series, mode){
   ctx.strokeStyle = "rgba(44,124,255,.10)";
   ctx.lineWidth = 1;
   ctx.setLineDash([6,6]);
-
   const gridN = 5;
   for (let i=0;i<=gridN;i++){
     const y = m.t + (i/gridN)*ih;
-    ctx.beginPath();
-    ctx.moveTo(m.l, y);
-    ctx.lineTo(W - m.r, y);
-    ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(m.l, y); ctx.lineTo(W - m.r, y); ctx.stroke();
   }
   ctx.setLineDash([]);
 
@@ -503,20 +472,17 @@ function drawLineChart(canvas, series, mode){
     ctx.fillText(label, 10, y+4);
   }
 
-  // x labels: 1 & 15
+  // x labels: 1st and 15th
   ctx.fillStyle = "rgba(170,190,230,.72)";
   ctx.font = "600 12px system-ui";
   for (let i=0;i<series.length;i++){
-    const d = series[i].date; // expected YYYY-MM-DD
+    const d = series[i].date; // YYYY-MM-DD
     const day = Number(String(d).slice(8,10));
     if (day !== 1 && day !== 15) continue;
-
     const x = xAt(i);
+
     ctx.strokeStyle = "rgba(44,124,255,.14)";
-    ctx.beginPath();
-    ctx.moveTo(x, m.t);
-    ctx.lineTo(x, m.t+ih);
-    ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x, m.t); ctx.lineTo(x, m.t+ih); ctx.stroke();
 
     const mon = String(d).slice(5,7);
     const label = (day===1) ? `1.${mon}` : "15";
@@ -569,59 +535,28 @@ function drawLineChart(canvas, series, mode){
   ctx.globalAlpha = 1;
 }
 
-function tierInfoText(config){
-  const t1 = toNum(config?.dd_tiers?.t1) ?? 0.12;
-  const t2 = toNum(config?.dd_tiers?.t2) ?? 0.18;
-  const p1 = Math.round(t1*100);
-  const p2 = Math.round(t2*100);
-  return `Tier 0 | Above 0% to ${p1}% | ${p1}–${p2}% | >${p2}%`;
-}
-
 async function main(){
   const errBox = $("errBox");
-
   try{
-    const [equity, kpis, dailyAgg, meta] = await Promise.all([
+    const [equityArr, tradesEnriched, kpis, meta] = await Promise.all([
       fetchJSON("equity.json"),
+      fetchJSON("trades_enriched.json"),
       fetchJSON("kpis_full.json"),
-      fetchJSON("daily_aggregates.json"),
       fetchJSON("meta.json"),
     ]);
 
-    // pick latest equity row robustly:
-    const latest =
-      equity?.latest_equity_row ??
-      equity?.latest ??
-      (Array.isArray(equity?.rows) ? equity.rows[equity.rows.length - 1] : null) ??
-      (Array.isArray(equity) ? equity[equity.length - 1] : null) ??
-      {};
+    const latest = Array.isArray(equityArr) && equityArr.length ? equityArr[equityArr.length-1] : {};
 
-    const curEq = pickNum(latest, [
-      "equity_end_$","equity_end",
-      "cash_equity_$","cash_equity",
-      "ending_equity_$","ending_equity",
-      "equity_$","equity"
-    ]);
-
-    const ath = pickNum(latest, [
-      "ath_$","ath",
-      "equity_high_$","equity_high",
-      "all_time_high_$","all_time_high"
-    ]) ?? curEq;
-
-    const effRisk = pickNum(latest, [
-      "effective_risk_$","effective_risk",
-      "next_trade_risk_$","next_trade_risk"
-    ]);
-
-    const ddTier = latest?.dd_tier || latest?.dd_tier_label || "—";
+    const curEq = pickNum(latest, ["equity_end_$","cash_equity_$","equity_end","cash_equity"]);
+    const ath  = pickNum(latest, ["ath_$","ath"]) ?? curEq;
+    const effRisk = pickNum(latest, ["effective_risk_$","effective_risk"]);
+    const ddTier = latest?.dd_tier || "—";
 
     $("kCurrentEquity").textContent = fmtUSD(curEq);
     $("kATH").textContent = fmtUSD(ath);
-
     $("kRisk").textContent = fmtUSD(effRisk);
     $("kTier").textContent = String(ddTier);
-    $("kTierInfo").textContent = tierInfoText(equity?.meta?.config || meta?.config || {});
+    $("kTierInfo").textContent = tierInfoText(meta?.config || {});
 
     // KPIs (Trades only)
     const winrate = toNum(kpis?.winrate);
@@ -635,26 +570,19 @@ async function main(){
 
     $("kWinrate").textContent = (Number.isFinite(winrate) ? (winrate*100).toFixed(0) + "%" : "—%");
     $("kWLCounts").textContent = `${Number.isFinite(winCount)?winCount:"—"} Wins / ${Number.isFinite(lossCount)?lossCount:"—"} Losses`;
-
     $("kAvgR").textContent = fmtR(avgR);
     $("kAvgWin").textContent = fmtR(avgWin);
-    // avg loss: show negative if negative, otherwise show with minus? -> keep as-is but remove leading "+"
     $("kAvgLoss").textContent = fmtR(avgLoss).replace("+","");
     $("kTradeCount").textContent = `${Number.isFinite(tradeCount)?tradeCount:"—"} Trades`;
 
-    // Meta line
-    const last = meta?.last_updated_utc || equity?.meta?.last_updated_utc || "—";
-    const standDate = latest?.date || equity?.latest_equity_row?.date || "—";
+    const last = meta?.last_updated_utc || "—";
+    const standDate = latest?.date || "—";
     $("metaLine").textContent = `Stand: ${standDate} · Updated: ${last}`;
 
-    // Data OK pill
     $("dataPill").textContent = "DATA: OK";
-    $("dataPill").style.background = "rgba(43,231,163,.10)";
-    $("dataPill").style.borderColor = "rgba(43,231,163,.22)";
-    $("dataPill").style.color = "rgba(200,255,240,.9)";
 
-    // Chart
-    const series = buildSeries(dailyAgg);
+    // Build full calendar series (Equity carry-forward + Trades-only CumR)
+    const series = buildDailySeries(equityArr, tradesEnriched);
 
     let mode = "equity";
     const canvas = $("chart");
@@ -672,7 +600,6 @@ async function main(){
 
     btnEquity.addEventListener("click", () => setMode("equity"));
     btnR.addEventListener("click", () => setMode("r"));
-
     setMode("equity");
 
   } catch (e){
