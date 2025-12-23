@@ -564,7 +564,35 @@ async function main(){
     const lossCount = toNum(kpis?.loss_count);
     const tradeCount = toNum(kpis?.trade_count);
 
-    const avgR = toNum(kpis?.avg_R) ?? toNum(kpis?.avg_r) ?? toNum(kpis?.avg_result_r) ?? null;
+    // Avg R per trade: try direct fields, else compute from totals / win-loss components
+let avgR =
+  toNum(kpis?.avg_R) ??
+  toNum(kpis?.avg_r) ??
+  toNum(kpis?.avg_result_r) ??
+  toNum(kpis?.expectancy_R) ??
+  toNum(kpis?.expectancy_r) ??
+  null;
+
+if (!Number.isFinite(avgR)) {
+  const totalR = toNum(kpis?.total_R) ?? toNum(kpis?.total_r) ?? null;
+  const tc = toNum(kpis?.trade_count) ?? null;
+  if (Number.isFinite(totalR) && Number.isFinite(tc) && tc > 0) {
+    avgR = totalR / tc;
+  }
+}
+
+if (!Number.isFinite(avgR)) {
+  const wc = toNum(kpis?.win_count);
+  const lc = toNum(kpis?.loss_count);
+  const bc = toNum(kpis?.breakeven_count) ?? 0;
+  const tc = toNum(kpis?.trade_count);
+  const aw = toNum(kpis?.avg_win_R) ?? toNum(kpis?.avg_win_r);
+  const al = toNum(kpis?.avg_loss_R) ?? toNum(kpis?.avg_loss_r);
+  if ([wc, lc, tc, aw, al].every(Number.isFinite) && tc > 0) {
+    avgR = ((wc * aw) + (lc * al) + (bc * 0)) / tc;
+  }
+}
+
     const avgWin = toNum(kpis?.avg_win_R) ?? toNum(kpis?.avg_win_r) ?? null;
     const avgLoss = toNum(kpis?.avg_loss_R) ?? toNum(kpis?.avg_loss_r) ?? null;
 
