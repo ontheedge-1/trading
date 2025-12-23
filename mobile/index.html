@@ -326,7 +326,7 @@
  * - /trading/data/daily_aggregates.json
  * - /trading/data/meta.json
  */
-const DATA_BASE = "/trading/data";
+const DATA_BASE = "../data";
 
 const $ = (id) => document.getElementById(id);
 
@@ -345,9 +345,38 @@ function fmtR(n){
 }
 function toNum(x){
   if (x === null || x === undefined) return null;
+
+  // already number
+  if (typeof x === "number") return Number.isFinite(x) ? x : null;
+
+  // strings: "39,042.00", "$39,042.00", " 385.88 ", "-1,60" (falls mal DE reinkommt)
+  if (typeof x === "string"){
+    let s = x.trim();
+    if (!s) return null;
+
+    // normalize: remove currency & spaces, unify decimal
+    // handle "$39,042.00" -> "39042.00"
+    s = s.replace(/\$/g, "");
+    s = s.replace(/\s+/g, "");
+
+    // if contains both "." and "," assume "," is thousands
+    // "39,042.00" -> remove commas
+    if (s.includes(".") && s.includes(",")) {
+      s = s.replace(/,/g, "");
+    } else {
+      // otherwise treat "," as decimal separator: "1,6" -> "1.6"
+      s = s.replace(/,/g, ".");
+    }
+
+    const n = Number(s);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  // fallback
   const n = Number(x);
   return Number.isFinite(n) ? n : null;
 }
+
 
 async function fetchJSON(path){
   const url = DATA_BASE + "/" + path;
