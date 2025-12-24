@@ -17,7 +17,6 @@
       --muted: rgba(234,242,255,0.58);
       --muted2: rgba(234,242,255,0.35);
 
-      /* Chart colors */
       --blue: #3a8cff;
       --green: #40f7c2;
       --red: #ff5a6a;
@@ -97,19 +96,17 @@
       margin-bottom: 10px;
     }
 
-    /* === KPI value sizing (smaller + responsive) === */
     .kpiValue{
-      font-size: clamp(40px, 9.2vw, 52px); /* deutlich kleiner + responsive */
+      font-size: clamp(40px, 9.2vw, 52px);
       line-height: 1.05;
       letter-spacing: -0.02em;
       font-weight: 850;
       color: var(--text);
-      /* base shadow is subtle; real colored glow is set via JS per value */
       text-shadow: 0 10px 35px rgba(0,0,0,0.40);
     }
 
     .kpiValue--small{
-      font-size: clamp(34px, 7.8vw, 44px); /* kleiner als vorher */
+      font-size: clamp(34px, 7.8vw, 44px);
     }
 
     .kpiRow{
@@ -126,6 +123,7 @@
       gap: 10px;
       color: var(--muted);
       font-size: 18px;
+      flex-wrap: wrap;
     }
 
     .athBadge{
@@ -139,14 +137,26 @@
     .badge{
       display:inline-flex;
       align-items:center;
+      gap: 8px;
       padding: 10px 14px;
       border-radius: 999px;
       border: 1px solid var(--stroke);
       background: rgba(20, 56, 105, 0.42);
       color: rgba(234,242,255,0.70);
       box-shadow: var(--inner);
-      min-width: 90px;
       justify-content:center;
+      white-space: nowrap;
+    }
+
+    .badgeLabel{
+      opacity: 0.75;
+      font-weight: 750;
+      letter-spacing: 0.01em;
+    }
+    .badgeValue{
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      color: rgba(234,242,255,0.85);
     }
 
     .tierBadge{
@@ -203,16 +213,21 @@
     }
     .avgLines .pos{ color: var(--green); font-weight: 750; }
     .avgLines .neg{ color: var(--red); font-weight: 750; }
-    .avgFooter{
-      margin-top: 12px;
-      color: var(--muted2);
+
+    .winLines{
+      margin-top: 10px;
+      display:flex;
+      flex-direction: column;
+      gap: 6px;
       font-size: 18px;
+      color: var(--muted);
+    }
+    .winLines .trades{
+      color: var(--muted2);
+      margin-top: 6px;
     }
 
-    /* Chart */
-    .chartCard{
-      padding: 16px 16px 14px;
-    }
+    .chartCard{ padding: 16px 16px 14px; }
     .chartHeader{
       display:flex;
       align-items:center;
@@ -285,7 +300,6 @@
       font-weight: 750;
     }
 
-    /* Slight “glass” vignette */
     .card:before, .miniCard:before{
       content:"";
       position:absolute;
@@ -309,9 +323,18 @@
     <div class="card">
       <div class="cardTitle">Current Equity</div>
       <div id="curEquity" class="kpiValue">$—</div>
+
+      <!-- ATH + DD badges -->
       <div class="kpiSub">
-        <span class="athBadge">ATH</span>
-        <span id="athEquity" class="badge">$—</span>
+        <span class="badge">
+          <span class="badgeLabel">ATH</span>
+          <span id="athEquity" class="badgeValue">$—</span>
+        </span>
+
+        <span class="badge">
+          <span class="badgeLabel">DD</span>
+          <span id="ddValue" class="badgeValue">—%</span>
+        </span>
       </div>
     </div>
 
@@ -325,7 +348,7 @@
 
       <div class="kpiSub" style="justify-content: space-between;">
         <span id="tierBadge" class="tierBadge">—</span>
-        <span id="tierText" class="smallText">Tier 0 | Above 0% to 12% | 12–18% | &gt;18%</span>
+        <!-- removed tier explanation text (ersatzlos) -->
       </div>
     </div>
 
@@ -335,22 +358,22 @@
         <div class="miniTitle">Avg. R / Trade</div>
 
         <div id="avgRValue" class="kpiValue kpiValue--small">—</div>
-        <div class="kpiValue kpiValue--small" style="margin-top:-6px;">R</div>
 
         <div class="avgLines">
           <div><span id="avgWin" class="pos">+— R</span> &nbsp;Avg Win</div>
           <div><span id="avgLoss" class="neg">-— R</span> &nbsp;Avg Loss</div>
         </div>
-
-        <div class="avgFooter"><span id="tradeCount">—</span> Trades</div>
       </div>
 
       <div class="miniCard">
         <div class="miniTitle">Winrate</div>
 
         <div id="winrateValue" class="kpiValue kpiValue--small">—%</div>
-        <div class="smallText" style="margin-top: 10px;">
-          <span id="winsLosses">— Wins / — Losses</span>
+
+        <div class="winLines">
+          <div id="winsLine">— Wins</div>
+          <div id="lossesLine">— Losses</div>
+          <div id="tradesLine" class="trades">— Trades</div>
         </div>
       </div>
     </div>
@@ -370,16 +393,13 @@
       </div>
 
       <div class="footer">
-        <span id="metaLine">Stand: — · Updated: —</span>
+        <span id="metaLine">Stand: —</span>
         <span><a href="../index.html">Desktop</a> · <a href="../entry/index.html">Zurück</a></span>
       </div>
     </div>
   </div>
 
 <script>
-  // ---------------------------
-  // Config / Data endpoints
-  // ---------------------------
   const DATA_BASE = "../data";
   const URL_EQUITY = `${DATA_BASE}/equity.json`;
   const URL_META   = `${DATA_BASE}/meta.json`;
@@ -387,24 +407,17 @@
   const URL_DAILY  = `${DATA_BASE}/daily_aggregates.json`;
   const URL_TRADES = `${DATA_BASE}/trades_enriched.json`;
 
-  // ---------------------------
-  // Utilities
-  // ---------------------------
   function clamp01(x){ return Math.max(0, Math.min(1, x)); }
   function lerp(a,b,t){ return a + (b-a)*t; }
-
   function rgbToHex(r,g,b){
     const toHex = (n)=> n.toString(16).padStart(2,"0");
     return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
   }
 
-  // Accepts "#rrggbb" only
   function mix(c1, c2, t){
-    // FIX: regex must be /\w\w/g (not /\\w\\w/g), otherwise match() becomes null -> DATA: ERROR
     const a = String(c1).match(/\w\w/g)?.map(x=>parseInt(x,16));
     const b = String(c2).match(/\w\w/g)?.map(x=>parseInt(x,16));
-    if (!a || !b) return c2; // safe fallback
-
+    if (!a || !b) return c2;
     return rgbToHex(
       Math.round(lerp(a[0],b[0],t)),
       Math.round(lerp(a[1],b[1],t)),
@@ -416,7 +429,6 @@
     if (!Number.isFinite(x)) return "$—";
     return x.toLocaleString("en-US",{style:"currency",currency:"USD",minimumFractionDigits:2,maximumFractionDigits:2});
   }
-
   function fmtSignedR(x){
     if (!Number.isFinite(x)) return "—";
     const s = x >= 0 ? "+" : "";
@@ -429,52 +441,60 @@
     return await res.json();
   }
 
-  // ---------------------------
-  // Color rules (your spec)
-  // ---------------------------
+  // --- Color rules (same palette family as AvgR/Winrate) ---
   function colorForAvgR(r){
-    const RED   = "#ff5a6a";
+    const RED = "#ff5a6a";
     const WHITE = "#eaf2ff";
-    // KPI-green slightly different from chart-green so it doesn't look identical
     const KPI_GREEN = "#3ff5d1";
-
     if (!Number.isFinite(r)) return WHITE;
 
     if (r <= 0){
-      // [-1..0] => red->white
-      const t = clamp01((r + 1) / 1);
+      const t = clamp01((r + 1) / 1);      // [-1..0] red->white
       return mix(RED, WHITE, t);
     }
     if (r < 0.5){
-      // [0..0.5] => white->green
-      const t = clamp01(r / 0.5);
+      const t = clamp01(r / 0.5);          // [0..0.5] white->green
       return mix(WHITE, KPI_GREEN, t);
     }
     return KPI_GREEN;
   }
 
   function colorForWinrate(wPct){
-    // input: percent (0..100)
-    const RED   = "#ff5a6a";
+    const RED = "#ff5a6a";
     const WHITE = "#eaf2ff";
     const KPI_GREEN = "#3ff5d1";
-
     if (!Number.isFinite(wPct)) return WHITE;
 
     if (wPct < 50){
-      // [40..50] => red->white
-      const t = clamp01((wPct - 40) / 10);
+      const t = clamp01((wPct - 40) / 10); // [40..50] red->white
       return mix(RED, WHITE, t);
     }
     if (wPct < 60){
-      // [50..60] => white->green
-      const t = clamp01((wPct - 50) / 10);
+      const t = clamp01((wPct - 50) / 10); // [50..60] white->green
       return mix(WHITE, KPI_GREEN, t);
     }
     return KPI_GREEN;
   }
 
-  // chart segment coloring: blue -> green (keep chart-green distinct)
+  // DD: 0% green, 0..5% -> white, >5% -> red
+  function colorForDD(ddPct){
+    const RED = "#ff5a6a";
+    const WHITE = "#eaf2ff";
+    const KPI_GREEN = "#3ff5d1";
+    if (!Number.isFinite(ddPct)) return WHITE;
+
+    if (ddPct <= 0){
+      return KPI_GREEN;
+    }
+    if (ddPct <= 5){
+      const t = clamp01(ddPct / 5);        // [0..5] green->white
+      return mix(KPI_GREEN, WHITE, t);
+    }
+    // [5..12] white->red (cap)
+    const t = clamp01((ddPct - 5) / 7);
+    return mix(WHITE, RED, t);
+  }
+
   function colorForCurveValue(v, minV, maxV){
     const BLUE  = "#3a8cff";
     const GREEN = "#40f7c2";
@@ -482,20 +502,13 @@
     return mix(BLUE, GREEN, t);
   }
 
-  // ---------------------------
-  // Chart drawing
-  // ---------------------------
+  // --- Chart ---
   function drawChart(ctx, canvas, series, modeLabel){
     const W = canvas.width;
     const H = canvas.height;
-
     ctx.clearRect(0,0,W,H);
 
-    const padL = 72;
-    const padR = 22;
-    const padT = 26;
-    const padB = 52;
-
+    const padL = 72, padR = 22, padT = 26, padB = 52;
     const innerW = W - padL - padR;
     const innerH = H - padT - padB;
 
@@ -509,17 +522,15 @@
     const values = series.map(d=>d.value);
     let minV = Math.min(...values);
     let maxV = Math.max(...values);
-    if (minV === maxV){
-      minV -= 1; maxV += 1;
-    }
+    if (minV === maxV){ minV -= 1; maxV += 1; }
+
     const yPad = (maxV - minV) * 0.06;
     minV -= yPad; maxV += yPad;
 
-    // grid
     ctx.strokeStyle = "rgba(120,170,255,0.10)";
     ctx.lineWidth = 1;
-
     const gridLines = 5;
+
     ctx.font = "600 14px ui-sans-serif";
     ctx.fillStyle = "rgba(234,242,255,0.35)";
 
@@ -535,10 +546,6 @@
       ctx.fillText(label, 12, y + 5);
     }
 
-    // X ticks: daily tick marks, label only on 1st + 15th
-    ctx.strokeStyle = "rgba(120,170,255,0.10)";
-    ctx.fillStyle = "rgba(234,242,255,0.35)";
-
     const n = series.length;
     function xAt(i){ return padL + (innerW * (i/(n-1))); }
     function yAt(val){
@@ -546,6 +553,8 @@
       return padT + innerH - innerH * t;
     }
 
+    ctx.strokeStyle = "rgba(120,170,255,0.10)";
+    ctx.fillStyle = "rgba(234,242,255,0.35)";
     for (let i=0;i<n;i++){
       const x = xAt(i);
       ctx.beginPath();
@@ -556,7 +565,6 @@
       const d = new Date(series[i].date);
       const day = d.getDate();
       const month = d.getMonth()+1;
-
       if (day === 1 || day === 15){
         const label = (day === 1) ? `${day}.${month}` : `${day}`;
         ctx.fillText(label, x-10, padT + innerH + 28);
@@ -564,8 +572,6 @@
     }
 
     const pts = series.map((p,i)=>({x:xAt(i), y:yAt(p.value)}));
-
-    // segments with color grading
     ctx.lineWidth = 3;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
@@ -574,15 +580,13 @@
     const rawMax = Math.max(...values);
 
     for (let i=1;i<pts.length;i++){
-      const v = series[i].value;
-      ctx.strokeStyle = colorForCurveValue(v, rawMin, rawMax);
+      ctx.strokeStyle = colorForCurveValue(series[i].value, rawMin, rawMax);
       ctx.beginPath();
       ctx.moveTo(pts[i-1].x, pts[i-1].y);
       ctx.lineTo(pts[i].x, pts[i].y);
       ctx.stroke();
     }
 
-    // last dot glow (chart-green)
     const last = pts[pts.length-1];
     ctx.fillStyle = "#40f7c2";
     ctx.shadowColor = "rgba(64,247,194,0.35)";
@@ -593,9 +597,7 @@
     ctx.shadowBlur = 0;
   }
 
-  // ---------------------------
-  // Cum-R building (fallback)
-  // ---------------------------
+  // --- Cum-R fallback ---
   function buildCumRSeriesFromTradesAndEquityDates(trades, equitySeries){
     const rDay = new Map();
     for (const t of trades){
@@ -604,7 +606,6 @@
       if (!d || !Number.isFinite(r)) continue;
       rDay.set(d, (rDay.get(d) || 0) + r);
     }
-
     let cum = 0;
     const out = [];
     for (const e of equitySeries){
@@ -616,26 +617,56 @@
     return out;
   }
 
-  // ---------------------------
-  // Main render
-  // ---------------------------
-  let MODE = "Equity"; // "Equity" or "CumR"
+  // --- Time formatting (Berlin) ---
+  function formatBerlinFromUTC(utcIso){
+    if (!utcIso) return null;
+    const dt = new Date(utcIso);
+    if (Number.isNaN(dt.getTime())) return null;
+
+    const parts = new Intl.DateTimeFormat("sv-SE", {
+      timeZone: "Europe/Berlin",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
+    }).formatToParts(dt);
+
+    const get = (t) => parts.find(p => p.type === t)?.value ?? "";
+    const yyyy = get("year");
+    const mm = get("month");
+    const dd = get("day");
+    const hh = get("hour");
+    const mi = get("minute");
+    if (!yyyy || !mm || !dd || !hh || !mi) return null;
+
+    return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+  }
+
+  // --- DOM ---
+  let MODE = "Equity";
   let cached = { equity: null, kpis: null, meta: null, daily: null, trades: null };
 
   const el = {
     dataPill: document.getElementById("dataPill"),
     curEquity: document.getElementById("curEquity"),
     athEquity: document.getElementById("athEquity"),
+    ddValue: document.getElementById("ddValue"),
+
     nextRisk: document.getElementById("nextRisk"),
     riskPctText: document.getElementById("riskPctText"),
     tierBadge: document.getElementById("tierBadge"),
-    tierText: document.getElementById("tierText"),
+
     avgRValue: document.getElementById("avgRValue"),
     avgWin: document.getElementById("avgWin"),
     avgLoss: document.getElementById("avgLoss"),
-    tradeCount: document.getElementById("tradeCount"),
+
     winrateValue: document.getElementById("winrateValue"),
-    winsLosses: document.getElementById("winsLosses"),
+    winsLine: document.getElementById("winsLine"),
+    lossesLine: document.getElementById("lossesLine"),
+    tradesLine: document.getElementById("tradesLine"),
+
     metaLine: document.getElementById("metaLine"),
     chartTitle: document.getElementById("chartTitle"),
     btnEquity: document.getElementById("btnEquity"),
@@ -657,8 +688,6 @@
 
   function applyNumberColorAndGlow(node, colorHex){
     node.style.color = colorHex;
-
-    // Glow only on the number: use the value-color itself (so gradient is obvious)
     const {r,g,b} = hexToRgb(colorHex);
     node.style.textShadow =
       `0 0 14px rgba(${r},${g},${b},0.28),
@@ -688,25 +717,42 @@
       return;
     }
 
-    // KPI cards
-    el.curEquity.textContent = fmtMoney(latest.equity_end_$);
-    el.athEquity.textContent = fmtMoney(latest.ath_$);
+    // --- Current Equity + ATH ---
+    const curEq = Number(latest.equity_end_$);
+    const athEq = Number(latest.ath_$);
 
-    el.nextRisk.textContent = fmtMoney(latest.effective_risk_$);
+    el.curEquity.textContent = fmtMoney(curEq);
+    el.athEquity.textContent = fmtMoney(athEq);
 
-    const riskPct = (latest.base_equity_for_sizing_$ && latest.base_risk_$)
-      ? (latest.base_risk_$ / latest.base_equity_for_sizing_$)
-      : null;
-    el.riskPctText.textContent = riskPct ? `${(riskPct*100).toFixed(0)}% of equity` : "";
+    // DD% = (ATH - current) / ATH * 100
+    let ddPct = NaN;
+    if (Number.isFinite(curEq) && Number.isFinite(athEq) && athEq > 0){
+      ddPct = Math.max(0, (athEq - curEq) / athEq * 100);
+    }
+    el.ddValue.textContent = Number.isFinite(ddPct) ? `${ddPct.toFixed(1)}%` : "—%";
+
+    // DD color coding
+    const ddColor = colorForDD(ddPct);
+    el.ddValue.style.color = ddColor;
+
+    // --- Next Trade Size + dynamic % of equity ---
+    const nextRisk = Number(latest.effective_risk_$);
+    el.nextRisk.textContent = fmtMoney(nextRisk);
+
+    let pct = NaN;
+    if (Number.isFinite(nextRisk) && Number.isFinite(curEq) && curEq > 0){
+      pct = nextRisk / curEq * 100;
+    }
+    el.riskPctText.textContent = Number.isFinite(pct) ? `${pct.toFixed(1)}% of equity` : "";
 
     el.tierBadge.textContent = latest.dd_tier || "—";
 
-    // KPIs from kpis_full.json
+    // --- KPIs from kpis_full.json ---
     const k = cached.kpis || {};
     const tradeCount = Number(k.trade_count);
     const winCount = Number(k.win_count);
     const lossCount = Number(k.loss_count);
-    const winrate = Number(k.winrate); // maybe 0..1
+    const winrate = Number(k.winrate); // 0..1
     const winratePct = Number.isFinite(winrate) ? (winrate * 100) : NaN;
 
     // Avg R/Trade
@@ -724,33 +770,34 @@
     el.avgRValue.textContent = fmtSignedR(avgR);
     el.avgWin.textContent = fmtSignedR(avgWinR) + " R";
     el.avgLoss.textContent = fmtSignedR(avgLossR) + " R";
-    el.tradeCount.textContent = Number.isFinite(tradeCount) ? tradeCount : "—";
 
     el.winrateValue.textContent = Number.isFinite(winratePct) ? `${Math.round(winratePct)}%` : "—%";
-    el.winsLosses.textContent =
-      (Number.isFinite(winCount) && Number.isFinite(lossCount))
-        ? `${winCount} Wins / ${lossCount} Losses`
-        : "— Wins / — Losses";
 
-    // Apply color gradients for AvgR & Winrate + value-based glow
+    // Win/Loss line break (two lines)
+    el.winsLine.textContent = Number.isFinite(winCount) ? `${winCount} Wins` : "— Wins";
+    el.lossesLine.textContent = Number.isFinite(lossCount) ? `${lossCount} Losses` : "— Losses";
+
+    // Trades line moved here (last line)
+    el.tradesLine.textContent = Number.isFinite(tradeCount) ? `${tradeCount} Trades` : "— Trades";
+
+    // Apply gradients + glow
     applyNumberColorAndGlow(el.avgRValue, colorForAvgR(avgR));
     applyNumberColorAndGlow(el.winrateValue, colorForWinrate(winratePct));
 
-    // Meta footer
+    // --- Footer "Stand:" uses last update datetime Berlin ---
     const lastUpd = cached.meta?.last_updated_utc || cached.meta?.meta?.last_updated_utc || "";
-    const stand = latest.date || "—";
-    el.metaLine.textContent = `Stand: ${stand} · Updated: ${lastUpd || "—"}`;
+    const berlin = formatBerlinFromUTC(lastUpd);
+    el.metaLine.textContent = `Stand: ${berlin ? (berlin + " Uhr") : "—"}`;
 
-    // Chart series build
+    // --- Chart series ---
     const equitySeries = equityArr
       .map(r=>({date: r.date, value: Number(r.equity_end_$)}))
       .filter(p=>p.date && Number.isFinite(p.value));
 
     let cumRSeries = null;
-
-    // Preferred: daily_aggregates has r_cum
     const daily = cached.daily || [];
     const hasRCum = daily.length && daily.some(x => Number.isFinite(Number(x.r_cum)));
+
     if (hasRCum){
       cumRSeries = daily
         .map(d=>({date: d.date, value: Number(d.r_cum)}))
@@ -793,7 +840,6 @@
     }
   }
 
-  // Toggle handlers
   el.btnEquity.addEventListener("click", ()=>{
     MODE = "Equity";
     el.btnEquity.classList.add("active");
@@ -808,8 +854,6 @@
   });
 
   window.addEventListener("resize", ()=> render());
-
-  // init
   loadAll();
 </script>
 </body>
