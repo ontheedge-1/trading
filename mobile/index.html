@@ -362,8 +362,8 @@
         <div id="avgRValue" class="kpiValue kpiValue--small">—</div>
 
         <div class="avgLines">
-          <div><span id="avgWin" class="pos">+— R</span> &nbsp;Avg Win</div>
-          <div><span id="avgLoss" class="neg">-— R</span> &nbsp;Avg Loss</div>
+          <div><span id="avgWin" class="pos">+— R</span> &nbsp;Ø Win</div>
+          <div><span id="avgLoss" class="neg">-— R</span> &nbsp;Ø Loss</div>
         </div>
       </div>
 
@@ -428,9 +428,15 @@
   }
 
   function fmtMoney(x){
-    if (!Number.isFinite(x)) return "$—";
-    return x.toLocaleString("en-US",{style:"currency",currency:"USD",minimumFractionDigits:2,maximumFractionDigits:2});
-  }
+  if (!Number.isFinite(x)) return "$—";
+  return x.toLocaleString("en-US",{
+    style:"currency",
+    currency:"USD",
+    minimumFractionDigits:0,
+    maximumFractionDigits:0
+  });
+}
+
   function fmtSignedR(x){
     if (!Number.isFinite(x)) return "—";
     const s = x >= 0 ? "+" : "";
