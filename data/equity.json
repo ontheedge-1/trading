@@ -360,18 +360,33 @@
     "effective_risk_$": 385.88
   },
   {
-    "date": "2025-12-24",
+    "date": "2025-12-23",
     "equity_start_$": 39042.0,
-    "equity_end_$": 39042.0,
-    "cash_equity_$": 39042.0,
+    "equity_end_$": 24042.0,
+    "cash_equity_$": 24042.0,
     "ath_$": 39042.0,
-    "drawdown_pct": 0.0,
-    "dd_tier": "0–12%",
-    "dd_multiplier": 1.0,
-    "base_equity_for_sizing_$": 38587.5,
-    "next_resize_up_threshold_$": 40516.88,
-    "next_resize_down_threshold_$": 36658.12,
-    "base_risk_$": 385.88,
-    "effective_risk_$": 385.88
+    "drawdown_pct": -0.384202,
+    "dd_tier": ">18%",
+    "dd_multiplier": 0.7,
+    "base_equity_for_sizing_$": 24319.75,
+    "next_resize_up_threshold_$": 25535.74,
+    "next_resize_down_threshold_$": 23103.76,
+    "base_risk_$": 243.2,
+    "effective_risk_$": 170.24
+  },
+  {
+    "date": "2025-12-24",
+    "equity_start_$": 24042.0,
+    "equity_end_$": 25242.0,
+    "cash_equity_$": 25242.0,
+    "ath_$": 39042.0,
+    "drawdown_pct": -0.353465,
+    "dd_tier": ">18%",
+    "dd_multiplier": 0.7,
+    "base_equity_for_sizing_$": 24319.75,
+    "next_resize_up_threshold_$": 25535.74,
+    "next_resize_down_threshold_$": 23103.76,
+    "base_risk_$": 243.2,
+    "effective_risk_$": 170.24
   }
 ]
