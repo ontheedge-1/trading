@@ -343,13 +343,15 @@
       <div class="cardTitle">Next Trade Size ($)</div>
       <div class="kpiRow">
         <div id="nextRisk" class="kpiValue">$—</div>
-        <div class="smallText" id="riskPctText"></div>
+        <div></div>
       </div>
 
+
       <div class="kpiSub" style="justify-content: space-between;">
-        <span id="tierBadge" class="tierBadge">—</span>
-        <!-- removed tier explanation text (ersatzlos) -->
+        <span id="tierBadge" class="tierBadge">Tier: —</span>
+        <span id="equityPctBadge" class="tierBadge">Equity: —</span>
       </div>
+
     </div>
 
     <!-- Avg R / Trade + Winrate -->
@@ -371,10 +373,10 @@
         <div id="winrateValue" class="kpiValue kpiValue--small">—%</div>
 
         <div class="winLines">
-          <div id="winsLine">— Wins</div>
-          <div id="lossesLine">— Losses</div>
+    	    <div id="wlLine">— W - — L</div>
           <div id="tradesLine" class="trades">— Trades</div>
-        </div>
+      </div>
+
       </div>
     </div>
 
@@ -655,16 +657,15 @@
     ddValue: document.getElementById("ddValue"),
 
     nextRisk: document.getElementById("nextRisk"),
-    riskPctText: document.getElementById("riskPctText"),
     tierBadge: document.getElementById("tierBadge"),
+    equityPctBadge: document.getElementById("equityPctBadge"),
 
     avgRValue: document.getElementById("avgRValue"),
     avgWin: document.getElementById("avgWin"),
     avgLoss: document.getElementById("avgLoss"),
 
     winrateValue: document.getElementById("winrateValue"),
-    winsLine: document.getElementById("winsLine"),
-    lossesLine: document.getElementById("lossesLine"),
+    wlLine: document.getElementById("wlLine"),
     tradesLine: document.getElementById("tradesLine"),
 
     metaLine: document.getElementById("metaLine"),
@@ -743,9 +744,13 @@
     if (Number.isFinite(nextRisk) && Number.isFinite(curEq) && curEq > 0){
       pct = nextRisk / curEq * 100;
     }
-    el.riskPctText.textContent = Number.isFinite(pct) ? `${pct.toFixed(1)}% of equity` : "";
 
-    el.tierBadge.textContent = latest.dd_tier || "—";
+    el.equityPctBadge.textContent =
+      `Equity: ${Number.isFinite(pct) ? pct.toFixed(1) : "—"}%`;
+
+    const tierVal = latest.dd_tier || "—";
+    el.tierBadge.textContent = `Tier: ${tierVal}`;
+
 
     // --- KPIs from kpis_full.json ---
     const k = cached.kpis || {};
@@ -773,12 +778,14 @@
 
     el.winrateValue.textContent = Number.isFinite(winratePct) ? `${Math.round(winratePct)}%` : "—%";
 
-    // Win/Loss line break (two lines)
-    el.winsLine.textContent = Number.isFinite(winCount) ? `${winCount} Wins` : "— Wins";
-    el.lossesLine.textContent = Number.isFinite(lossCount) ? `${lossCount} Losses` : "— Losses";
+    // Win/Loss one line (and trades line)
+    const wTxt = Number.isFinite(winCount) ? winCount : "—";
+    const lTxt = Number.isFinite(lossCount) ? lossCount : "—";
 
-    // Trades line moved here (last line)
-    el.tradesLine.textContent = Number.isFinite(tradeCount) ? `${tradeCount} Trades` : "— Trades";
+    el.wlLine.textContent = `${wTxt} W - ${lTxt} L`;
+
+    el.tradesLine.textContent =
+      Number.isFinite(tradeCount) ? `${tradeCount} Trades` : "— Trades";
 
     // Apply gradients + glow
     applyNumberColorAndGlow(el.avgRValue, colorForAvgR(avgR));
