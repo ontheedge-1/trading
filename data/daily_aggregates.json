@@ -1,5 +1,18 @@
 [
   {
+    "date": "2025-10-01",
+    "trade_count": 4,
+    "daily_R": 5.03,
+    "wins": 3,
+    "losses": 1,
+    "daily_adjustments_total_$": 1023.0,
+    "daily_pnl_$": 1023.0,
+    "withdrawal_$": 0.0,
+    "deposit_$": 0.0,
+    "fees_$": 0.0,
+    "correction_$": 0.0
+  },
+  {
     "date": "2025-11-03",
     "trade_count": 0,
     "daily_R": 0.0,
