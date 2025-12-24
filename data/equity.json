@@ -75,6 +75,21 @@
     "effective_risk_$": 367.5
   },
   {
+    "date": "2025-11-20",
+    "equity_start_$": 36800.0,
+    "equity_end_$": 36800.0,
+    "cash_equity_$": 36800.0,
+    "ath_$": 36800.0,
+    "drawdown_pct": 0.0,
+    "dd_tier": "0–12%",
+    "dd_multiplier": 1.0,
+    "base_equity_for_sizing_$": 36750.0,
+    "next_resize_up_threshold_$": 38587.5,
+    "next_resize_down_threshold_$": 34912.5,
+    "base_risk_$": 367.5,
+    "effective_risk_$": 367.5
+  },
+  {
     "date": "2025-11-28",
     "equity_start_$": 36800.0,
     "equity_end_$": 36800.0,

@@ -65,6 +65,19 @@
     "correction_$": 0.0
   },
   {
+    "date": "2025-11-20",
+    "trade_count": 6,
+    "daily_R": -6.0,
+    "wins": 0,
+    "losses": 6,
+    "daily_adjustments_total_$": 0.0,
+    "daily_pnl_$": 0.0,
+    "withdrawal_$": 0.0,
+    "deposit_$": 0.0,
+    "fees_$": 0.0,
+    "correction_$": 0.0
+  },
+  {
     "date": "2025-11-28",
     "trade_count": 1,
     "daily_R": 0.0,
@@ -300,10 +313,10 @@
   },
   {
     "date": "2025-12-24",
-    "trade_count": 3,
-    "daily_R": -1.7,
+    "trade_count": 4,
+    "daily_R": -2.7,
     "wins": 0,
-    "losses": 3,
+    "losses": 4,
     "daily_adjustments_total_$": 0.0,
     "daily_pnl_$": 0.0,
     "withdrawal_$": 0.0,
