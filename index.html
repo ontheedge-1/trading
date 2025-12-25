@@ -615,6 +615,7 @@
       GLOBAL.trades = Array.isArray(trades) ? trades : [];
 
 
+
       const latest = Array.isArray(equity) && equity.length ? equity[equity.length - 1] : null;
 
       const risk = Math.abs(Number(latest?.effective_risk_$ ?? 0));
