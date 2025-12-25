@@ -543,10 +543,27 @@
 
   // ---- Main ----
   let GLOBAL = {
-    meta:null, equity:null, dailyAgg:null, kpis:null,
-    spine:[], seriesEquity:[], seriesCumR:[], seriesDailyR:[],
+    meta:null,
+    equity:null,
+    dailyAgg:null,
+    kpis:null,
+
+    trades:null,          // raw trades_enriched.json
+    filteredTrades:[],    // OUTPUT des filterEngine
+
+    filters: {
+      dateStart: null,    // YYYY-MM-DD oder null
+      dateEnd: null,      // YYYY-MM-DD oder null
+      instrument: "ALL"
+    },
+
+    spine:[],
+    seriesEquity:[],
+    seriesCumR:[],
+    seriesDailyR:[],
     mode:"equity"
   };
+
 
   function renderCurve(withCrosshair=false){
     const canvas = $("curveCanvas");
