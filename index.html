@@ -599,17 +599,21 @@
 
   async function main(){
     try{
-      const [meta, equity, dailyAgg, kpis] = await Promise.all([
+      const [meta, equity, dailyAgg, kpis, trades] = await Promise.all([
         loadJSON("data/meta.json"),
         loadJSON("data/equity.json"),
         loadJSON("data/daily_aggregates.json"),
         loadJSON("data/kpis_full.json"),
+        loadJSON("data/trades_enriched.json"),
       ]);
+
 
       GLOBAL.meta = meta;
       GLOBAL.equity = equity;
       GLOBAL.dailyAgg = dailyAgg;
       GLOBAL.kpis = kpis;
+      GLOBAL.trades = Array.isArray(trades) ? trades : [];
+
 
       const latest = Array.isArray(equity) && equity.length ? equity[equity.length - 1] : null;
 
