@@ -681,15 +681,16 @@ function computeScore(filteredTrades, tradeKPIs){
       grid.appendChild(div);
     }
 
-   const sc = GLOBAL.score;
+    const sc = GLOBAL.score;
+    const scoreEl = $("scoreCard");
 
-    if(score){
+    if(scoreEl){
       const isLowSample = (sc?.nTrades ?? 0) < 30;
       const label = sc?.label ?? "—";
       const col = sc?.color ?? "rgb(235,242,255)";
 
-      score.style.opacity = isLowSample ? "0.55" : "1";
-      score.innerHTML = `
+      scoreEl.style.opacity = isLowSample ? "0.55" : "1";
+      scoreEl.innerHTML = `
         <div class="k">Strategy Score</div>
         <div class="v" style="font-size:30px; margin-top:10px; color:${col};">
           ${label}
@@ -699,14 +700,15 @@ function computeScore(filteredTrades, tradeKPIs){
         </div>
       `;
 
-      // Tooltip via title (simple)
-      score.title = `Score = Base(expectancy) + PF + Sharpe + Recovery\n` +
+      scoreEl.title =
+        `Score = Base(expectancy) + PF + Sharpe + Recovery\n` +
         `Base: ${sc?.base?.toFixed?.(1) ?? "—"}\n` +
         `PF mod: ${sc?.modPF?.toFixed?.(1) ?? "—"}\n` +
         `Sharpe mod: ${sc?.modSharpe?.toFixed?.(1) ?? "—"}\n` +
         `Recovery mod: ${sc?.modRec?.toFixed?.(1) ?? "—"}\n` +
         (isLowSample ? "\nLow sample: < 30 trades" : "");
     }
+
 
   }
 
