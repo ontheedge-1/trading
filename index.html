@@ -358,52 +358,103 @@
     console.log("[ANALYSIS] tradeKPIs:", GLOBAL.tradeKPIs);
   }
 
-  
-  
-  function renderCards(latestEquityRow, meta){
-    const cards = $("cards");
-    cards.innerHTML = "";
 
+    const fmtPct1 = (p) => {
+    if (p === null || p === undefined || Number.isNaN(Number(p))) return "—";
+    return (Number(p) * 100).toFixed(1) + "%";
+  };
+  const fmtR1 = (n) => {
+    if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
+    return `${Number(n).toFixed(1)} R`;
+  };
+  const fmtPF1 = (n) => {
+    if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
+    if (n === Infinity) return "∞";
+    return Number(n).toFixed(1);
+  };
+
+  function renderKpiPanel(latestEquityRow){
+    const grid = $("kpiGrid");
+    if(!grid) return;
+    grid.innerHTML = "";
+
+    const k = GLOBAL.tradeKPIs || {};
+
+    // Equity/DD/Risk sind GLOBAL (nicht filterabhängig)
     const dd = latestEquityRow?.drawdown_pct ?? null;
     const ddClass = (dd !== null && dd < 0) ? "bad" : "good";
+    const risk$ = Math.abs(Number(latestEquityRow?.effective_risk_$ ?? 0));
 
-    const risk = Math.abs(Number(latestEquityRow?.effective_risk_$ ?? 0));
-
-    const items = [
-      { k:"Current Equity", v: fmtUSD(latestEquityRow?.cash_equity_$) },
-      { k:"All-Time High", v: fmtUSD(latestEquityRow?.ath_$) },
-      { k:"Drawdown", v: `<span class="${ddClass}">${fmtPct(dd)}</span>` },
-
-      { k:"DD Tier", v: `${latestEquityRow?.dd_tier ?? "—"}` },
-      { k:"DD Multiplier", v: `${latestEquityRow?.dd_multiplier ?? "—"}` },
-      { k:"Next Trade Risk ($)", v: fmtUSD(risk) },
+    const tiles = [
+      {
+        title: "Equity Status",
+        main: fmtUSD(latestEquityRow?.cash_equity_$),
+        sub1: `ATH: ${fmtUSD(latestEquityRow?.ath_$)}`,
+        sub2: `DD: <span class="${ddClass}">${fmtPct1(dd)}</span>`,
+        cls: ""
+      },
+      {
+        title: "Risk & Sizing",
+        main: fmtUSD(risk$),
+        sub1: `Tier: ${latestEquityRow?.dd_tier ?? "—"}`,
+        sub2: `Mult: ${latestEquityRow?.dd_multiplier ?? "—"}`,
+        cls: "riskAccent"
+      },
+      {
+        title: "Trade Quality",
+        main: fmtR1(k.avgR),
+        sub1: `Ø Win: ${fmtR1(k.avgWin)}`,
+        sub2: `Ø Loss: ${fmtR1(k.avgLoss)}`,
+        cls: ""
+      },
+      {
+        title: "System Edge",
+        main: fmtR1(k.expectancy),
+        sub1: `PF: ${fmtPF1(k.profitFactor)}`,
+        sub2: `Trades: ${k.tradeCount ?? "—"}`,
+        cls: ""
+      },
+      {
+        title: "Strike Rate",
+        main: fmtPct1(k.winrate),
+        sub1: `W/L: ${k.wins ?? "—"} / ${k.losses ?? "—"}`,
+        sub2: `Trades: ${k.tradeCount ?? "—"}`,
+        cls: ""
+      },
+      {
+        title: "Streaks",
+        main: "—",
+        sub1: `Longest Win: —`,
+        sub2: `Longest Loss: —`,
+        cls: ""
+      },
     ];
 
-    for (const it of items){
+    for(const t of tiles){
       const div = document.createElement("div");
-      div.className = "card";
-      div.innerHTML = `<div class="k">${it.k}</div><div class="v">${it.v}</div>`;
-      cards.appendChild(div);
+      div.className = `card ${t.cls || ""}`;
+      div.innerHTML = `
+        <div class="k">${t.title}</div>
+        <div class="v">${t.main}</div>
+        <div class="sub" style="margin-top:8px; line-height:1.35;">
+          <div>${t.sub1}</div>
+          <div>${t.sub2}</div>
+        </div>
+      `;
+      grid.appendChild(div);
     }
 
-    const info = document.createElement("div");
-    info.className = "card big";
-    info.innerHTML = `
-      <div class="row">
-        <div>
-          <div class="k">Meta</div>
-          <div class="v" style="font-size:16px; font-weight:700; margin-top:6px;">
-            Last updated (UTC): ${meta?.last_updated_utc ?? "—"}
-          </div>
-          <div class="sub" style="margin-top:6px;">
-            Dates processed: ${meta?.counts?.unique_dates ?? "—"} · Trades: ${meta?.counts?.trades_rows_included ?? "—"} · Adjustments: ${meta?.counts?.adjustment_rows_included ?? "—"}
-          </div>
-        </div>
-        <div class="pill">Mode: Broker-truth equity (Option A)</div>
-      </div>
-    `;
-    cards.appendChild(info);
+    const score = $("scoreCard");
+    if(score){
+      score.innerHTML = `
+        <div class="k">Strategy Score</div>
+        <div class="v" style="font-size:28px; margin-top:10px;">—</div>
+        <div class="sub" style="margin-top:8px;">WEAK · OK · GOOD · STRONG</div>
+      `;
+    }
   }
+
+
 
   // ---- Date spine helpers ----
   function parseISO(s){ // YYYY-MM-DD
@@ -797,7 +848,8 @@
       $("statusPill").style.borderColor = "rgba(53,208,127,.25)";
       $("statusPill").style.color = "#bff2d9";
 
-      renderCards(latest, meta);
+      // renderCards(latest, meta);
+      renderKpiPanel(latest);
 
       // Build calendar spine (ALL days) + series
       const startingEquity = Number(kpis?.starting_equity_$ ?? (equity?.[0]?.equity_start_$ ?? null));
