@@ -614,6 +614,7 @@
       GLOBAL.kpis = kpis;
       GLOBAL.trades = Array.isArray(trades) ? trades : [];
 
+      console.log("raw trades:", GLOBAL.trades.length);
 
 
       const latest = Array.isArray(equity) && equity.length ? equity[equity.length - 1] : null;
