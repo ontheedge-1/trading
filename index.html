@@ -504,6 +504,21 @@ function aggregateDailyRFromTrades(trades){
     });
   }
 
+  function buildCumRSeriesOnSpine(spineDates, dailyRows){
+    // spineDates: ["YYYY-MM-DD", ...] (calendar spine)
+    // dailyRows: [{date, dailyR}] only for trade-days
+    const map = new Map();
+    for(const row of (dailyRows || [])){
+      if(row?.date) map.set(row.date, Number(row.dailyR) || 0);
+    }
+
+    let cum = 0;
+    return (spineDates || []).map(d => {
+      const r = map.get(d) || 0;   // missing day => 0R
+      cum += r;
+      return cum;
+    });
+  }
 
   
   function computeDayStreaksFromDailyR(dailyRows){
@@ -690,7 +705,7 @@ function computeScore(filteredTrades, tradeKPIs){
     const dailyRows = aggregateDailyRFromTrades(GLOBAL.filteredTrades);
     GLOBAL.dayStreaks = computeDayStreaksFromDailyR(dailyRows);
     GLOBAL.seriesDailyR_F = dailyRows;
-    GLOBAL.seriesCumR_F = buildCumRSeriesFromDailyR(dailyRows);
+    GLOBAL.seriesCumR_F = buildCumRSeriesOnSpine(GLOBAL.spine, dailyRows);
     GLOBAL.score = computeScore(GLOBAL.filteredTrades, GLOBAL.tradeKPIs); 
 
     console.log("[ANALYSIS] filteredTrades:", GLOBAL.filteredTrades.length);
@@ -1227,6 +1242,8 @@ function computeScore(filteredTrades, tradeKPIs){
           : null;
 
         renderKpiPanel(latest2);
+        renderCurve(true);
+
       });
     }
 
@@ -1253,6 +1270,8 @@ function computeScore(filteredTrades, tradeKPIs){
           : null;
 
         renderKpiPanel(latest2);
+        renderCurve(true);
+
       });
     }
 
