@@ -306,8 +306,10 @@
 
     if(preset === "ALL") return { dateStart: null, dateEnd: null };
 
-    const end = maxD || isoToday();
+    // Presets always end at TODAY (Variant A)
+    const end = isoToday();
     const endDate = new Date(end + "T00:00:00");
+
 
     if(preset === "YTD"){
       const start = `${endDate.getFullYear()}-01-01`;
