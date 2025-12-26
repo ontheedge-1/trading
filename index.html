@@ -1,4 +1,4 @@
-<!doctype html>
+  <!doctype html>
 <html lang="de">
 <head>
   <meta charset="utf-8" />
@@ -57,6 +57,30 @@
     }
     .good{ color:var(--green); }
     .bad{ color:var(--red); }
+
+
+    /* ===== FILTER BAR ===== */
+
+    .filters{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .filters .input{
+      height:34px;
+      padding:6px 10px;
+      border-radius:10px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--border);
+      color: var(--text);
+      outline:none;
+    }
+
+    .filters .seg.small button{
+      padding:7px 10px;
+      font-size:12px;
+    }
 
     /* ===== DESKTOP LAYOUT (KPI LEFT / CHART RIGHT) ===== */
 
@@ -179,6 +203,20 @@
          <div class="title">Trading Dashboard</div>
          <div class="sub" id="subtitle">Lade Daten…</div>
        </div>
+         <div class="filters" id="filtersBar">
+          <select id="fInstrument" class="input">
+            <option value="ALL">Instr. | All</option>
+          </select>
+
+          <div class="seg small" role="tablist" aria-label="Date Presets">
+            <button type="button" data-preset="30D">30D</button>
+            <button type="button" data-preset="90D">90D</button>
+            <button type="button" data-preset="180D">180D</button>
+            <button type="button" data-preset="YTD">YTD</button>
+            <button type="button" data-preset="ALL" class="active">All</button>
+          </div>
+        </div>
+
        <div class="pill" id="statusPill">DATA: loading</div>
      </div>
 
@@ -245,7 +283,61 @@
     return await res.json();
   }
 
+  function isoToday(){
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const day = String(d.getDate()).padStart(2,"0");
+    return `${y}-${m}-${day}`;
+  }
 
+  function isoFromDate(dateObj){
+    const y = dateObj.getFullYear();
+    const m = String(dateObj.getMonth()+1).padStart(2,"0");
+    const day = String(dateObj.getDate()).padStart(2,"0");
+    return `${y}-${m}-${day}`;
+  }
+
+  function computePresetRange(preset, trades){
+    const t = Array.isArray(trades) ? trades : [];
+    const dates = t.map(x => x.trade_date || x.date).filter(Boolean).sort();
+    const minD = dates[0] || null;
+    const maxD = dates[dates.length-1] || null;
+
+    if(preset === "ALL") return { dateStart: null, dateEnd: null };
+
+    const end = maxD || isoToday();
+    const endDate = new Date(end + "T00:00:00");
+
+    if(preset === "YTD"){
+      const start = `${endDate.getFullYear()}-01-01`;
+      return { dateStart: start, dateEnd: end };
+    }
+
+    const days =
+      preset === "30D" ? 30 :
+      preset === "90D" ? 90 :
+      preset === "180D" ? 180 : null;
+
+    if(!days) return { dateStart: minD, dateEnd: maxD };
+
+    const startDate = new Date(endDate);
+    startDate.setDate(startDate.getDate() - (days - 1));
+    const start = isoFromDate(startDate);
+
+    return { dateStart: start, dateEnd: end };
+  }
+
+  function uniqueInstruments(trades){
+    const set = new Set();
+    for(const tr of (trades || [])){
+      const inst = tr?.instrument || tr?.symbol;
+      if(inst) set.add(inst);
+    }
+    return Array.from(set).sort();
+  }
+
+  
   function filterEngine(rawTrades, filters){
     if(!Array.isArray(rawTrades)) return [];
 
@@ -1094,6 +1186,61 @@ function computeScore(filteredTrades, tradeKPIs){
       GLOBAL.trades = Array.isArray(trades) ? trades : [];
       recomputeAnalysis();
 
+      // ---- Filter UI init + wiring ----
+    const instSel = $("fInstrument");
+    if(instSel){
+      // build options (once)
+      const instruments = uniqueInstruments(GLOBAL.trades);
+      for(const inst of instruments){
+        const opt = document.createElement("option");
+        opt.value = inst;
+        opt.textContent = `Instr. | ${inst}`;
+        instSel.appendChild(opt);
+      }
+
+      // set default
+      instSel.value = GLOBAL.filters.instrument || "ALL";
+
+      // change handler
+      instSel.addEventListener("change", () => {
+        GLOBAL.filters.instrument = instSel.value || "ALL";
+        recomputeAnalysis();
+
+        const latest2 = Array.isArray(GLOBAL.equity) && GLOBAL.equity.length
+          ? GLOBAL.equity[GLOBAL.equity.length - 1]
+          : null;
+
+        renderKpiPanel(latest2);
+      });
+    }
+
+    const presetBar = document.querySelector("#filtersBar .seg");
+    if(presetBar){
+      presetBar.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-preset]");
+        if(!btn) return;
+
+        // UI active
+        presetBar.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        const preset = btn.getAttribute("data-preset");
+        const { dateStart, dateEnd } = computePresetRange(preset, GLOBAL.trades);
+
+        GLOBAL.filters.dateStart = dateStart;
+        GLOBAL.filters.dateEnd = dateEnd;
+
+        recomputeAnalysis();
+
+        const latest2 = Array.isArray(GLOBAL.equity) && GLOBAL.equity.length
+          ? GLOBAL.equity[GLOBAL.equity.length - 1]
+          : null;
+
+        renderKpiPanel(latest2);
+      });
+    }
+
+     
       const latest = Array.isArray(equity) && equity.length ? equity[equity.length - 1] : null;
 
       const risk = Math.abs(Number(latest?.effective_risk_$ ?? 0));
