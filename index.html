@@ -496,14 +496,14 @@ function aggregateDailyRFromTrades(trades){
 
 
   function buildCumRSeriesFromDailyR(dailyRows){
-    // dailyRows: [{date, dailyR}] sorted by date
     let cum = 0;
     return (dailyRows || []).map(row => {
       const r = Number(row?.dailyR ?? 0);
       cum += (Number.isFinite(r) ? r : 0);
-      return { date: row.date, value: cum, dailyR: r };
+      return cum; // <-- nur Zahl, passend zum Chart
     });
   }
+
 
   
   function computeDayStreaksFromDailyR(dailyRows){
