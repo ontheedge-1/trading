@@ -441,6 +441,141 @@ function aggregateDailyRFromTrades(trades){
     };
   }
 
+
+  function clamp(x, lo, hi){ return Math.min(hi, Math.max(lo, x)); }
+function lerp(a,b,t){ return a + (b-a)*t; }
+
+function scoreBaseFromExpectancy(exp){
+  // maps expectancy to 0..70 (linear), then clamp
+  // <= -0.20 => 0
+  // >= +0.30 => 70
+  const e = Number(exp);
+  if(!Number.isFinite(e)) return 0;
+
+  const minE = -0.20;
+  const maxE =  0.30;
+
+  const t = clamp((e - minE) / (maxE - minE), 0, 1);
+  return 70 * t;
+}
+
+function modifierFromRange(value, minVal, maxVal, minMod, maxMod){
+  // linear mapping value -> modifier
+  const v = Number(value);
+  if(!Number.isFinite(v)) return 0;
+
+  const t = clamp((v - minVal) / (maxVal - minVal), 0, 1);
+  return lerp(minMod, maxMod, t);
+}
+
+function computeRecoveryFactor(trades){
+  // Recovery Factor = Net Profit (R) / Max Drawdown (R)
+  // uses cumulative R over trade sequence (filtered + sorted)
+  let cum = 0;
+  let peak = 0;
+  let maxDD = 0;
+  let net = 0;
+
+  for(const tr of (trades || [])){
+    const r = Number(tr?.result_r ?? tr?.r ?? 0);
+    if(!Number.isFinite(r)) continue;
+
+    net += r;
+    cum += r;
+    if(cum > peak) peak = cum;
+
+    const dd = peak - cum; // >= 0
+    if(dd > maxDD) maxDD = dd;
+  }
+
+  if(maxDD <= 0){
+    // no drawdown: if net>0 => "infinite" recovery, else undefined-ish
+    if(net > 0) return Infinity;
+    return null;
+  }
+  return net / maxDD;
+}
+
+function labelFromScore(s){
+  if(s < 40) return "WEAK";
+  if(s < 60) return "OK";
+  if(s < 75) return "GOOD";
+  return "STRONG";
+}
+
+function colorFromScore(s){
+  // continuous gradient: red -> yellow -> white -> green
+  // piecewise interpolation across 3 segments
+  const clampS = clamp(s, 0, 100);
+
+  const RED   = [255,  77, 109];
+  const YELL  = [255, 200,  80];
+  const WHITE = [235, 242, 255];
+  const GREEN = [ 53, 208, 127];
+
+  let a, b, t;
+  if(clampS <= 50){
+    a = RED; b = YELL; t = clampS / 50;
+  } else if(clampS <= 75){
+    a = YELL; b = WHITE; t = (clampS - 50) / 25;
+  } else {
+    a = WHITE; b = GREEN; t = (clampS - 75) / 25;
+  }
+
+  const r = Math.round(lerp(a[0], b[0], t));
+  const g = Math.round(lerp(a[1], b[1], t));
+  const bl = Math.round(lerp(a[2], b[2], t));
+  return `rgb(${r},${g},${bl})`;
+}
+
+function computeScore(filteredTrades, tradeKPIs){
+    const n = filteredTrades?.length || 0;
+
+    const expectancy = tradeKPIs?.expectancy ?? null;
+    const pf = tradeKPIs?.profitFactor ?? null;
+
+    // If you don't have Sharpe yet, we treat it as neutral (0 modifier)
+    // Later you can compute it and pass it here.
+    const sharpe = tradeKPIs?.sharpe ?? null;
+
+    const rec = computeRecoveryFactor(filteredTrades);
+
+    // Base 0..70 from expectancy
+    const base = scoreBaseFromExpectancy(expectancy);
+
+    // Modifiers (each ±10)
+    // PF: 1.0 => -10, 1.8 => +10 (clamped)
+    const modPF = modifierFromRange(pf === Infinity ? 3.0 : pf, 1.0, 1.8, -10, +10);
+
+    // Sharpe: 0.0 => -10, 1.6 => +10
+    const modSharpe = modifierFromRange(sharpe, 0.0, 1.6, -10, +10);
+
+    // Recovery: 0.8 => -10, 2.0 => +10 (Infinity treated as max)
+    const recVal = (rec === Infinity) ? 3.0 : rec;
+    const modRec = modifierFromRange(recVal, 0.8, 2.0, -10, +10);
+
+    let score = base + modPF + modSharpe + modRec;
+    score = clamp(score, 0, 100);
+
+    const label = labelFromScore(score);
+    const color = colorFromScore(score);
+
+    return {
+      nTrades: n,
+      score,
+      label,
+      color,
+      base,
+      modPF,
+      modSharpe,
+      modRec,
+      profitFactor: pf,
+      expectancy,
+      sharpe,
+      recoveryFactor: rec
+    };
+  }
+
   
   function recomputeAnalysis(){
     GLOBAL.filteredTrades = filterEngine(GLOBAL.trades, GLOBAL.filters);
@@ -450,10 +585,11 @@ function aggregateDailyRFromTrades(trades){
 
     const dailyRows = aggregateDailyRFromTrades(GLOBAL.filteredTrades);
     GLOBAL.dayStreaks = computeDayStreaksFromDailyR(dailyRows);
-
+    GLOBAL.score = computeScore(GLOBAL.filteredTrades, GLOBAL.tradeKPIs); 
 
     console.log("[ANALYSIS] filteredTrades:", GLOBAL.filteredTrades.length);
     console.log("[ANALYSIS] tradeKPIs:", GLOBAL.tradeKPIs);
+    console.log("[ANALYSIS] score:", GLOBAL.score);
   }
 
 
@@ -470,6 +606,9 @@ function aggregateDailyRFromTrades(trades){
     if (n === Infinity) return "∞";
     return Number(n).toFixed(1);
   };
+
+
+
 
   function renderKpiPanel(latestEquityRow){
     const grid = $("kpiGrid");
@@ -542,14 +681,33 @@ function aggregateDailyRFromTrades(trades){
       grid.appendChild(div);
     }
 
-    const score = $("scoreCard");
+   const sc = GLOBAL.score;
+
     if(score){
+      const isLowSample = (sc?.nTrades ?? 0) < 30;
+      const label = sc?.label ?? "—";
+      const col = sc?.color ?? "rgb(235,242,255)";
+
+      score.style.opacity = isLowSample ? "0.55" : "1";
       score.innerHTML = `
         <div class="k">Strategy Score</div>
-        <div class="v" style="font-size:28px; margin-top:10px;">—</div>
-        <div class="sub" style="margin-top:8px;">WEAK · OK · GOOD · STRONG</div>
+        <div class="v" style="font-size:30px; margin-top:10px; color:${col};">
+          ${label}
+        </div>
+        <div class="sub" style="margin-top:8px;">
+          Trades: ${sc?.nTrades ?? "—"} · Exp: ${fmtR1(sc?.expectancy)} · PF: ${fmtPF1(sc?.profitFactor)} · RF: ${sc?.recoveryFactor === Infinity ? "∞" : (Number.isFinite(sc?.recoveryFactor) ? sc.recoveryFactor.toFixed(2) : "—")}
+        </div>
       `;
+
+      // Tooltip via title (simple)
+      score.title = `Score = Base(expectancy) + PF + Sharpe + Recovery\n` +
+        `Base: ${sc?.base?.toFixed?.(1) ?? "—"}\n` +
+        `PF mod: ${sc?.modPF?.toFixed?.(1) ?? "—"}\n` +
+        `Sharpe mod: ${sc?.modSharpe?.toFixed?.(1) ?? "—"}\n` +
+        `Recovery mod: ${sc?.modRec?.toFixed?.(1) ?? "—"}\n` +
+        (isLowSample ? "\nLow sample: < 30 trades" : "");
     }
+
   }
 
 
@@ -861,6 +1019,7 @@ function aggregateDailyRFromTrades(trades){
     equity:null,
     dailyAgg:null,
     kpis:null,
+    score: null,
 
     trades:null,          // raw trades_enriched.json
     filteredTrades:[],    // OUTPUT des filterEngine
