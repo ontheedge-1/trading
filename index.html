@@ -58,7 +58,50 @@
     .good{ color:var(--green); }
     .bad{ color:var(--red); }
 
+    /* ===== DESKTOP LAYOUT (KPI LEFT / CHART RIGHT) ===== */
+
+    .desktop{
+      display:grid;
+      grid-template-columns: 420px 1fr; /* links KPIs, rechts Chart */
+      gap:14px;
+      align-items:start;
+    }
+
+    .kpiPanel{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+
+    .kpiGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr; /* 2 KPI-Spalten */
+      gap:14px;
+    }
+
+    .chartPanel{
+      padding:14px;
+    }
+
+    .scoreCard{
+      grid-column: 1 / -1;
+      min-height: 120px;
+    }
+
+    /* Risk & Sizing optisch hervorheben */
+    .card.riskAccent{
+      background: linear-gradient(
+        180deg,
+        rgba(255,255,255,.06),
+        rgba(255,255,255,.02)
+      );
+      border-color: rgba(120,160,255,.28);
+    }
+
+    /* ===== END DESKTOP LAYOUT ===== */
+
     /* Chart */
+
     .chartHead{
       display:flex; align-items:center; justify-content:space-between; gap:12px;
       margin-bottom:10px;
@@ -128,24 +171,29 @@
       canvas{ height:300px; }
     }
   </style>
-</head>
+ </head>
 <body>
-  <div class="wrap">
-    <div class="top">
+   <div class="wrap">
+     <div class="top">
       <div>
-        <div class="title">Trading Dashboard</div>
-        <div class="sub" id="subtitle">Lade Daten…</div>
-      </div>
-      <div class="pill" id="statusPill">DATA: loading</div>
+         <div class="title">Trading Dashboard</div>
+         <div class="sub" id="subtitle">Lade Daten…</div>
+       </div>
+       <div class="pill" id="statusPill">DATA: loading</div>
+     </div>
+
+      <div class="desktop">
+    <!-- LEFT: KPI tiles -->
+    <div class="kpiPanel">
+      <div class="kpiGrid" id="kpiGrid"></div>
+      <div class="scoreCard card" id="scoreCard"></div>
     </div>
 
-    <div class="grid" id="cards"></div>
-
-    <!-- Chart -->
-    <div class="card big" style="margin-top:14px;">
+    <!-- RIGHT: Chart -->
+    <div class="chartPanel card" id="chartPanel">
       <div class="chartHead">
         <div>
-          <div class="k">Curve</div>
+          <div class="k">Chart</div>
           <div class="v" style="font-size:16px; font-weight:800; margin-top:6px;" id="curveTitle">Equity Curve</div>
           <div class="sub" id="curveSub">Daily (Calendar spine, carry-forward)</div>
         </div>
@@ -164,6 +212,8 @@
         X-Achse: Kalendertage (Ticks am 1. &amp; 15.). Equity basiert auf Daily P/L (Broker-truth). R-Curve basiert auf Tages-Summe R (Trades only).
       </div>
     </div>
+  </div>
+
 
     <div style="margin-top:14px;">
       <div class="k" style="margin:10px 0 8px;">Debug (raw snapshot)</div>
