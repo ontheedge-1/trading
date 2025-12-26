@@ -695,6 +695,72 @@ function computeScore(filteredTrades, tradeKPIs){
     };
   }
 
+
+  function hasDateFilter(){
+    return !!(GLOBAL?.filters?.dateStart || GLOBAL?.filters?.dateEnd);
+  }
+
+  function sliceSpineByRange(fullSpine, dateStart, dateEnd){
+    if(!Array.isArray(fullSpine) || !fullSpine.length) return [];
+    if(!dateStart && !dateEnd) return fullSpine.slice();
+
+    const s = dateStart || fullSpine[0];
+    const e = dateEnd   || fullSpine[fullSpine.length-1];
+
+    return fullSpine.filter(d => d >= s && d <= e);
+  }
+
+  function sliceSeriesToView(fullSpine, fullSeries, viewSpine){
+    // assumes fullSeries aligned to fullSpine
+    const idx = new Map();
+    for(let i=0;i<(fullSpine||[]).length;i++) idx.set(fullSpine[i], i);
+
+    return (viewSpine||[]).map(d => {
+      const i = idx.get(d);
+      return (i === undefined) ? null : fullSeries[i];
+    });
+  }
+
+  function dailyRMapFromRows(dailyRows){
+    const map = new Map();
+    for(const row of (dailyRows || [])){
+      if(!row?.date) continue;
+      map.set(row.date, Number(row.dailyR) || 0);
+    }
+    return map;
+  }
+
+  function buildCumR_Rebased_OnView(viewSpine, dailyRows){
+    // 1 value per day (aligned to viewSpine), rebased so first day baseline is 0
+    const map = dailyRMapFromRows(dailyRows);
+    let cum = 0;
+    const out = (viewSpine||[]).map(d => {
+      const r = map.get(d) || 0;
+      cum += r;
+      return cum;
+    });
+
+    // Rebase: start at 0 (so subtract first-day "carry", which is 0 anyway here)
+    // (kept for clarity/extension)
+    return out;
+  }
+
+  function addBaselinePointSameDay(viewSpine, values, baselineValue){
+    // duplicates the first date so the first day shows baseline -> day1 value
+    if(!Array.isArray(viewSpine) || viewSpine.length === 0) return { spine: [], values: [] };
+
+    const d0 = viewSpine[0];
+    const v0 = Array.isArray(values) && values.length ? values[0] : null;
+
+    const spine2 = [d0, ...viewSpine];
+    const values2 = [baselineValue, ...values];
+
+    // After insertion, the "first real day value" becomes values2[1]
+    // so you see a line from baselineValue -> v0 on the same date.
+    return { spine: spine2, values: values2 };
+  }
+
+  
   
   function recomputeAnalysis(){
     GLOBAL.filteredTrades = filterEngine(GLOBAL.trades, GLOBAL.filters);
@@ -704,9 +770,43 @@ function computeScore(filteredTrades, tradeKPIs){
 
     const dailyRows = aggregateDailyRFromTrades(GLOBAL.filteredTrades);
     GLOBAL.dayStreaks = computeDayStreaksFromDailyR(dailyRows);
+
+    // keep raw filtered daily rows (trade-days only)
     GLOBAL.seriesDailyR_F = dailyRows;
-    GLOBAL.seriesCumR_F = buildCumRSeriesOnSpine(GLOBAL.spine, dailyRows);
-    GLOBAL.score = computeScore(GLOBAL.filteredTrades, GLOBAL.tradeKPIs); 
+
+    // ---- VIEW AXIS (date-range affects X-axis) ----
+    const ds = GLOBAL.filters?.dateStart || null;
+    const de = GLOBAL.filters?.dateEnd   || null;
+
+    GLOBAL.viewSpine = sliceSpineByRange(GLOBAL.spine, ds, de);
+
+    // ---- CumR (rebased to 0 on period start, aligned to viewSpine) ----
+    const cumView = buildCumR_Rebased_OnView(GLOBAL.viewSpine, dailyRows);
+    const cumWithBaseline = addBaselinePointSameDay(GLOBAL.viewSpine, cumView, 0);
+    GLOBAL.viewCumR = cumWithBaseline.values;
+
+    // ---- Equity (global equity sliced to viewSpine, baseline = previous day equity) ----
+    const eqView = sliceSeriesToView(GLOBAL.spine, GLOBAL.seriesEquity, GLOBAL.viewSpine);
+
+    // carry-in = equity value from day before view start (if exists), else first day value
+    let carryIn = (eqView && eqView.length) ? eqView[0] : null;
+    if(GLOBAL.viewSpine.length){
+      const startDate = GLOBAL.viewSpine[0];
+      const fullIdx = GLOBAL.spine.indexOf(startDate);
+      if(fullIdx > 0){
+        const prev = GLOBAL.seriesEquity[fullIdx - 1];
+        if(prev !== undefined && prev !== null) carryIn = prev;
+      }
+    }
+    const eqWithBaseline = addBaselinePointSameDay(GLOBAL.viewSpine, eqView, carryIn);
+    GLOBAL.viewEquity = eqWithBaseline.values;
+
+    // IMPORTANT: viewSpine must match the series that have baseline point
+    // so we store a "spine used for chart" with duplicated first day:
+    GLOBAL._chartSpine = cumWithBaseline.spine; // same structure as eqWithBaseline.spine
+
+    GLOBAL.score = computeScore(GLOBAL.filteredTrades, GLOBAL.tradeKPIs);
+
 
     console.log("[ANALYSIS] filteredTrades:", GLOBAL.filteredTrades.length);
     console.log("[ANALYSIS] tradeKPIs:", GLOBAL.tradeKPIs);
@@ -1161,23 +1261,40 @@ function computeScore(filteredTrades, tradeKPIs){
     seriesEquity:[],
     seriesCumR:[],
     seriesDailyR:[],
-    seriesCumR_F:[],    // <- NEU: CumR aus FILTERED trades (für Chart "Cum R")
-    seriesDailyR_F:[],  // <- NEU: DailyR aus FILTERED trades
+
+    seriesCumR_F:[],    // filtered CumR (calendar based, BUT we will use view-logic below)
+    seriesDailyR_F:[],
+
+    // ---- view (date-range chart axis + rebased series) ----
+    viewSpine:[],        // X-axis for current selected date range
+    viewEquity:[],       // equity sliced to viewSpine (+ baseline point)
+    viewCumR:[],         // cumR sliced to viewSpine, rebased to 0 (+ baseline point)
+
     mode:"equity"
+
   };
 
 
   function renderCurve(withCrosshair=false){
   const canvas = $("curveCanvas");
-  const { spine, seriesEquity, seriesCumR_F } = GLOBAL;
+
+  const spine = (GLOBAL._chartSpine && GLOBAL._chartSpine.length)
+    ? GLOBAL._chartSpine
+    : GLOBAL.spine;
+
+  const isEquity = (GLOBAL.mode === "equity");
+  const useView = hasDateFilter();
+
+  const values = isEquity
+    ? (useView ? (GLOBAL.viewEquity || []) : (GLOBAL.seriesEquity || []))
+    : (useView ? (GLOBAL.viewCumR || []) : (GLOBAL.viewCumR || GLOBAL.seriesCumR_F || []));
+
     if(!spine.length){
       const ctx = canvas.getContext("2d");
       ctx.clearRect(0,0,canvas.width,canvas.height);
       return;
     }
 
-    const isEquity = (GLOBAL.mode === "equity");
-    const values = isEquity ? seriesEquity : (seriesCumR_F || []);
 
     $("curveTitle").textContent = isEquity ? "Equity Curve" : "Cumulative R Curve";
     $("curveSub").textContent = isEquity
