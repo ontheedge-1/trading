@@ -494,6 +494,18 @@ function aggregateDailyRFromTrades(trades){
     .map(([date, dailyR]) => ({ date, dailyR }));
 }
 
+
+  function buildCumRSeriesFromDailyR(dailyRows){
+    // dailyRows: [{date, dailyR}] sorted by date
+    let cum = 0;
+    return (dailyRows || []).map(row => {
+      const r = Number(row?.dailyR ?? 0);
+      cum += (Number.isFinite(r) ? r : 0);
+      return { date: row.date, value: cum, dailyR: r };
+    });
+  }
+
+  
   function computeDayStreaksFromDailyR(dailyRows){
     // Neutral days (dailyR==0) ignored and do NOT break streaks
     let curW = 0, curL = 0;
@@ -677,6 +689,8 @@ function computeScore(filteredTrades, tradeKPIs){
 
     const dailyRows = aggregateDailyRFromTrades(GLOBAL.filteredTrades);
     GLOBAL.dayStreaks = computeDayStreaksFromDailyR(dailyRows);
+    GLOBAL.seriesDailyR_F = dailyRows;
+    GLOBAL.seriesCumR_F = buildCumRSeriesFromDailyR(dailyRows);
     GLOBAL.score = computeScore(GLOBAL.filteredTrades, GLOBAL.tradeKPIs); 
 
     console.log("[ANALYSIS] filteredTrades:", GLOBAL.filteredTrades.length);
@@ -1132,13 +1146,15 @@ function computeScore(filteredTrades, tradeKPIs){
     seriesEquity:[],
     seriesCumR:[],
     seriesDailyR:[],
+    seriesCumR_F:[],    // <- NEU: CumR aus FILTERED trades (für Chart "Cum R")
+    seriesDailyR_F:[],  // <- NEU: DailyR aus FILTERED trades
     mode:"equity"
   };
 
 
   function renderCurve(withCrosshair=false){
-    const canvas = $("curveCanvas");
-    const { spine, seriesEquity, seriesCumR } = GLOBAL;
+  const canvas = $("curveCanvas");
+  const { spine, seriesEquity, seriesCumR_F } = GLOBAL;
     if(!spine.length){
       const ctx = canvas.getContext("2d");
       ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -1146,7 +1162,7 @@ function computeScore(filteredTrades, tradeKPIs){
     }
 
     const isEquity = (GLOBAL.mode === "equity");
-    const values = isEquity ? seriesEquity : seriesCumR;
+    const values = isEquity ? seriesEquity : (seriesCumR_F || []);
 
     $("curveTitle").textContent = isEquity ? "Equity Curve" : "Cumulative R Curve";
     $("curveSub").textContent = isEquity
