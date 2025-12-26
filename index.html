@@ -238,7 +238,9 @@
         <div class="seg" role="tablist" aria-label="Curve Toggle">
           <button id="btnEquity" class="active" type="button">Equity ($)</button>
           <button id="btnR" type="button">Cum R</button>
+          <button id="btnDD" type="button">DD (R)</button>
         </div>
+
       </div>
 
       <div class="chartWrap" id="chartWrap">
@@ -762,7 +764,17 @@ function computeScore(filteredTrades, tradeKPIs){
     return { spine: spine2, values: values2 };
   }
 
-  
+  function computeDrawdownSeriesFromCum(values){
+    // values: cum curve values aligned to the chart spine (incl baseline point)
+    let peak = -Infinity;
+    return (values || []).map(v => {
+      const x = Number(v);
+      if(!Number.isFinite(x)) return 0;
+      if(x > peak) peak = x;
+      return x - peak; // <= 0 (0 at peak)
+    });
+  }
+
   
   function recomputeAnalysis(){
     GLOBAL.filteredTrades = filterEngine(GLOBAL.trades, GLOBAL.filters);
@@ -786,6 +798,8 @@ function computeScore(filteredTrades, tradeKPIs){
     const cumView = buildCumR_Rebased_OnView(GLOBAL.viewSpine, dailyRows);
     const cumWithBaseline = addBaselinePointSameDay(GLOBAL.viewSpine, cumView, 0);
     GLOBAL.viewCumR = cumWithBaseline.values;
+    GLOBAL.viewDD = computeDrawdownSeriesFromCum(GLOBAL.viewCumR);
+
 
     // ---- Equity (global equity sliced to viewSpine, baseline = previous day equity) ----
     const eqView = sliceSeriesToView(GLOBAL.spine, GLOBAL.seriesEquity, GLOBAL.viewSpine);
@@ -1284,6 +1298,7 @@ function computeScore(filteredTrades, tradeKPIs){
     viewSpine:[],        // X-axis for current selected date range
     viewEquity:[],       // equity sliced to viewSpine (+ baseline point)
     viewCumR:[],         // cumR sliced to viewSpine, rebased to 0 (+ baseline point)
+    viewDD:[],           // drawdown (R) on viewCumR (<=0), incl baseline point
 
     mode:"equity"
 
@@ -1297,12 +1312,20 @@ function computeScore(filteredTrades, tradeKPIs){
     ? GLOBAL._chartSpine
     : GLOBAL.spine;
 
-  const isEquity = (GLOBAL.mode === "equity");
+  const mode = GLOBAL.mode; // "equity" | "r" | "dd"
   const useView = hasDateFilter();
 
-  const values = isEquity
-    ? (useView ? (GLOBAL.viewEquity || []) : (GLOBAL.seriesEquity || []))
-    : (useView ? (GLOBAL.viewCumR || []) : (GLOBAL.viewCumR || GLOBAL.seriesCumR_F || []));
+  let values = [];
+  if(mode === "equity"){
+    values = useView ? (GLOBAL.viewEquity || []) : (GLOBAL.seriesEquity || []);
+  } else if(mode === "r"){
+    values = useView ? (GLOBAL.viewCumR || []) : (GLOBAL.viewCumR || GLOBAL.seriesCumR_F || []);
+  } else if(mode === "dd"){
+    values = useView ? (GLOBAL.viewDD || []) : (GLOBAL.viewDD || []);
+  } else {
+    values = useView ? (GLOBAL.viewEquity || []) : (GLOBAL.seriesEquity || []);
+  }
+
 
     if(!spine.length){
       const ctx = canvas.getContext("2d");
@@ -1311,15 +1334,26 @@ function computeScore(filteredTrades, tradeKPIs){
     }
 
 
-    $("curveTitle").textContent = isEquity ? "Equity Curve" : "Cumulative R Curve";
-    $("curveSub").textContent = isEquity
-      ? "Daily (Calendar spine, carry-forward) · Source: Daily_Adjustments"
-      : "Daily (Calendar spine) · Source: Trades (daily R summed, then cumulative)";
+    $("curveTitle").textContent =
+      (mode === "equity") ? "Equity Curve" :
+      (mode === "r")      ? "Cumulative R Curve" :
+      "Drawdown (R)";
+
+    $("curveSub").textContent =
+      (mode === "equity")
+        ? "Daily (Calendar spine, carry-forward) · Source: Daily_Adjustments"
+        : (mode === "r")
+          ? "Daily (Calendar spine) · Source: Trades (daily R summed, rebased, then cumulative)"
+          : "Daily (Calendar spine) · Source: Cum R peaks (rebased) → Drawdown";
+
 
     const opts = {
-      title: isEquity ? "Equity" : "Cum R",
-      yFmt: isEquity ? yFmtUSD : yFmtR,
-      vFmt: (v) => isEquity ? fmtUSD(v) : fmtR(v),
+      title:
+        (mode === "equity") ? "Equity" :
+        (mode === "r") ? "Cum R" : "DD (R)",
+      yFmt: (mode === "equity") ? yFmtUSD : yFmtR,
+      vFmt: (v) => (mode === "equity") ? fmtUSD(v) : fmtR(v),
+
       onRequestRender: (keepCrosshair=false) => {
         // re-render
         drawLineChart(canvas, spine, values, opts);
@@ -1465,6 +1499,7 @@ function computeScore(filteredTrades, tradeKPIs){
     GLOBAL.mode = "equity";
     $("btnEquity").classList.add("active");
     $("btnR").classList.remove("active");
+    $("btnDD").classList.remove("active");
     renderCurve();
   });
   $("btnR").addEventListener("click", () => {
@@ -1473,6 +1508,14 @@ function computeScore(filteredTrades, tradeKPIs){
     $("btnEquity").classList.remove("active");
     renderCurve();
   });
+  $("btnDD").addEventListener("click", () => {
+    GLOBAL.mode = "dd";
+    $("btnDD").classList.add("active");
+    $("btnEquity").classList.remove("active");
+    $("btnR").classList.remove("active");
+    renderCurve();
+  });
+
 
   // Redraw on resize (debounced)
   let _t = null;
