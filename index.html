@@ -985,8 +985,21 @@ function computeScore(filteredTrades, tradeKPIs){
     const minIso = datesSource.reduce((a,b)=> a < b ? a : b);
     const maxIso = datesSource.reduce((a,b)=> a > b ? a : b);
 
+    // today (local) as ISO YYYY-MM-DD
+    const todayIso = (() => {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,"0");
+      const day = String(d.getDate()).padStart(2,"0");
+      return `${y}-${m}-${day}`;
+    })();
+
+    // spine ends at today if today is later than last data point
+    const endIso = (todayIso > maxIso) ? todayIso : maxIso;
+
     let cur = parseISO(minIso);
-    const end = parseISO(maxIso);
+    const end = parseISO(endIso);
+
 
     // carry-forward equity (start from startingEquity until first known)
     let lastEquity = Number.isFinite(Number(startingEquity)) ? Number(startingEquity) : null;
