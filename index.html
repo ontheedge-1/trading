@@ -1215,7 +1215,8 @@ function computeScore(filteredTrades, tradeKPIs){
       GLOBAL.dailyAgg = dailyAgg;
       GLOBAL.kpis = kpis;
       GLOBAL.trades = Array.isArray(trades) ? trades : [];
-      recomputeAnalysis();
+      // recomputeAnalysis();  // <-- NICHT hier (spine noch leer)
+
 
       // ---- Filter UI init + wiring ----
     const instSel = $("fInstrument");
@@ -1299,7 +1300,11 @@ function computeScore(filteredTrades, tradeKPIs){
       GLOBAL.seriesEquity = seriesEquity;
       GLOBAL.seriesCumR = seriesCumR;
       GLOBAL.seriesDailyR = seriesDailyR;
+      
+      // JETZT: spine existiert -> filter-derived series (CumR_F) korrekt berechnen
+      recomputeAnalysis();
 
+      renderKpiPanel(latest);
       renderCurve();
 
       // Debug snapshot
