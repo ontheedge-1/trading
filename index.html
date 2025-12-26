@@ -775,6 +775,123 @@ function computeScore(filteredTrades, tradeKPIs){
     });
   }
 
+
+  function buildActiveDaySequence({ trades, dailyAgg, dateStart, dateEnd, instrument }) {
+  // Rules:
+  // - active day if: has Trades OR has dailyPnL entry
+  // - inactive day (no trades AND no dailyPnL) => ignored (does not break)
+  // - if instrument != "ALL": we use ONLY trades to define activity & sign
+  //   (because dailyPnL is account-wide, not instrument-specific)
+
+  const useDailyAgg = (instrument === "ALL");
+
+  const tradeDayMap = new Map(); // date -> sumR (from filtered trades)
+  for (const tr of (trades || [])) {
+    const d = tr?.trade_date || tr?.date;
+    if (!d) continue;
+    const r = Number(tr?.result_r ?? tr?.r ?? 0);
+    if (!Number.isFinite(r)) continue;
+    tradeDayMap.set(d, (tradeDayMap.get(d) || 0) + r);
+  }
+
+  const pnlDayMap = new Map(); // date -> daily_pnl_$ (or similar)
+  if (useDailyAgg) {
+    for (const row of (dailyAgg || [])) {
+      const d = row?.date;
+      if (!d) continue;
+
+      // try common field names (adjust if yours differ)
+      const pnl =
+        (row.daily_pnl_$ ?? row.daily_pnl ?? row.dailyPnl ?? row.pnl ?? null);
+
+      if (pnl === null || pnl === undefined) continue;
+      const x = Number(pnl);
+      if (!Number.isFinite(x)) continue;
+      pnlDayMap.set(d, x);
+    }
+  }
+
+  // union of active dates
+  const activeDatesSet = new Set();
+  for (const d of tradeDayMap.keys()) activeDatesSet.add(d);
+  if (useDailyAgg) for (const d of pnlDayMap.keys()) activeDatesSet.add(d);
+
+  // apply date range
+  const dates = Array.from(activeDatesSet)
+    .filter(d => (!dateStart || d >= dateStart) && (!dateEnd || d <= dateEnd))
+    .sort(); // YYYY-MM-DD lexicographically safe
+
+  // build sequence of outcomes per active day
+  // outcome: "W" | "L" | "F" (flat)
+  const seq = [];
+  for (const d of dates) {
+    let val = null;
+
+    if (useDailyAgg && pnlDayMap.has(d)) {
+      val = pnlDayMap.get(d); // dailyPnL sign
+    } else if (tradeDayMap.has(d)) {
+      val = tradeDayMap.get(d); // fallback sign from trades (sumR)
+    } else {
+      // should not happen due to union set
+      continue;
+    }
+
+    const outcome = (val > 0) ? "W" : (val < 0) ? "L" : "F";
+    seq.push({ date: d, outcome, value: val });
+  }
+
+  return seq;
+}
+
+  function computeStreakFrequencyFromSequence(seq){
+    // Flat days break streak and are not counted.
+    // Inactive days are already removed by buildActiveDaySequence.
+    const winFreq = {};
+    const lossFreq = {};
+
+    let curType = null; // "W" | "L" | null
+    let curLen = 0;
+
+    const closeStreak = () => {
+      if (!curType || curLen <= 0) return;
+      const bucket = (curType === "W") ? winFreq : lossFreq;
+      bucket[curLen] = (bucket[curLen] || 0) + 1;
+      curType = null;
+      curLen = 0;
+    };
+
+    for (const day of (seq || [])) {
+      const o = day?.outcome;
+      if (o === "F") {
+        // flat breaks immediately
+        closeStreak();
+        continue;
+      }
+
+      if (o !== "W" && o !== "L") continue;
+
+      if (curType === null) {
+        curType = o;
+        curLen = 1;
+      } else if (curType === o) {
+        curLen += 1;
+      } else {
+        closeStreak();
+        curType = o;
+        curLen = 1;
+      }
+    }
+    closeStreak();
+
+    // compute max length for chart axis later
+    const maxWin = Math.max(0, ...Object.keys(winFreq).map(Number));
+    const maxLoss = Math.max(0, ...Object.keys(lossFreq).map(Number));
+    const maxLen = Math.max(maxWin, maxLoss);
+
+    return { winFreq, lossFreq, maxLen };
+  }
+
+  
   
   function recomputeAnalysis(){
     GLOBAL.filteredTrades = filterEngine(GLOBAL.trades, GLOBAL.filters);
@@ -793,6 +910,17 @@ function computeScore(filteredTrades, tradeKPIs){
     const de = GLOBAL.filters?.dateEnd   || null;
 
     GLOBAL.viewSpine = sliceSpineByRange(GLOBAL.spine, ds, de);
+
+    // ---- Day streak frequency distribution (filter reactive) ----
+    const seq = buildActiveDaySequence({
+      trades: GLOBAL.filteredTrades,      // filtered trades (instrument/date)
+      dailyAgg: GLOBAL.dailyAgg,          // account-wide daily pnl (date only)
+      dateStart: ds,
+      dateEnd: de,
+      instrument: GLOBAL.filters?.instrument || "ALL"
+    });
+    GLOBAL.dayStreakDist = computeStreakFrequencyFromSequence(seq);
+
 
     // ---- CumR (rebased to 0 on period start, aligned to viewSpine) ----
     const cumView = buildCumR_Rebased_OnView(GLOBAL.viewSpine, dailyRows);
@@ -1278,6 +1406,8 @@ function computeScore(filteredTrades, tradeKPIs){
     tradeKPIs: null,  
     tradeStreaks: null,
     dayStreaks: null,
+    dayStreakDist: null, // frequency distribution for day streak lengths (wins/losses)
+
 
 
     filters: {
@@ -1481,6 +1611,7 @@ function computeScore(filteredTrades, tradeKPIs){
         calendar_spine_days: spine.length,
         spine_start: spine[0],
         spine_end: spine[spine.length-1],
+        day_streak_dist: GLOBAL.dayStreakDist,
       }, null, 2);
 
     } catch(err){
