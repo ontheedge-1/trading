@@ -239,11 +239,73 @@
   }
 
 
+  function computeTradeKPIs(trades){
+    const t = Array.isArray(trades) ? trades : [];
+    const n = t.length;
+
+    let wins = 0;
+    let losses = 0;
+
+    let sumR = 0;
+    let sumWinR = 0;
+    let sumLossR = 0; // negative sum (z.B. -12.5)
+
+    for (const tr of t){
+      const r = Number(tr?.result_r ?? tr?.r ?? 0);
+      if (!Number.isFinite(r)) continue;
+
+      sumR += r;
+
+      if (r > 0){
+        wins += 1;
+        sumWinR += r;
+      } else if (r < 0){
+        losses += 1;
+        sumLossR += r;
+      }
+      // r == 0: neutral trade zählt in n, aber nicht als win/loss
+    }
+
+    const winrate = (wins + losses) > 0 ? wins / (wins + losses) : null;
+
+    const avgR = n > 0 ? sumR / n : null;
+    const avgWin = wins > 0 ? sumWinR / wins : null;
+    const avgLoss = losses > 0 ? sumLossR / losses : null; // negativ
+
+    const grossLossAbs = Math.abs(sumLossR);
+    const profitFactor =
+      grossLossAbs > 0 ? (sumWinR / grossLossAbs) :
+      (sumWinR > 0 ? Infinity : null);
+
+    // Expectancy (klassisch): WR*AvgWin + (1-WR)*AvgLoss
+    // (AvgLoss ist negativ)
+    const expectancy =
+      (winrate !== null && avgWin !== null && avgLoss !== null)
+        ? (winrate * avgWin + (1 - winrate) * avgLoss)
+        : avgR; // fallback (bei wenig Daten gleichwertig)
+
+    return {
+      tradeCount: n,
+      wins,
+      losses,
+      winrate,      // 0..1 oder null
+      avgR,         // R/trade
+      avgWin,       // R
+      avgLoss,      // R (negativ)
+      profitFactor, // number | Infinity | null
+      expectancy    // R/trade
+    };
+  }
+
+
+  
   function recomputeAnalysis(){
     GLOBAL.filteredTrades = filterEngine(GLOBAL.trades, GLOBAL.filters);
 
-    // temp debug check
+    GLOBAL.tradeKPIs = computeTradeKPIs(GLOBAL.filteredTrades);
+
     console.log("[ANALYSIS] filteredTrades:", GLOBAL.filteredTrades.length);
+    console.log("[ANALYSIS] tradeKPIs:", GLOBAL.tradeKPIs);
   }
 
   
@@ -603,6 +665,7 @@
 
     trades:null,          // raw trades_enriched.json
     filteredTrades:[],    // OUTPUT des filterEngine
+    tradeKPIs: null,  
 
     filters: {
       dateStart: null,    // YYYY-MM-DD oder null
