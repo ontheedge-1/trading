@@ -476,7 +476,7 @@ function aggregateDailyRFromTrades(trades){
     if(!grid) return;
     grid.innerHTML = "";
 
-    const k = .tradeKPIs || {};
+    const k = GLOBAL.tradeKPIs || {};
 
     // Equity/DD/Risk sind GLOBAL (nicht filterabhängig)
     const dd = latestEquityRow?.drawdown_pct ?? null;
@@ -932,9 +932,6 @@ function aggregateDailyRFromTrades(trades){
       GLOBAL.kpis = kpis;
       GLOBAL.trades = Array.isArray(trades) ? trades : [];
       recomputeAnalysis();
-
-      console.log("raw trades:", GLOBAL.trades.length);
-
 
       const latest = Array.isArray(equity) && equity.length ? equity[equity.length - 1] : null;
 
