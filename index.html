@@ -251,22 +251,22 @@
 
     const { dateStart, dateEnd, instrument } = filters || {};
 
-    const out = rawTrades.filter(t => {
-      if(!t) return false;
-      const d = t.trade_date || t.date;   // <-- fallback
-      if(!d) return false;
+    const out = rawTrades
+      .map((t, idx) => ({ ...t, __idx: idx }))
+      .filter(t => {
+        if(!t) return false;
+        const d = t.trade_date || t.date;
+        if(!d) return false;
 
-      if(dateStart && d < dateStart) return false;
-      if(dateEnd && d > dateEnd) return false;
+        if(dateStart && d < dateStart) return false;
+        if(dateEnd && d > dateEnd) return false;
 
+        if(instrument && instrument !== "ALL"){
+          if(t.instrument !== instrument) return false;
+        }
+        return true;
+      });
 
-      // Instrument filter
-      if(instrument && instrument !== "ALL"){
-        if(t.instrument !== instrument) return false;
-      }
-
-      return true;
-    });
 
     // Stable deterministic ordering: date (trade_date OR date), then trade_id
   out.sort((a, b) => {
@@ -282,7 +282,7 @@
     if (aId < bId) return -1;
     if (aId > bId) return 1;
 
-    return 0;
+    return (a.__idx ?? 0) - (b.__idx ?? 0);
   });
 
   return out;
@@ -347,12 +347,110 @@
     };
   }
 
+  function computeTradeStreaks(trades){
+  // Neutral trades (R==0) are ignored and do NOT break streaks
+  let curW = 0, curL = 0;
+  let maxW = 0, maxL = 0;
+
+  let sumW = 0, cntW = 0;
+  let sumL = 0, cntL = 0;
+
+  let last = null; // "W" | "L" | null
+
+  for(const tr of (trades || [])){
+    const r = Number(tr?.result_r ?? tr?.r ?? 0);
+    if(!Number.isFinite(r) || r === 0) continue;
+
+    const s = r > 0 ? "W" : "L";
+
+    if(s === "W"){
+      if(last === "L"){ sumL += curL; cntL += 1; curL = 0; }
+      curW += 1; curL = 0;
+      maxW = Math.max(maxW, curW);
+    } else {
+      if(last === "W"){ sumW += curW; cntW += 1; curW = 0; }
+      curL += 1; curW = 0;
+      maxL = Math.max(maxL, curL);
+    }
+    last = s;
+  }
+
+  // close open streak
+  if(last === "W"){ sumW += curW; cntW += 1; }
+  if(last === "L"){ sumL += curL; cntL += 1; }
+
+  return {
+    longestWin: maxW,
+    longestLoss: maxL,
+    avgWin: cntW ? (sumW / cntW) : 0,
+    avgLoss: cntL ? (sumL / cntL) : 0
+  };
+}
+
+function aggregateDailyRFromTrades(trades){
+  const map = new Map(); // date -> sumR
+  for(const tr of (trades || [])){
+    const d = tr?.trade_date || tr?.date;
+    if(!d) continue;
+    const r = Number(tr?.result_r ?? tr?.r ?? 0);
+    if(!Number.isFinite(r)) continue;
+    map.set(d, (map.get(d) || 0) + r);
+  }
+  // return sorted array by date
+  return [...map.entries()]
+    .sort((a,b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0)
+    .map(([date, dailyR]) => ({ date, dailyR }));
+}
+
+  function computeDayStreaksFromDailyR(dailyRows){
+    // Neutral days (dailyR==0) ignored and do NOT break streaks
+    let curW = 0, curL = 0;
+    let maxW = 0, maxL = 0;
+
+    let sumW = 0, cntW = 0;
+    let sumL = 0, cntL = 0;
+
+    let last = null;
+
+    for(const row of (dailyRows || [])){
+      const r = Number(row?.dailyR ?? 0);
+      if(!Number.isFinite(r) || r === 0) continue;
+
+      const s = r > 0 ? "W" : "L";
+
+      if(s === "W"){
+        if(last === "L"){ sumL += curL; cntL += 1; curL = 0; }
+        curW += 1; curL = 0;
+        maxW = Math.max(maxW, curW);
+      } else {
+        if(last === "W"){ sumW += curW; cntW += 1; curW = 0; }
+        curL += 1; curW = 0;
+        maxL = Math.max(maxL, curL);
+      }
+      last = s;
+    }
+
+    if(last === "W"){ sumW += curW; cntW += 1; }
+    if(last === "L"){ sumL += curL; cntL += 1; }
+
+    return {
+      longestWinDays: maxW,
+      longestLossDays: maxL,
+      avgWinDays: cntW ? (sumW / cntW) : 0,
+      avgLossDays: cntL ? (sumL / cntL) : 0
+    };
+  }
 
   
   function recomputeAnalysis(){
     GLOBAL.filteredTrades = filterEngine(GLOBAL.trades, GLOBAL.filters);
 
     GLOBAL.tradeKPIs = computeTradeKPIs(GLOBAL.filteredTrades);
+    GLOBAL.tradeStreaks = computeTradeStreaks(GLOBAL.filteredTrades);
+
+    const dailyRows = aggregateDailyRFromTrades(GLOBAL.filteredTrades);
+    GLOBAL.dayStreaks = computeDayStreaksFromDailyR(dailyRows);
+
 
     console.log("[ANALYSIS] filteredTrades:", GLOBAL.filteredTrades.length);
     console.log("[ANALYSIS] tradeKPIs:", GLOBAL.tradeKPIs);
@@ -378,7 +476,7 @@
     if(!grid) return;
     grid.innerHTML = "";
 
-    const k = GLOBAL.tradeKPIs || {};
+    const k = .tradeKPIs || {};
 
     // Equity/DD/Risk sind GLOBAL (nicht filterabhängig)
     const dd = latestEquityRow?.drawdown_pct ?? null;
@@ -423,9 +521,9 @@
       },
       {
         title: "Streaks",
-        main: "—",
-        sub1: `Longest Win: —`,
-        sub2: `Longest Loss: —`,
+        main: `${GLOBAL.tradeStreaks?.longestWin ?? 0}`,
+        sub1: `Longest Loss: ${GLOBAL.tradeStreaks?.longestLoss ?? 0}`,
+        sub2: `Ø W/L: ${(GLOBAL.tradeStreaks?.avgWin ?? 0).toFixed(1)} / ${(GLOBAL.tradeStreaks?.avgLoss ?? 0).toFixed(1)}`,
         cls: ""
       },
     ];
@@ -767,6 +865,9 @@
     trades:null,          // raw trades_enriched.json
     filteredTrades:[],    // OUTPUT des filterEngine
     tradeKPIs: null,  
+    tradeStreaks: null,
+    dayStreaks: null,
+
 
     filters: {
       dateStart: null,    // YYYY-MM-DD oder null
