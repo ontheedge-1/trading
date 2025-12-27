@@ -1078,6 +1078,25 @@ function computeScore(filteredTrades, tradeKPIs){
   }
 
 
+  function renderDebug(){
+    const el = $("debug");
+    if(!el) return;
+
+    el.textContent = JSON.stringify({
+      calendar_spine_days: GLOBAL.spine?.length ?? 0,
+      spine_start: GLOBAL.spine?.[0] ?? null,
+      spine_end: GLOBAL.spine?.at?.(-1) ?? null,
+
+      filters: GLOBAL.filters,
+      view_spine_days: GLOBAL.viewSpine?.length ?? 0,
+      view_start: GLOBAL.viewSpine?.[0] ?? null,
+      view_end: GLOBAL.viewSpine?.at?.(-1) ?? null,
+
+      day_streak_dist: GLOBAL.dayStreakDist
+    }, null, 2);
+  }
+
+  
 
   // ---- Date spine helpers ----
   function parseISO(s){ // YYYY-MM-DD
@@ -1540,6 +1559,8 @@ function computeScore(filteredTrades, tradeKPIs){
 
         renderKpiPanel(latest2);
         renderCurve(true);
+        renderDebug();
+
 
       });
     }
@@ -1568,6 +1589,8 @@ function computeScore(filteredTrades, tradeKPIs){
 
         renderKpiPanel(latest2);
         renderCurve(true);
+        renderDebug();
+
 
       });
     }
@@ -1602,6 +1625,8 @@ function computeScore(filteredTrades, tradeKPIs){
 
       renderKpiPanel(latest);
       renderCurve();
+      renderDebug();
+
 
       // Debug snapshot
       $("debug").textContent = JSON.stringify({
