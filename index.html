@@ -65,10 +65,14 @@ color:var(--txt);
       grid-template-columns: repeat(12, 1fr);
       gap:14px;
     }
+
+    /* Cards inside the 12-col grid (if used) */
+    .grid .card{ grid-column: span 4; }
+
     .card{
       position:relative;
-      grid-column: span 4;
-      background: var(--cardGrad);
+      /* grid-column scoped below */
+background: var(--cardGrad);
       border: 1px solid var(--border);
       border-radius: var(--rCard);
       padding: 14px 14px 12px 14px;
@@ -95,7 +99,7 @@ color:var(--txt);
       box-shadow: var(--shadow);
       background: linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.02));
     }
-    .card.big{ grid-column: span 12; }
+    .grid .card.big{ grid-column: span 12; }
     .k{ color:var(--muted); font-size:12px; }
     .v{ font-size:24px; font-weight:900; margin-top:6px; letter-spacing:.2px; }
     .row{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
@@ -476,6 +480,12 @@ color:var(--txt);
       .chartPanel{ position: sticky; top: 18px; }
       canvas{ height: 440px; }
     }
+    /* Statement polish */
+    .k{ font-size:12px; letter-spacing:.25px; text-transform: none; }
+    .kpiGrid .card .k{ color: rgba(170,200,255,.92); }
+    .kpiGrid .card .v{ font-size:26px; }
+    .kpiGrid .card{ box-shadow: 0 14px 34px rgba(0,0,0,.40); }
+
 
 
     @media (max-width: 900px){
