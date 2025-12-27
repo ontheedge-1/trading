@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Trading Dashboard</title>
+  <title>Trading Dashboard V1</title>
   <style>
     :root{
       /* Base */
@@ -52,7 +52,7 @@ body{
 color:var(--txt);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
     }
-    .wrap{ max-width:1280px; margin:0 auto; padding:22px; }
+    .wrap{ max-width:1400px; margin:0 auto; padding:22px; }
     .top{
       display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:16px;
     }
@@ -135,7 +135,7 @@ color:var(--txt);
 
     .desktop{
       display:grid;
-      grid-template-columns: 460px 1fr; /* links KPIs, rechts Chart */
+      grid-template-columns: 520px 1fr; /* links KPIs, rechts Chart */
       gap:14px;
       align-items:start;
     }
@@ -447,30 +447,32 @@ color:var(--txt);
     }
 
     /* ===== END CALENDAR VIEW ===== */
-    /* ===== LAYOUT VARIANT V3: BALANCED HERO ROW ===== */
+    .variantTag{
+      display:inline-flex;
+      margin-left:10px;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:.3px;
+      color:#e7f0ff;
+      border:1px solid rgba(120,160,255,.28);
+      background: linear-gradient(180deg, rgba(45,107,255,.24), rgba(41,182,255,.12));
+      vertical-align:middle;
+    }
+
+    /* Stack later (keep chart beside tiles on typical desktop widths) */
+    @media (max-width: 1050px){
+      .desktop{ grid-template-columns: 1fr; }
+      .chartPanel{ position: static; }
+    }
+
+    /* ===== V1: HERO SCORE TOP + STICKY CHART ===== */
     .kpiPanel{ gap:12px; }
-    .kpiGrid{ gap:12px; }
-    .kpiGrid .card{ padding:16px 16px 14px 16px; }
-    .kpiGrid .card:nth-child(1),
-    .kpiGrid .card:nth-child(2){
-      grid-column: 1 / -1;
-      background: linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.02));
-    }
-    .kpiGrid .card:nth-child(1)::after,
-    .kpiGrid .card:nth-child(2)::after{
-      content:"";
-      position:absolute;
-      inset:0;
-      pointer-events:none;
-      border-radius: inherit;
-      background:
-        radial-gradient(760px 240px at 18% 0%, rgba(41,182,255,.14), transparent 62%),
-        radial-gradient(520px 220px at 92% 16%, rgba(45,107,255,.10), transparent 58%);
-      opacity:.9;
-    }
-    @media (min-width: 1000px){
-      canvas{ height: 440px; }
+    .scoreCard{ min-height: 180px; }
+    @media (min-width: 1100px){
       .chartPanel{ position: sticky; top: 18px; }
+      canvas{ height: 440px; }
     }
 
 
@@ -484,8 +486,8 @@ color:var(--txt);
    <div class="wrap">
      <div class="top">
       <div>
-         <div class="title">Trading Dashboard</div>
-         <div class="sub" id="subtitle">Lade Daten…</div>
+         <div class="title">Trading Dashboard <span class="variantTag">V1</span></div>
+         <div class="sub" id="subtitle">Lade Daten… · Layout: Hero Score Top</div>
        </div>
          <div class="filters" id="filtersBar">
           <select id="fInstrument" class="input">
@@ -507,8 +509,8 @@ color:var(--txt);
       <div class="desktop">
     <!-- LEFT: KPI tiles -->
     <div class="kpiPanel">
-      <div class="kpiGrid" id="kpiGrid"></div>
       <div class="scoreCard card" id="scoreCard"></div>
+      <div class="kpiGrid" id="kpiGrid"></div>
     </div>
 
     <!-- RIGHT: Chart -->
