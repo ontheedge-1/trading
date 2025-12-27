@@ -447,6 +447,16 @@ color:var(--txt);
     }
 
     /* ===== END CALENDAR VIEW ===== */
+    /* ===== LAYOUT VARIANT V1: HERO SCORE TOP ===== */
+    .kpiPanel{ gap:12px; }
+    .scoreCard{ min-height: 160px; }
+    .scoreCard .v{ font-size:34px !important; }
+    .kpiGrid{ gap:12px; }
+    @media (min-width: 1000px){
+      .chartPanel{ position: sticky; top: 18px; }
+      canvas{ height: 420px; }
+    }
+
 
     @media (max-width: 900px){
       .card{ grid-column: span 12; }
@@ -481,8 +491,8 @@ color:var(--txt);
       <div class="desktop">
     <!-- LEFT: KPI tiles -->
     <div class="kpiPanel">
-      <div class="kpiGrid" id="kpiGrid"></div>
       <div class="scoreCard card" id="scoreCard"></div>
+      <div class="kpiGrid" id="kpiGrid"></div>
     </div>
 
     <!-- RIGHT: Chart -->
