@@ -239,6 +239,7 @@
           <button id="btnEquity" class="active" type="button">Equity ($)</button>
           <button id="btnR" type="button">Cum R</button>
           <button id="btnDD" type="button">DD (R)</button>
+          <button id="btnDD" type="button"
         </div>
 
       </div>
@@ -1347,6 +1348,111 @@ function computeScore(filteredTrades, tradeKPIs){
       redrawWithCrosshair();
     }
 
+
+    function drawStreakBarChart(canvas, labels, values, opts){
+      const ctx = canvas.getContext("2d");
+
+      // size
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.round(rect.width * dpr);
+      canvas.height = Math.round(rect.height * dpr);
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+
+      const W = rect.width;
+      const H = rect.height;
+
+      ctx.clearRect(0,0,W,H);
+
+      // padding
+      const padL = 46;
+      const padR = 12;
+      const padT = 14;
+      const padB = 28;
+
+      const plotW = W - padL - padR;
+      const plotH = H - padT - padB;
+
+      // determine y range (sym around 0 for nice look)
+      let maxAbs = 1;
+      for(const v of (values || [])){
+        const x = Math.abs(Number(v) || 0);
+        if(x > maxAbs) maxAbs = x;
+      }
+      const yMax = maxAbs;
+      const yMin = -maxAbs;
+
+      const xCount = (labels || []).length;
+      const step = xCount ? (plotW / xCount) : plotW;
+      const barW = Math.max(6, Math.min(26, step * 0.60));
+
+      const xToPx = (i) => padL + i * step + step/2;
+      const yToPx = (v) => {
+        const t = (v - yMin) / (yMax - yMin);
+      return padT + (1 - t) * plotH;
+      };
+
+      // axes: zero line
+      const y0 = yToPx(0);
+      ctx.globalAlpha = 0.9;
+      ctx.strokeStyle = "rgba(255,255,255,.20)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(padL, y0);
+      ctx.lineTo(padL + plotW, y0);
+      ctx.stroke();
+
+      // y ticks (3 lines: -max, 0, +max)
+      ctx.globalAlpha = 0.9;
+      ctx.fillStyle = "rgba(255,255,255,.65)";
+      ctx.font = "12px ui-sans-serif, system-ui";
+      const fmtY = opts?.yFmt || ((n)=> String(n));
+      const yTicks = [yMax, 0, yMin];
+      for(const yt of yTicks){
+        const py = yToPx(yt);
+        ctx.globalAlpha = 0.28;
+        ctx.strokeStyle = "rgba(255,255,255,.14)";
+        ctx.beginPath();
+        ctx.moveTo(padL, py);
+        ctx.lineTo(padL + plotW, py);
+        ctx.stroke();
+
+        ctx.globalAlpha = 0.85;
+        ctx.fillText(fmtY(yt), 8, py + 4);
+      }
+
+      // bars
+      for(let i=0;i<xCount;i++){
+        const v = Number(values[i] || 0);
+        const cx = xToPx(i);
+        const x0 = cx - barW/2;
+
+        const yA = yToPx(0);
+        const yB = yToPx(v);
+
+        const top = Math.min(yA, yB);
+        const h = Math.abs(yB - yA);
+
+       // choose color by sign (no hard change needed, keep consistent)
+        ctx.fillStyle = (v >= 0) ? "rgba(53,208,127,.75)" : "rgba(255,77,109,.75)";
+        ctx.globalAlpha = 1.0;
+        ctx.fillRect(x0, top, barW, Math.max(1, h));
+
+        // x labels (length)
+        ctx.globalAlpha = 0.80;
+        ctx.fillStyle = "rgba(255,255,255,.60)";
+        ctx.font = "12px ui-sans-serif, system-ui";
+        ctx.textAlign = "center";
+        ctx.fillText(String(labels[i]), cx, H - 10);
+        ctx.textAlign = "left";
+      }
+
+      // tooltip hitboxes
+      drawStreakBarChart._hit = { padL, padT, plotW, plotH, step, barW, xToPx, y0, labels, values };
+    }
+
+
+    
     function hide(){
       tooltip.style.display = "none";
       hoverIndex = null;
@@ -1454,6 +1560,54 @@ function computeScore(filteredTrades, tradeKPIs){
   };
 
 
+  function bindStreakTooltip(){
+    const wrap = $("chartWrap");
+    const tip = $("tooltip");
+    const canvas = $("curveCanvas");
+    if(!wrap || !tip || !canvas) return;
+
+    // avoid multiple bindings
+    if(bindStreakTooltip._bound) return;
+    bindStreakTooltip._bound = true;
+
+    wrap.addEventListener("mousemove", (e) => {
+      if(GLOBAL.mode !== "streaks") return;
+      const hit = drawStreakBarChart._hit;
+      if(!hit) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+
+      // find nearest bar index
+      const i = Math.floor((x - hit.padL) / hit.step);
+      if(i < 0 || i >= (hit.labels?.length || 0)){
+        tip.style.display = "none";
+        return;
+      }
+
+      const len = hit.labels[i];
+      const v = Number(hit.values[i] || 0);
+      const winCount = (v > 0) ? v : 0;
+      const lossCount = (v < 0) ? Math.abs(v) : 0;
+
+      tip.style.display = "block";
+      tip.style.left = `${Math.min(rect.width - 160, Math.max(10, x + 12))}px`;
+      tip.style.top = `${Math.max(10, (e.clientY - rect.top) - 28)}px`;
+      tip.innerHTML = `
+        <div style="font-weight:800;">Streak length: ${len}</div>
+        <div style="margin-top:4px;">
+          Win: ${winCount} &nbsp;|&nbsp; Loss: ${lossCount}
+        </div>
+      `;
+    });
+
+    wrap.addEventListener("mouseleave", () => {
+      if($("tooltip")) $("tooltip").style.display = "none";
+    });
+  }
+
+
+  
   function renderCurve(withCrosshair=false){
   const canvas = $("curveCanvas");
 
@@ -1471,6 +1625,9 @@ function computeScore(filteredTrades, tradeKPIs){
     values = useView ? (GLOBAL.viewCumR || []) : (GLOBAL.viewCumR || GLOBAL.seriesCumR_F || []);
   } else if(mode === "dd"){
     values = useView ? (GLOBAL.viewDD || []) : (GLOBAL.viewDD || []);
+  } else if(mode === "streaks"){
+    // handled separately below (bar chart)
+    values = [];
   } else {
     values = useView ? (GLOBAL.viewEquity || []) : (GLOBAL.seriesEquity || []);
   }
@@ -1484,16 +1641,21 @@ function computeScore(filteredTrades, tradeKPIs){
 
 
     $("curveTitle").textContent =
-      (mode === "equity") ? "Equity Curve" :
-      (mode === "r")      ? "Cumulative R Curve" :
-      "Drawdown (R)";
+      (mode === "equity")   ? "Equity Curve" :
+      (mode === "r")        ? "Cumulative R Curve" :
+      (mode === "dd")       ? "Drawdown (R)" :
+      "Streak Frequency (Days)";
+
 
     $("curveSub").textContent =
       (mode === "equity")
         ? "Daily (Calendar spine, carry-forward) · Source: Daily_Adjustments"
         : (mode === "r")
           ? "Daily (Calendar spine) · Source: Trades (daily R summed, rebased, then cumulative)"
-          : "Daily (Calendar spine) · Source: Cum R peaks (rebased) → Drawdown";
+          : (mode === "dd")
+            ? "Daily (Calendar spine) · Source: Cum R peaks (rebased) → Drawdown"
+            : "X = streak length (days). Y = frequency. Wins above 0, Losses below 0. Flats break. Inactive days ignored.";
+
 
 
     const opts = {
@@ -1510,8 +1672,42 @@ function computeScore(filteredTrades, tradeKPIs){
       }
     };
 
-    drawLineChart(canvas, spine, values, opts);
-    if(withCrosshair && drawLineChart._overlay) drawLineChart._overlay.drawCrosshair();
+    if(mode === "streaks"){
+      const dist = GLOBAL.dayStreakDist || { winFreq:{}, lossFreq:{}, maxLen:0 };
+      const maxLen = dist.maxLen || 0;
+
+      const labels = [];
+      const vals = [];
+
+      for(let L=1; L<=maxLen; L++){
+        const w = Number(dist.winFreq?.[L] || 0);
+        const l = Number(dist.lossFreq?.[L] || 0);
+        labels.push(L);
+        vals.push(w - l); // BUT we need negative for losses, not net
+      }
+
+      // IMPORTANT: we want separate bars: win positive, loss negative.
+      // Build as (winCount) + (-lossCount)
+      for(let i=0;i<vals.length;i++){
+        const L = labels[i];
+        const w = Number(dist.winFreq?.[L] || 0);
+        const l = Number(dist.lossFreq?.[L] || 0);
+        vals[i] = w + (-l);
+      }
+
+      drawStreakBarChart(canvas, labels, vals, {
+        yFmt: (n) => String(Math.trunc(n))
+      });
+
+      bindStreakTooltip();
+      if($("tooltip")) $("tooltip").style.display = "none";
+      return;
+  }
+
+  // default: line chart
+  drawLineChart(canvas, spine, values, opts);
+  if(withCrosshair && drawLineChart._overlay) drawLineChart._overlay.drawCrosshair();
+
   }
 
   async function main(){
@@ -1656,12 +1852,14 @@ function computeScore(filteredTrades, tradeKPIs){
     $("btnEquity").classList.add("active");
     $("btnR").classList.remove("active");
     $("btnDD").classList.remove("active");
+    $("btnStreaks").classList.remove("active");
     renderCurve();
   });
   $("btnR").addEventListener("click", () => {
     GLOBAL.mode = "r";
     $("btnR").classList.add("active");
     $("btnEquity").classList.remove("active");
+    $("btnStreaks").classList.remove("active");
     renderCurve();
   });
   $("btnDD").addEventListener("click", () => {
@@ -1669,6 +1867,15 @@ function computeScore(filteredTrades, tradeKPIs){
     $("btnDD").classList.add("active");
     $("btnEquity").classList.remove("active");
     $("btnR").classList.remove("active");
+    $("btnStreaks").classList.remove("active");
+    renderCurve();
+  });
+  $("btnStreaks").addEventListener("click", () => {
+    GLOBAL.mode = "streaks";
+    $("btnStreaks").classList.add("active");
+    $("btnEquity").classList.remove("active");
+    $("btnR").classList.remove("active");
+    $("btnDD").classList.remove("active");
     renderCurve();
   });
 
