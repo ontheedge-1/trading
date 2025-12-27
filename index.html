@@ -2068,8 +2068,7 @@ function computeScore(filteredTrades, tradeKPIs){
   function bindStreakTooltip(){
     const wrap = $("chartWrap");
     const tip = $("tooltip");
-    updateChartHeader();
-  const canvas = $("curveCanvas");
+    const canvas = $("curveCanvas");
     if(!wrap || !tip || !canvas) return;
 
     // avoid multiple bindings
@@ -2111,42 +2110,10 @@ function computeScore(filteredTrades, tradeKPIs){
       if($("tooltip")) $("tooltip").style.display = "none";
     });
   }
-
-
-  
-
-  function updateChartHeader(){
-    const title = $("chartTitle");
-    const sub = $("chartSub");
-    if(!title || !sub) return;
-
-    switch(GLOBAL.mode){
-      case "equity":
-        title.textContent = "Equity Curve";
-        sub.textContent = "Daily (Calendar spine, carry-forward) · Source: Daily_Adjustments";
-        break;
-      case "r":
-        title.textContent = "Cumulative R";
-        sub.textContent = "Daily cumulative R based on closed trading days";
-        break;
-      case "dd":
-        title.textContent = "Drawdown (R)";
-        sub.textContent = "Peak-to-trough drawdown in R";
-        break;
-      case "streaks":
-        title.textContent = "Streaks";
-        sub.textContent = "Winning and losing streak distribution";
-        break;
-      case "calendar":
-        title.textContent = "Kalender";
-        sub.textContent = "Daily Trading Performance · Mo–Fr";
-        break;
-    }
   }
 
 
   function renderCurve(withCrosshair=false){
-  updateChartHeader();
   const canvas = $("curveCanvas");
   const chartWrap = $("chartWrap");
   const calWrap = $("calendarWrap");
@@ -2193,20 +2160,22 @@ function computeScore(filteredTrades, tradeKPIs){
 
 
     $("curveTitle").textContent =
-      (mode === "equity")   ? "Equity Curve" :
-      (mode === "r")        ? "Cumulative R Curve" :
-      (mode === "dd")       ? "Drawdown (R)" :
-      "Streak Frequency (Days)";
-
+      (mode === "equity")    ? "Equity Curve" :
+      (mode === "r")         ? "Cumulative R Curve" :
+      (mode === "dd")        ? "Drawdown (R)" :
+      (mode === "streaks")   ? "Streak Frequency (Days)" :
+      "Kalender";
 
     $("curveSub").textContent =
       (mode === "equity")
-        ? "<span id="chartSub">Daily (Calendar spine, carry-forward) · Source: Daily_Adjustments</span>"
+        ? "Daily (Calendar spine, carry-forward) · Source: Daily_Adjustments"
         : (mode === "r")
-          ? "Daily (Calendar spine) · Source: Trades (daily R summed, rebased, then cumulative)"
+          ? "Daily cumulative R · Source: daily_aggregates.json"
           : (mode === "dd")
-            ? "Daily (Calendar spine) · Source: Cum R peaks (rebased) → Drawdown"
-            : "X = streak length (days). Y = frequency. Wins above 0, Losses below 0. Flats break. Inactive days ignored.";
+            ? "Peak-to-trough drawdown in R"
+            : (mode === "streaks")
+              ? "X = streak length (days). Y = frequency. Win...s above 0, Losses below 0. Flats break. Inactive days ignored."
+              : "Daily Trading Performance · Mo–Fr";
 
 
 
