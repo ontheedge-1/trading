@@ -264,7 +264,7 @@
     }
     .calGrid{
       display:grid;
-      grid-template-columns: repeat(7, 1fr);
+      grid-template-columns: repeat(5, 1fr);
     }
     .calDow{
       padding:10px 10px 8px 10px;
@@ -283,7 +283,7 @@
       border-bottom: 1px solid rgba(120,160,255,.10);
       background: rgba(255,255,255,.01);
     }
-    .dayCell:nth-child(7n){
+    .dayCell:nth-child(5n){
       border-right:none;
     }
     .dayCell.outMonth{
@@ -306,12 +306,25 @@
       font-size:12px;
       color:#e7f0ff;
     }
+    
     .dayBadges{
       display:flex;
-      gap:6px;
+      flex-direction:column;
+      gap:8px;
+      align-items:flex-end;
+      justify-content:flex-start;
+      flex-wrap:nowrap;
+    }
+    .badge.round{
+      width:34px;
+      height:34px;
+      padding:0;
+      border-radius:999px;
+      display:flex;
       align-items:center;
-      justify-content:flex-end;
-      flex-wrap:wrap;
+      justify-content:center;
+      font-weight:900;
+      letter-spacing:.2px;
     }
     .badge{
       font-size:11px;
@@ -470,6 +483,14 @@
     const val = abs.toFixed(decimals);
     return (x < 0 ? "-" : "+") + val + "R";
   };
+
+  const fmtCumR = (n) => {
+    const x = Number(n);
+    if(!Number.isFinite(x)) return "—";
+    const val = Math.abs(x).toFixed(1);
+    return (x < 0 ? "-" : "+") + val + "R";
+  };
+
 
 
   const fmtPct = (p) => {
@@ -1325,7 +1346,7 @@ function computeScore(filteredTrades, tradeKPIs){
     return x;
   }
   const MONTHS_DE = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
-  const DOW_DE = ["Mo","Di","Mi","Do","Fr","Sa","So"];
+  const DOW_DE = ["Mo","Di","Mi","Do","Fr"];
 
   function monthKeyFromISO(iso){ return String(iso).slice(0,7); } // "YYYY-MM"
   function monthLabelFromKey(key){
@@ -1486,49 +1507,64 @@ function computeScore(filteredTrades, tradeKPIs){
 
     const instrumentNote = (GLOBAL.filters?.instrument && GLOBAL.filters.instrument !== "ALL");
 
-    for(let cell=0; cell<42; cell++){
-      const dayNum = (cell - dowMon0) + 1;
-      const inMonth = (dayNum >= 1 && dayNum <= dim);
+    // Weekday-only grid (Mon–Fri)
+    const y = Number(monthKey.slice(0,4));
+    const mNum = Number(monthKey.slice(5,7)); // 1..12
+
+    const firstOfMonth = new Date(Date.UTC(y, mNum-1, 1));
+    const lastOfMonth  = new Date(Date.UTC(y, mNum-1, dim));
+
+    // Start at Monday on/before firstOfMonth
+    const firstDowMon0 = (firstOfMonth.getUTCDay() + 6) % 7; // Mon=0..Sun=6
+    const startDate = new Date(firstOfMonth);
+    startDate.setUTCDate(startDate.getUTCDate() - firstDowMon0);
+
+    // End at Friday on/after lastOfMonth (only if last day is Mon–Fri)
+    const lastDowMon0 = (lastOfMonth.getUTCDay() + 6) % 7;
+    const endDate = new Date(lastOfMonth);
+    const addDays = (lastDowMon0 <= 4) ? (4 - lastDowMon0) : 0;
+    endDate.setUTCDate(endDate.getUTCDate() + addDays);
+
+    for(let dt = new Date(startDate); dt <= endDate; dt.setUTCDate(dt.getUTCDate()+1)){
+      const dow = (dt.getUTCDay() + 6) % 7; // Mon=0..Sun=6
+      if(dow > 4) continue; // skip Sat/Sun
+
+      const yy = dt.getUTCFullYear();
+      const mm = String(dt.getUTCMonth()+1).padStart(2,"0");
+      const dd = String(dt.getUTCDate()).padStart(2,"0");
+      const iso = `${yy}-${mm}-${dd}`;
+
+      const inMonth = (yy === y) && (Number(mm) === mNum);
+      const dayNum = dt.getUTCDate();
 
       const div = document.createElement("div");
       div.className = "dayCell" + (inMonth ? "" : " outMonth");
 
       if(inMonth){
-        const y = monthKey.slice(0,4);
-        const m = monthKey.slice(5,7);
-        const dd = String(dayNum).padStart(2,"0");
-        const iso = `${y}-${m}-${dd}`;
-
         const inRange = (!ds || iso >= ds) && (!de || iso <= de);
         if(!inRange) div.className += " outRange";
 
         const nTrades = tradeCount.get(iso) || 0;
-        const dayR = Number(dailySumR.get(iso) || 0);
         const cumR = Number(cumRByDate.get(iso) || 0);
 
         const pnlRaw = dailyPnL.get(iso);
         const pnl = (pnlRaw === undefined) ? null : Number(pnlRaw);
 
-        // badge classes
-        const pnlCls = badgeClassFromValue(pnl);
-        const rCls = badgeClassFromValue(dayR);
+        const hasAnyData = (nTrades > 0) || (pnlRaw !== undefined);
 
-        // decide primary color by PnL if available, else by dayR
-        const primaryCls = pnlCls || rCls;
-        if(primaryCls) div.className += " " + primaryCls;
+        // COLOR ONLY by Daily PnL
+        const pnlCls = badgeClassFromValue(pnl);
+        if(pnlCls) div.className += " " + pnlCls;
 
         div.innerHTML = `
           <div class="dayTop">
             <div class="dayNum">${dayNum}</div>
+            ${hasAnyData ? `
             <div class="dayBadges">
-              <div class="badge">${nTrades}T</div>
-              <div class="badge">${Number.isFinite(cumR) ? fmtR(cumR) : "—"}</div>
-              <div class="badge ${pnlCls}">${pnl === null ? "—" : fmtUSD0(pnl)}${instrumentNote ? "·A" : ""}</div>
-            </div>
-          </div>
-          <div class="mini">
-            <div>Daily R: <strong>${Number.isFinite(dayR) ? fmtR(dayR) : "—"}</strong></div>
-            <div>Trades: <strong>${nTrades}</strong></div>
+              ${nTrades > 0 ? `<div class="badge round">${nTrades}T</div>` : ``}
+              <div class="badge">${Number.isFinite(cumR) ? fmtCumR(cumR) : "—"}</div>
+              ${pnl === null ? `` : `<div class="badge ${pnlCls}">${fmtUSD0(pnl)}${instrumentNote ? "·A" : ""}</div>`}
+            </div>` : ``}
           </div>
         `;
 
@@ -1536,11 +1572,12 @@ function computeScore(filteredTrades, tradeKPIs){
           div.title = "Hinweis: Daily PnL ist Account-wide (nicht instrument-spezifisch).";
         }
       } else {
-        div.innerHTML = `<div class="dayTop"><div class="dayNum"> </div></div>`;
+        div.innerHTML = `<div class="dayTop"><div class="dayNum"></div></div>`;
       }
 
       grid.appendChild(div);
     }
+
   }
 
   function labelForTick(iso){
