@@ -239,8 +239,9 @@
           <button id="btnEquity" class="active" type="button">Equity ($)</button>
           <button id="btnR" type="button">Cum R</button>
           <button id="btnDD" type="button">DD (R)</button>
-          <button id="btnDD" type="button"
+          <button id="btnStreaks" type="button">Streaks</button>
         </div>
+
 
       </div>
 
@@ -1207,7 +1208,119 @@ function computeScore(filteredTrades, tradeKPIs){
     return { spine: allDates, seriesEquity, seriesCumR, seriesDailyR };
   }
 
+
+  
+
+
+
+  
   // ---- Canvas chart (simple, performant) ----
+
+    function drawStreakBarChart(canvas, labels, values, opts){
+      const ctx = canvas.getContext("2d");
+
+      // size
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.round(rect.width * dpr);
+      canvas.height = Math.round(rect.height * dpr);
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+
+      const W = rect.width;
+      const H = rect.height;
+
+      ctx.clearRect(0,0,W,H);
+
+      // padding
+      const padL = 46;
+      const padR = 12;
+      const padT = 14;
+      const padB = 28;
+
+      const plotW = W - padL - padR;
+      const plotH = H - padT - padB;
+
+      // determine y range (sym around 0 for nice look)
+      let maxAbs = 1;
+      for(const v of (values || [])){
+        const x = Math.abs(Number(v) || 0);
+        if(x > maxAbs) maxAbs = x;
+      }
+      const yMax = maxAbs;
+      const yMin = -maxAbs;
+
+      const xCount = (labels || []).length;
+      const step = xCount ? (plotW / xCount) : plotW;
+      const barW = Math.max(6, Math.min(26, step * 0.60));
+
+      const xToPx = (i) => padL + i * step + step/2;
+      const yToPx = (v) => {
+        const t = (v - yMin) / (yMax - yMin);
+      return padT + (1 - t) * plotH;
+      };
+
+      // axes: zero line
+      const y0 = yToPx(0);
+      ctx.globalAlpha = 0.9;
+      ctx.strokeStyle = "rgba(255,255,255,.20)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(padL, y0);
+      ctx.lineTo(padL + plotW, y0);
+      ctx.stroke();
+
+      // y ticks (3 lines: -max, 0, +max)
+      ctx.globalAlpha = 0.9;
+      ctx.fillStyle = "rgba(255,255,255,.65)";
+      ctx.font = "12px ui-sans-serif, system-ui";
+      const fmtY = opts?.yFmt || ((n)=> String(n));
+      const yTicks = [yMax, 0, yMin];
+      for(const yt of yTicks){
+        const py = yToPx(yt);
+        ctx.globalAlpha = 0.28;
+        ctx.strokeStyle = "rgba(255,255,255,.14)";
+        ctx.beginPath();
+        ctx.moveTo(padL, py);
+        ctx.lineTo(padL + plotW, py);
+        ctx.stroke();
+
+        ctx.globalAlpha = 0.85;
+        ctx.fillText(fmtY(yt), 8, py + 4);
+      }
+
+      // bars
+      for(let i=0;i<xCount;i++){
+        const v = Number(values[i] || 0);
+        const cx = xToPx(i);
+        const x0 = cx - barW/2;
+
+        const yA = yToPx(0);
+        const yB = yToPx(v);
+
+        const top = Math.min(yA, yB);
+        const h = Math.abs(yB - yA);
+
+       // choose color by sign (no hard change needed, keep consistent)
+        ctx.fillStyle = (v >= 0) ? "rgba(53,208,127,.75)" : "rgba(255,77,109,.75)";
+        ctx.globalAlpha = 1.0;
+        ctx.fillRect(x0, top, barW, Math.max(1, h));
+
+        // x labels (length)
+        ctx.globalAlpha = 0.80;
+        ctx.fillStyle = "rgba(255,255,255,.60)";
+        ctx.font = "12px ui-sans-serif, system-ui";
+        ctx.textAlign = "center";
+        ctx.fillText(String(labels[i]), cx, H - 10);
+        ctx.textAlign = "left";
+      }
+
+      // tooltip hitboxes
+      drawStreakBarChart._hit = { padL, padT, plotW, plotH, step, barW, xToPx, y0, labels, values };
+   }
+
+
+
+  
   function drawLineChart(canvas, spine, values, opts){
     const ctx = canvas.getContext("2d");
     const wrap = $("chartWrap");
@@ -1349,110 +1462,6 @@ function computeScore(filteredTrades, tradeKPIs){
     }
 
 
-    function drawStreakBarChart(canvas, labels, values, opts){
-      const ctx = canvas.getContext("2d");
-
-      // size
-      const dpr = window.devicePixelRatio || 1;
-      const rect = canvas.getBoundingClientRect();
-      canvas.width = Math.round(rect.width * dpr);
-      canvas.height = Math.round(rect.height * dpr);
-      ctx.setTransform(dpr,0,0,dpr,0,0);
-
-      const W = rect.width;
-      const H = rect.height;
-
-      ctx.clearRect(0,0,W,H);
-
-      // padding
-      const padL = 46;
-      const padR = 12;
-      const padT = 14;
-      const padB = 28;
-
-      const plotW = W - padL - padR;
-      const plotH = H - padT - padB;
-
-      // determine y range (sym around 0 for nice look)
-      let maxAbs = 1;
-      for(const v of (values || [])){
-        const x = Math.abs(Number(v) || 0);
-        if(x > maxAbs) maxAbs = x;
-      }
-      const yMax = maxAbs;
-      const yMin = -maxAbs;
-
-      const xCount = (labels || []).length;
-      const step = xCount ? (plotW / xCount) : plotW;
-      const barW = Math.max(6, Math.min(26, step * 0.60));
-
-      const xToPx = (i) => padL + i * step + step/2;
-      const yToPx = (v) => {
-        const t = (v - yMin) / (yMax - yMin);
-      return padT + (1 - t) * plotH;
-      };
-
-      // axes: zero line
-      const y0 = yToPx(0);
-      ctx.globalAlpha = 0.9;
-      ctx.strokeStyle = "rgba(255,255,255,.20)";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(padL, y0);
-      ctx.lineTo(padL + plotW, y0);
-      ctx.stroke();
-
-      // y ticks (3 lines: -max, 0, +max)
-      ctx.globalAlpha = 0.9;
-      ctx.fillStyle = "rgba(255,255,255,.65)";
-      ctx.font = "12px ui-sans-serif, system-ui";
-      const fmtY = opts?.yFmt || ((n)=> String(n));
-      const yTicks = [yMax, 0, yMin];
-      for(const yt of yTicks){
-        const py = yToPx(yt);
-        ctx.globalAlpha = 0.28;
-        ctx.strokeStyle = "rgba(255,255,255,.14)";
-        ctx.beginPath();
-        ctx.moveTo(padL, py);
-        ctx.lineTo(padL + plotW, py);
-        ctx.stroke();
-
-        ctx.globalAlpha = 0.85;
-        ctx.fillText(fmtY(yt), 8, py + 4);
-      }
-
-      // bars
-      for(let i=0;i<xCount;i++){
-        const v = Number(values[i] || 0);
-        const cx = xToPx(i);
-        const x0 = cx - barW/2;
-
-        const yA = yToPx(0);
-        const yB = yToPx(v);
-
-        const top = Math.min(yA, yB);
-        const h = Math.abs(yB - yA);
-
-       // choose color by sign (no hard change needed, keep consistent)
-        ctx.fillStyle = (v >= 0) ? "rgba(53,208,127,.75)" : "rgba(255,77,109,.75)";
-        ctx.globalAlpha = 1.0;
-        ctx.fillRect(x0, top, barW, Math.max(1, h));
-
-        // x labels (length)
-        ctx.globalAlpha = 0.80;
-        ctx.fillStyle = "rgba(255,255,255,.60)";
-        ctx.font = "12px ui-sans-serif, system-ui";
-        ctx.textAlign = "center";
-        ctx.fillText(String(labels[i]), cx, H - 10);
-        ctx.textAlign = "left";
-      }
-
-      // tooltip hitboxes
-      drawStreakBarChart._hit = { padL, padT, plotW, plotH, step, barW, xToPx, y0, labels, values };
-    }
-
-
-    
     function hide(){
       tooltip.style.display = "none";
       hoverIndex = null;
@@ -1823,18 +1832,6 @@ function computeScore(filteredTrades, tradeKPIs){
       renderCurve();
       renderDebug();
 
-
-      // Debug snapshot
-      $("debug").textContent = JSON.stringify({
-        meta,
-        latest_equity_row: latest,
-        kpis_full: kpis,
-        calendar_spine_days: spine.length,
-        spine_start: spine[0],
-        spine_end: spine[spine.length-1],
-        day_streak_dist: GLOBAL.dayStreakDist,
-      }, null, 2);
-
     } catch(err){
       $("subtitle").textContent = "Fehler beim Laden der Daten.";
       $("statusPill").textContent = "DATA: ERROR";
@@ -1859,6 +1856,7 @@ function computeScore(filteredTrades, tradeKPIs){
     GLOBAL.mode = "r";
     $("btnR").classList.add("active");
     $("btnEquity").classList.remove("active");
+    $("btnDD").classList.remove("active");
     $("btnStreaks").classList.remove("active");
     renderCurve();
   });
