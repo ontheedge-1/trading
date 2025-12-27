@@ -135,7 +135,7 @@ color:var(--txt);
 
     .desktop{
       display:grid;
-      grid-template-columns: 460px 1fr; /* links KPIs, rechts Chart */
+      grid-template-columns: 520px 1fr; /* links KPIs, rechts Chart */
       gap:14px;
       align-items:start;
     }
@@ -148,8 +148,8 @@ color:var(--txt);
 
     .kpiGrid{
       display:grid;
-      grid-template-columns: 1fr 1fr; /* 2 KPI-Spalten */
-      gap:14px;
+      grid-template-columns: 1fr; /* statement stack */
+      gap:12px;
     }
 
     .chartPanel{
@@ -447,14 +447,21 @@ color:var(--txt);
     }
 
     /* ===== END CALENDAR VIEW ===== */
-    /* ===== LAYOUT VARIANT V1: HERO SCORE TOP ===== */
+    /* ===== LAYOUT VARIANT V2: STATEMENT STACK ===== */
     .kpiPanel{ gap:12px; }
-    .scoreCard{ min-height: 160px; }
-    .scoreCard .v{ font-size:34px !important; }
-    .kpiGrid{ gap:12px; }
+    .kpiGrid .card{ padding:16px 16px 14px 16px; }
+    .kpiGrid .card::after{
+      content:"";
+      position:absolute;
+      left:0; top:12px; bottom:12px;
+      width:3px;
+      border-radius:3px;
+      background: linear-gradient(180deg, rgba(41,182,255,.92), rgba(45,107,255,.70));
+      opacity:.68;
+    }
     @media (min-width: 1000px){
+      canvas{ height: 460px; }
       .chartPanel{ position: sticky; top: 18px; }
-      canvas{ height: 420px; }
     }
 
 
@@ -491,8 +498,8 @@ color:var(--txt);
       <div class="desktop">
     <!-- LEFT: KPI tiles -->
     <div class="kpiPanel">
-      <div class="scoreCard card" id="scoreCard"></div>
       <div class="kpiGrid" id="kpiGrid"></div>
+      <div class="scoreCard card" id="scoreCard"></div>
     </div>
 
     <!-- RIGHT: Chart -->
