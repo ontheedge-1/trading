@@ -476,12 +476,6 @@
     if (p === null || p === undefined || Number.isNaN(Number(p))) return "—";
     return (Number(p) * 100).toFixed(2) + "%";
   };
-  const fmtR = (n) => {
-    if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
-    const x = Number(n);
-    const s = (Math.abs(x) >= 10 ? x.toFixed(1) : x.toFixed(2));
-    return `${s} R`;
-  };
 
   async function loadJSON(path){
     const res = await fetch(path, { cache: "no-store" });
