@@ -6,26 +6,53 @@
   <title>Trading Dashboard</title>
   <style>
     :root{
+      /* Base */
       --bg:#070b12;
       --panel:#0c1220;
       --txt:#dbe7ff;
       --muted:#8aa4d6;
+
+      /* Brand (A: Electric Blue / Ice) */
       --blue:#2d6bff;
       --blue2:#29b6ff;
+
+      /* States */
       --green:#35d07f;
       --red:#ff4d6d;
+
+      /* Emerald only for Strategy Score */
+      --emerald:#22c55e;
+      --emerald2:#34d399;
+
+      /* Surfaces */
       --border: rgba(120,160,255,.18);
+      --border2: rgba(120,160,255,.26);
+
+      /* Background glow */
+      --bgGlow:
+        radial-gradient(1200px 520px at 15% -10%, rgba(45,107,255,.22), transparent 62%),
+        radial-gradient(900px 480px at 85% 0%, rgba(41,182,255,.15), transparent 58%),
+        radial-gradient(700px 420px at 55% 110%, rgba(34,197,94,.10), transparent 55%);
+
+      /* Card surfaces */
+      --cardGrad: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.018));
+      --cardGradStrong: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
+
+      /* Shadows */
+      --shadow: 0 18px 44px rgba(0,0,0,.46);
+      --shadowSoft: 0 12px 28px rgba(0,0,0,.34);
+
+      /* Radii */
+      --rCard: 18px;
+      --rPill: 999px;
     }
-    body{
+body{
       margin:0;
-      background:
-        radial-gradient(1200px 500px at 20% -10%, rgba(45,107,255,.18), transparent 60%),
-        radial-gradient(900px 450px at 80% 0%, rgba(41,182,255,.12), transparent 55%),
-        var(--bg);
-      color:var(--txt);
+      background: var(--bgGlow), var(--bg);
+color:var(--txt);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
     }
-    .wrap{ max-width:1100px; margin:0 auto; padding:22px; }
+    .wrap{ max-width:1280px; margin:0 auto; padding:22px; }
     .top{
       display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:16px;
     }
@@ -37,16 +64,38 @@
       gap:14px;
     }
     .card{
+      position:relative;
       grid-column: span 4;
-      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+      background: var(--cardGrad);
       border: 1px solid var(--border);
-      border-radius:14px;
-      padding:14px 14px 12px 14px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      border-radius: var(--rCard);
+      padding: 14px 14px 12px 14px;
+      box-shadow: var(--shadowSoft);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease;
+      overflow:hidden;
+    }
+    .card::before{
+      content:"";
+      position:absolute;
+      inset:-1px;
+      border-radius: inherit;
+      pointer-events:none;
+      background:
+        radial-gradient(700px 260px at 18% 0%, rgba(45,107,255,.12), transparent 62%),
+        radial-gradient(520px 240px at 92% 16%, rgba(41,182,255,.10), transparent 58%);
+      opacity:.95;
+    }
+    .card:hover{
+      transform: translateY(-2px);
+      border-color: var(--border2);
+      box-shadow: var(--shadow);
+      background: linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.02));
     }
     .card.big{ grid-column: span 12; }
     .k{ color:var(--muted); font-size:12px; }
-    .v{ font-size:22px; font-weight:800; margin-top:6px; }
+    .v{ font-size:24px; font-weight:900; margin-top:6px; letter-spacing:.2px; }
     .row{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
     .pill{
       font-size:12px; padding:6px 10px; border-radius:999px;
@@ -86,7 +135,7 @@
 
     .desktop{
       display:grid;
-      grid-template-columns: 420px 1fr; /* links KPIs, rechts Chart */
+      grid-template-columns: 460px 1fr; /* links KPIs, rechts Chart */
       gap:14px;
       align-items:start;
     }
@@ -104,7 +153,11 @@
     }
 
     .chartPanel{
-      padding:14px;
+      padding:16px;
+      background:
+        radial-gradient(900px 360px at 30% 0%, rgba(41,182,255,.14), transparent 60%),
+        radial-gradient(700px 320px at 90% 20%, rgba(45,107,255,.10), transparent 55%),
+        var(--cardGradStrong);
     }
 
     .scoreCard{
@@ -112,14 +165,22 @@
       min-height: 120px;
     }
 
-    /* Risk & Sizing optisch hervorheben */
+    
+    /* Strategy Score = Emerald hero (only accent in UI) */
+    #scoreCard{
+      background:
+        radial-gradient(760px 260px at 22% 0%, rgba(34,197,94,.18), transparent 62%),
+        radial-gradient(520px 220px at 92% 16%, rgba(52,211,153,.12), transparent 58%),
+        var(--cardGradStrong);
+      border-color: rgba(34,197,94,.22);
+    }
+    #scoreCard:hover{ border-color: rgba(34,197,94,.36); }
+/* Risk & Sizing optisch hervorheben */
     .card.riskAccent{
-      background: linear-gradient(
-        180deg,
-        rgba(255,255,255,.06),
-        rgba(255,255,255,.02)
-      );
-      border-color: rgba(120,160,255,.28);
+      background:
+        radial-gradient(620px 240px at 22% 0%, rgba(45,107,255,.14), transparent 62%),
+        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
+      border-color: rgba(120,160,255,.32);
     }
 
     /* ===== END DESKTOP LAYOUT ===== */
@@ -132,35 +193,51 @@
     }
     .seg{
       display:inline-flex;
-      background: rgba(10,16,32,.55);
-      border: 1px solid var(--border);
-      border-radius: 999px;
+      background: rgba(10,16,32,.58);
+      border: 1px solid rgba(120,160,255,.20);
+      border-radius: var(--rPill);
       padding: 4px;
       gap: 4px;
+      box-shadow: 0 10px 24px rgba(0,0,0,.22) inset;
     }
     .seg button{
       appearance:none; border:0; cursor:pointer;
       background: transparent;
       color: #bcd2ff;
       padding: 8px 10px;
-      border-radius: 999px;
+      border-radius: var(--rPill);
       font-size: 12px;
-      font-weight: 700;
+      font-weight: 800;
       letter-spacing: .2px;
+      transition: background .15s ease, color .15s ease, transform .12s ease;
     }
+    .seg button:hover{ transform: translateY(-1px); }
     .seg button.active{
-      background: rgba(45,107,255,.22);
-      border: 1px solid rgba(45,107,255,.32);
+      background: linear-gradient(180deg, rgba(45,107,255,.30), rgba(41,182,255,.16));
+      border: 1px solid rgba(45,107,255,.34);
       color: #e7f0ff;
     }
     .chartWrap{
       position:relative;
-      border-radius:14px;
+      border-radius:16px;
       overflow:hidden;
       border: 1px solid var(--border);
-      background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+      background:
+        radial-gradient(900px 360px at 30% 0%, rgba(41,182,255,.14), transparent 62%),
+        radial-gradient(720px 320px at 90% 20%, rgba(45,107,255,.10), transparent 58%),
+        linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+      box-shadow: 0 18px 44px rgba(0,0,0,.35);
     }
-    canvas{ display:block; width:100%; height:360px; }
+    .chartWrap::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background: radial-gradient(620px 280px at 50% 0%, rgba(41,182,255,.10), transparent 60%);
+      mix-blend-mode: screen;
+      opacity:.65;
+    }
+    canvas{ display:block; width:100%; height:390px; }
     .tooltip{
       position:absolute;
       pointer-events:none;
@@ -1896,33 +1973,39 @@ function computeScore(filteredTrades, tradeKPIs){
       }
     }
 
-    // line
-    ctx.strokeStyle = "rgba(45,107,255,.95)";
-    ctx.lineWidth = 2;
+    // line (Ice glow)
+    const grad = ctx.createLinearGradient(0, padT, 0, padT + H);
+    grad.addColorStop(0, "rgba(41,182,255,.95)");
+    grad.addColorStop(1, "rgba(45,107,255,.92)");
+
+    // build path once
     ctx.beginPath();
-
-    let started = false;
-    function moveOrLine(x,y, first){
-      if(first) ctx.moveTo(x,y);
-      else ctx.lineTo(x,y);
-    }
-
     let first = true;
     for(let i=0;i<spine.length;i++){
       const v = values[i];
       if(!Number.isFinite(Number(v))) continue;
       const x = xFor(i);
       const y = yFor(Number(v));
-      if(first){
-        ctx.moveTo(x,y);
-        first = false;
-      } else {
-        ctx.lineTo(x,y);
-      }
+      if(first){ ctx.moveTo(x,y); first = false; }
+      else { ctx.lineTo(x,y); }
     }
-    ctx.stroke();
 
-    // hover interaction
+    // glow pass
+    ctx.save();
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 6;
+    ctx.globalAlpha = 0.22;
+    ctx.shadowBlur = 18;
+    ctx.shadowColor = "rgba(41,182,255,.65)";
+    ctx.stroke();
+    ctx.restore();
+
+    // main stroke
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 2.25;
+    ctx.globalAlpha = 0.98;
+    ctx.stroke();
+// hover interaction
     let hoverIndex = null;
 
     function showAt(clientX, clientY){
@@ -2011,7 +2094,7 @@ function computeScore(filteredTrades, tradeKPIs){
 
       ctx.beginPath();
       ctx.arc(c.vx, c.vy, 3.5, 0, Math.PI*2);
-      ctx.fillStyle = "rgba(231,240,255,.95)";
+      ctx.fillStyle = "rgba(207,232,255,.98)";
       ctx.fill();
     }
 
