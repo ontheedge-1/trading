@@ -190,6 +190,160 @@
       color:#cfe0ff;
       font-size:12px;
     }
+
+    /* ===== CALENDAR VIEW ===== */
+    .calendarWrap{
+      display:none;
+      border-radius:14px;
+      overflow:hidden;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+    }
+    .calHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:12px 12px 10px 12px;
+      border-bottom: 1px solid rgba(120,160,255,.14);
+      background: rgba(10,16,32,.35);
+    }
+    .calNav{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      min-width: 240px;
+    }
+    .iconBtn{
+      appearance:none;
+      border:1px solid rgba(120,160,255,.22);
+      background: rgba(255,255,255,.03);
+      color:#cfe0ff;
+      width:34px;
+      height:34px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:900;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      line-height:1;
+    }
+    .iconBtn:disabled{
+      opacity:.35;
+      cursor:default;
+    }
+    .calTitle{
+      font-weight:900;
+      letter-spacing:.2px;
+      white-space:nowrap;
+    }
+    .chipRow{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:6px;
+      flex-wrap:wrap;
+    }
+    .chip{
+      appearance:none;
+      border:1px solid rgba(120,160,255,.22);
+      background: rgba(255,255,255,.02);
+      color:#bcd2ff;
+      padding:7px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:800;
+      cursor:pointer;
+      line-height:1;
+    }
+    .chip.active{
+      background: rgba(45,107,255,.22);
+      border-color: rgba(45,107,255,.32);
+      color:#e7f0ff;
+    }
+    .calGrid{
+      display:grid;
+      grid-template-columns: repeat(7, 1fr);
+    }
+    .calDow{
+      padding:10px 10px 8px 10px;
+      font-size:11px;
+      color: rgba(138,164,214,.95);
+      border-bottom: 1px solid rgba(120,160,255,.10);
+      background: rgba(10,16,32,.25);
+      letter-spacing:.2px;
+      text-transform:uppercase;
+    }
+    .dayCell{
+      position:relative;
+      min-height:78px;
+      padding:10px;
+      border-right: 1px solid rgba(120,160,255,.10);
+      border-bottom: 1px solid rgba(120,160,255,.10);
+      background: rgba(255,255,255,.01);
+    }
+    .dayCell:nth-child(7n){
+      border-right:none;
+    }
+    .dayCell.outMonth{
+      background: rgba(255,255,255,.005);
+      opacity:.35;
+    }
+    .dayCell.outRange{
+      opacity:.32;
+      filter: grayscale(.2);
+    }
+    .dayTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:8px;
+      margin-bottom:8px;
+    }
+    .dayNum{
+      font-weight:900;
+      font-size:12px;
+      color:#e7f0ff;
+    }
+    .dayBadges{
+      display:flex;
+      gap:6px;
+      align-items:center;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+    }
+    .badge{
+      font-size:11px;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid rgba(120,160,255,.18);
+      background: rgba(255,255,255,.02);
+      color:#bcd2ff;
+      white-space:nowrap;
+    }
+    .badge.good{
+      border-color: rgba(53,208,127,.30);
+      background: rgba(53,208,127,.10);
+      color:#c8f7df;
+    }
+    .badge.bad{
+      border-color: rgba(255,77,109,.30);
+      background: rgba(255,77,109,.10);
+      color:#ffd1db;
+    }
+    .mini{
+      font-size:11px;
+      color: rgba(138,164,214,.92);
+      line-height:1.25;
+    }
+    .mini strong{
+      color:#e7f0ff;
+      font-weight:900;
+    }
+
+    /* ===== END CALENDAR VIEW ===== */
+
     @media (max-width: 900px){
       .card{ grid-column: span 12; }
       canvas{ height:300px; }
@@ -240,6 +394,7 @@
           <button id="btnR" type="button">Cum R</button>
           <button id="btnDD" type="button">DD (R)</button>
           <button id="btnStreaks" type="button">Streaks</button>
+          <button id="btnCal" type="button" title="Calendar">📅</button>
         </div>
 
 
@@ -249,6 +404,23 @@
         <canvas id="curveCanvas"></canvas>
         <div class="tooltip" id="tooltip"></div>
       </div>
+
+      <div class="calendarWrap" id="calendarWrap">
+        <div class="calHead">
+          <div class="calNav">
+            <button class="iconBtn" id="calPrev" type="button" aria-label="Previous month">‹</button>
+            <div>
+              <div class="calTitle" id="calTitle">—</div>
+              <div class="sub" id="calSub" style="margin-top:2px;">—</div>
+            </div>
+            <button class="iconBtn" id="calNext" type="button" aria-label="Next month">›</button>
+          </div>
+          <div class="chipRow" id="calChips"></div>
+        </div>
+
+        <div class="calGrid" id="calGrid"></div>
+      </div>
+
 
       <div class="hint">
         X-Achse: Kalendertage (Ticks am 1. &amp; 15.). Equity basiert auf Daily P/L (Broker-truth). R-Curve basiert auf Tages-Summe R (Trades only).
@@ -270,6 +442,12 @@
     if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
     return Number(n).toLocaleString("en-US", { style:"currency", currency:"USD" });
   };
+
+  const fmtUSD0 = (n) => {
+    if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
+    return Number(n).toLocaleString("en-US", { style:"currency", currency:"USD", maximumFractionDigits:0, minimumFractionDigits:0 });
+  };
+
   const fmtPct = (p) => {
     if (p === null || p === undefined || Number.isNaN(Number(p))) return "—";
     return (Number(p) * 100).toFixed(2) + "%";
@@ -951,6 +1129,18 @@ function computeScore(filteredTrades, tradeKPIs){
     // so we store a "spine used for chart" with duplicated first day:
     GLOBAL._chartSpine = cumWithBaseline.spine; // same structure as eqWithBaseline.spine
 
+    // ---- Calendar view maps (filter reactive) ----
+    const maps = buildDailyTradeMaps(GLOBAL.filteredTrades);
+    const pnlMap = buildDailyPnLMap(GLOBAL.dailyAgg || []);
+    const cumMap = buildCumRByDateOnView(GLOBAL.viewSpine, maps.sumR);
+
+    GLOBAL._calMaps = {
+      tradeCount: maps.count,
+      dailySumR: maps.sumR,
+      dailyPnL: pnlMap,
+      cumRByDate: cumMap
+    };
+
     GLOBAL.score = computeScore(GLOBAL.filteredTrades, GLOBAL.tradeKPIs);
 
 
@@ -1117,6 +1307,223 @@ function computeScore(filteredTrades, tradeKPIs){
     return x;
   }
   const MONTHS_DE = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+  const DOW_DE = ["Mo","Di","Mi","Do","Fr","Sa","So"];
+
+  function monthKeyFromISO(iso){ return String(iso).slice(0,7); } // "YYYY-MM"
+  function monthLabelFromKey(key){
+    const y = Number(key.slice(0,4));
+    const m = Number(key.slice(5,7));
+    const mon = MONTHS_DE[(m-1) || 0] || key;
+    return `${mon} ${y}`;
+  }
+  function firstDayOfMonthUTC(key){
+    const y = Number(key.slice(0,4));
+    const m = Number(key.slice(5,7));
+    return new Date(Date.UTC(y, (m||1)-1, 1));
+  }
+  function daysInMonthUTC(key){
+    const y = Number(key.slice(0,4));
+    const m = Number(key.slice(5,7));
+    const last = new Date(Date.UTC(y, (m||1), 0));
+    return last.getUTCDate();
+  }
+  function addMonthsKey(key, delta){
+    const y = Number(key.slice(0,4));
+    const m = Number(key.slice(5,7));
+    const dt = new Date(Date.UTC(y, (m-1), 1));
+    dt.setUTCMonth(dt.getUTCMonth() + delta);
+    const yy = dt.getUTCFullYear();
+    const mm = String(dt.getUTCMonth()+1).padStart(2,"0");
+    return `${yy}-${mm}`;
+  }
+
+  function computeAllowedMonths(dateStart, dateEnd, spine){
+    const s = dateStart || (spine?.[0] ?? null);
+    const e = dateEnd   || (spine?.at?.(-1) ?? null);
+    if(!s || !e) return [];
+
+    const out = [];
+    let cur = monthKeyFromISO(s);
+    const last = monthKeyFromISO(e);
+    while(cur <= last){
+      out.push(cur);
+      cur = addMonthsKey(cur, 1);
+    }
+    return out;
+  }
+
+  function buildDailyTradeMaps(trades){
+    const count = new Map(); // date -> n trades
+    const sumR = new Map();  // date -> daily sum R
+    for(const tr of (trades || [])){
+      const d = tr?.trade_date || tr?.date;
+      if(!d) continue;
+      const r = Number(tr?.result_r ?? tr?.r ?? 0);
+      if(!Number.isFinite(r)) continue;
+      count.set(d, (count.get(d) || 0) + 1);
+      sumR.set(d, (sumR.get(d) || 0) + r);
+    }
+    return { count, sumR };
+  }
+
+  function buildDailyPnLMap(dailyAggRows){
+    const map = new Map();
+    for(const row of (dailyAggRows || [])){
+      const d = row?.date;
+      if(!d) continue;
+      const pnl = (row.daily_pnl_$ ?? row.daily_pnl ?? row.dailyPnl ?? row.pnl ?? row.dailyPnL ?? null);
+      if(pnl === null || pnl === undefined) continue;
+      const x = Number(pnl);
+      if(!Number.isFinite(x)) continue;
+      map.set(d, x);
+    }
+    return map;
+  }
+
+  function buildCumRByDateOnView(viewSpine, dailySumRMap){
+    let cum = 0;
+    const out = new Map(); // date -> cumR at end of day
+    for(const d of (viewSpine || [])){
+      const r = Number(dailySumRMap.get(d) || 0);
+      cum += (Number.isFinite(r) ? r : 0);
+      out.set(d, cum);
+    }
+    return out;
+  }
+
+  function badgeClassFromValue(v){
+    const x = Number(v);
+    if(!Number.isFinite(x) || x === 0) return "";
+    return x > 0 ? "good" : "bad";
+  }
+
+  function renderCalendar(){
+    const wrap = $("calendarWrap");
+    const grid = $("calGrid");
+    if(!wrap || !grid) return;
+
+    const ds = GLOBAL.filters?.dateStart || null;
+    const de = GLOBAL.filters?.dateEnd   || null;
+
+    const allowedMonths = computeAllowedMonths(ds, de, GLOBAL.spine);
+    GLOBAL.calendar = GLOBAL.calendar || {};
+    GLOBAL.calendar.allowedMonths = allowedMonths;
+
+    const defaultMonth = monthKeyFromISO(de || (GLOBAL.spine?.at?.(-1) ?? isoToday()));
+    if(!GLOBAL.calendar.month || !allowedMonths.includes(GLOBAL.calendar.month)){
+      GLOBAL.calendar.month = allowedMonths.includes(defaultMonth) ? defaultMonth : (allowedMonths.at(-1) || defaultMonth);
+    }
+    const monthKey = GLOBAL.calendar.month;
+
+    $("calTitle").textContent = monthLabelFromKey(monthKey);
+    $("calSub").textContent = (ds || de)
+      ? `Range: ${ds || (GLOBAL.spine?.[0] ?? "—")} – ${de || (GLOBAL.spine?.at?.(-1) ?? "—")}`
+      : "Range: All";
+
+    const idx = allowedMonths.indexOf(monthKey);
+    const btnPrev = $("calPrev");
+    const btnNext = $("calNext");
+    if(btnPrev) btnPrev.disabled = (idx <= 0);
+    if(btnNext) btnNext.disabled = (idx < 0 || idx >= allowedMonths.length - 1);
+
+    const chips = $("calChips");
+    if(chips){
+      chips.innerHTML = "";
+      for(const mk of allowedMonths){
+        const b = document.createElement("button");
+        b.className = "chip" + (mk === monthKey ? " active" : "");
+        b.type = "button";
+        b.textContent = MONTHS_DE[Number(mk.slice(5,7))-1] || mk;
+        b.title = monthLabelFromKey(mk);
+        b.addEventListener("click", () => {
+          GLOBAL.calendar.month = mk;
+          renderCalendar();
+        });
+        chips.appendChild(b);
+      }
+    }
+
+    // Grid build (Mon–So)
+    const first = firstDayOfMonthUTC(monthKey);
+    const dim = daysInMonthUTC(monthKey);
+
+    // getUTCDay(): 0=Sun..6=Sat; convert to Mon=0..Sun=6
+    const dowSun0 = first.getUTCDay();
+    const dowMon0 = (dowSun0 + 6) % 7;
+
+    grid.innerHTML = "";
+
+    for(const d of DOW_DE){
+      const el = document.createElement("div");
+      el.className = "calDow";
+      el.textContent = d;
+      grid.appendChild(el);
+    }
+
+    const maps = GLOBAL._calMaps || {};
+    const tradeCount = maps.tradeCount || new Map();
+    const dailySumR = maps.dailySumR || new Map();
+    const dailyPnL = maps.dailyPnL || new Map();
+    const cumRByDate = maps.cumRByDate || new Map();
+
+    const instrumentNote = (GLOBAL.filters?.instrument && GLOBAL.filters.instrument !== "ALL");
+
+    for(let cell=0; cell<42; cell++){
+      const dayNum = (cell - dowMon0) + 1;
+      const inMonth = (dayNum >= 1 && dayNum <= dim);
+
+      const div = document.createElement("div");
+      div.className = "dayCell" + (inMonth ? "" : " outMonth");
+
+      if(inMonth){
+        const y = monthKey.slice(0,4);
+        const m = monthKey.slice(5,7);
+        const dd = String(dayNum).padStart(2,"0");
+        const iso = `${y}-${m}-${dd}`;
+
+        const inRange = (!ds || iso >= ds) && (!de || iso <= de);
+        if(!inRange) div.className += " outRange";
+
+        const nTrades = tradeCount.get(iso) || 0;
+        const dayR = Number(dailySumR.get(iso) || 0);
+        const cumR = Number(cumRByDate.get(iso) || 0);
+
+        const pnlRaw = dailyPnL.get(iso);
+        const pnl = (pnlRaw === undefined) ? null : Number(pnlRaw);
+
+        // badge classes
+        const pnlCls = badgeClassFromValue(pnl);
+        const rCls = badgeClassFromValue(dayR);
+
+        // decide primary color by PnL if available, else by dayR
+        const primaryCls = pnlCls || rCls;
+
+        div.innerHTML = `
+          <div class="dayTop">
+            <div class="dayNum">${dayNum}</div>
+            <div class="dayBadges">
+              <div class="badge">${nTrades}T</div>
+              <div class="badge ${primaryCls}">${(Number.isFinite(cumR) ? (cumR>=0?"+":"") + (Math.abs(cumR)>=10?cumR.toFixed(1):cumR.toFixed(2)) : "—")}R</div>
+              <div class="badge ${pnlCls}">${pnl === null ? "—" : fmtUSD0(pnl)}${instrumentNote ? "·A" : ""}</div>
+            </div>
+          </div>
+          <div class="mini">
+            <div>Daily R: <strong>${Number.isFinite(dayR) ? (dayR>=0?"+":"") + (Math.abs(dayR)>=10?dayR.toFixed(1):dayR.toFixed(2)) : "—"}</strong></div>
+            <div>Trades: <strong>${nTrades}</strong></div>
+          </div>
+        `;
+
+        if(instrumentNote){
+          div.title = "Hinweis: Daily PnL ist Account-wide (nicht instrument-spezifisch).";
+        }
+      } else {
+        div.innerHTML = `<div class="dayTop"><div class="dayNum"> </div></div>`;
+      }
+
+      grid.appendChild(div);
+    }
+  }
+
   function labelForTick(iso){
     const dt = parseISO(iso);
     const day = dt.getUTCDate();
@@ -1577,7 +1984,10 @@ function computeScore(filteredTrades, tradeKPIs){
     viewCumR:[],         // cumR sliced to viewSpine, rebased to 0 (+ baseline point)
     viewDD:[],           // drawdown (R) on viewCumR (<=0), incl baseline point
 
-    mode:"equity"
+    mode:"equity",
+
+    calendar: { month:null, allowedMonths: [] },
+    _calMaps: null
 
   };
 
@@ -1632,6 +2042,20 @@ function computeScore(filteredTrades, tradeKPIs){
   
   function renderCurve(withCrosshair=false){
   const canvas = $("curveCanvas");
+  const chartWrap = $("chartWrap");
+  const calWrap = $("calendarWrap");
+
+  if(GLOBAL.mode === "calendar"){
+    if(chartWrap) chartWrap.style.display = "none";
+    if(calWrap) calWrap.style.display = "block";
+    if($("tooltip")) $("tooltip").style.display = "none";
+    renderCalendar();
+    return;
+  } else {
+    if(chartWrap) chartWrap.style.display = "block";
+    if(calWrap) calWrap.style.display = "none";
+  }
+
 
   const spine = (GLOBAL._chartSpine && GLOBAL._chartSpine.length)
     ? GLOBAL._chartSpine
@@ -1841,6 +2265,32 @@ function computeScore(filteredTrades, tradeKPIs){
       // JETZT: spine existiert -> filter-derived series (CumR_F) korrekt berechnen
       recomputeAnalysis();
 
+      // Calendar nav wiring (once)
+      const prevBtn = $("calPrev");
+      const nextBtn = $("calNext");
+      if(prevBtn && !prevBtn._bound){
+        prevBtn._bound = true;
+        prevBtn.addEventListener("click", () => {
+          const months = GLOBAL.calendar?.allowedMonths || [];
+          const idx = months.indexOf(GLOBAL.calendar?.month);
+          if(idx > 0){
+            GLOBAL.calendar.month = months[idx-1];
+            renderCalendar();
+          }
+        });
+      }
+      if(nextBtn && !nextBtn._bound){
+        nextBtn._bound = true;
+        nextBtn.addEventListener("click", () => {
+          const months = GLOBAL.calendar?.allowedMonths || [];
+          const idx = months.indexOf(GLOBAL.calendar?.month);
+          if(idx >= 0 && idx < months.length-1){
+            GLOBAL.calendar.month = months[idx+1];
+            renderCalendar();
+          }
+        });
+      }
+
       renderKpiPanel(latest);
       renderCurve();
       renderDebug();
@@ -1863,7 +2313,8 @@ function computeScore(filteredTrades, tradeKPIs){
     $("btnR").classList.remove("active");
     $("btnDD").classList.remove("active");
     $("btnStreaks").classList.remove("active");
-    renderCurve();
+    $("btnCal").classList.remove("active");
+renderCurve();
   });
   $("btnR").addEventListener("click", () => {
     GLOBAL.mode = "r";
@@ -1871,7 +2322,8 @@ function computeScore(filteredTrades, tradeKPIs){
     $("btnEquity").classList.remove("active");
     $("btnDD").classList.remove("active");
     $("btnStreaks").classList.remove("active");
-    renderCurve();
+    $("btnCal").classList.remove("active");
+renderCurve();
   });
   $("btnDD").addEventListener("click", () => {
     GLOBAL.mode = "dd";
@@ -1879,7 +2331,8 @@ function computeScore(filteredTrades, tradeKPIs){
     $("btnEquity").classList.remove("active");
     $("btnR").classList.remove("active");
     $("btnStreaks").classList.remove("active");
-    renderCurve();
+    $("btnCal").classList.remove("active");
+renderCurve();
   });
   $("btnStreaks").addEventListener("click", () => {
     GLOBAL.mode = "streaks";
@@ -1887,6 +2340,17 @@ function computeScore(filteredTrades, tradeKPIs){
     $("btnEquity").classList.remove("active");
     $("btnR").classList.remove("active");
     $("btnDD").classList.remove("active");
+    $("btnCal").classList.remove("active");
+renderCurve();
+  });
+
+  $("btnCal").addEventListener("click", () => {
+    GLOBAL.mode = "calendar";
+    $("btnCal").classList.add("active");
+    $("btnEquity").classList.remove("active");
+    $("btnR").classList.remove("active");
+    $("btnDD").classList.remove("active");
+    $("btnStreaks").classList.remove("active");
     renderCurve();
   });
 
