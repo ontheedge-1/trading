@@ -413,7 +413,7 @@
       <div class="chartHead">
         <div>
           <div class="k">Chart</div>
-          <div class="v" style="font-size:16px; font-weight:800; margin-top:6px;" id="curveTitle">Equity Curve</div>
+          <div class="v" style="font-size:16px; font-weight:800; margin-top:6px;" id="curveTitle">Kalender</div>
           <div class="sub" id="curveSub">Daily (Calendar spine, carry-forward)</div>
         </div>
         <div class="seg" role="tablist" aria-label="Curve Toggle">
@@ -1171,13 +1171,21 @@ function computeScore(filteredTrades, tradeKPIs){
     // ---- Calendar view maps (filter reactive) ----
     const maps = buildDailyTradeMaps(GLOBAL.filteredTrades);
     const pnlMap = buildDailyPnLMap(GLOBAL.dailyAgg || []);
-    const cumMap = buildCumRByDateOnView(GLOBAL.viewSpine, maps.sumR);
+    const dailyRMap = buildDailyRMap(GLOBAL.dailyAgg || []);
+
+    let cum = 0;
+    const cumRByDate = new Map();
+    for(const d of GLOBAL.viewSpine){
+      const r = dailyRMap.get(d) || 0;
+      cum += r;
+      cumRByDate.set(d, cum);
+    }
 
     GLOBAL._calMaps = {
       tradeCount: maps.count,
-      dailySumR: maps.sumR,
       dailyPnL: pnlMap,
-      cumRByDate: cumMap
+      dailyR: dailyRMap,
+      cumRByDate
     };
 
     GLOBAL.score = computeScore(GLOBAL.filteredTrades, GLOBAL.tradeKPIs);
@@ -1405,6 +1413,16 @@ function computeScore(filteredTrades, tradeKPIs){
     return { count, sumR };
   }
 
+  function buildDailyRMap(dailyAggRows){
+    const map = new Map();
+    for(const row of (dailyAggRows || [])){
+      if(row?.date && Number.isFinite(row.daily_R)){
+        map.set(row.date, Number(row.daily_R));
+      }
+    }
+    return map;
+  }
+
   function buildDailyPnLMap(dailyAggRows){
     const map = new Map();
     for(const row of (dailyAggRows || [])){
@@ -1501,8 +1519,7 @@ function computeScore(filteredTrades, tradeKPIs){
 
     const maps = GLOBAL._calMaps || {};
     const tradeCount = maps.tradeCount || new Map();
-    const dailySumR = maps.dailySumR || new Map();
-    const dailyPnL = maps.dailyPnL || new Map();
+        const dailyPnL = maps.dailyPnL || new Map();
     const cumRByDate = maps.cumRByDate || new Map();
 
     const instrumentNote = (GLOBAL.filters?.instrument && GLOBAL.filters.instrument !== "ALL");
@@ -2051,7 +2068,8 @@ function computeScore(filteredTrades, tradeKPIs){
   function bindStreakTooltip(){
     const wrap = $("chartWrap");
     const tip = $("tooltip");
-    const canvas = $("curveCanvas");
+    updateChartHeader();
+  const canvas = $("curveCanvas");
     if(!wrap || !tip || !canvas) return;
 
     // avoid multiple bindings
@@ -2096,7 +2114,39 @@ function computeScore(filteredTrades, tradeKPIs){
 
 
   
+
+  function updateChartHeader(){
+    const title = $("chartTitle");
+    const sub = $("chartSub");
+    if(!title || !sub) return;
+
+    switch(GLOBAL.mode){
+      case "equity":
+        title.textContent = "Equity Curve";
+        sub.textContent = "Daily (Calendar spine, carry-forward) · Source: Daily_Adjustments";
+        break;
+      case "r":
+        title.textContent = "Cumulative R";
+        sub.textContent = "Daily cumulative R based on closed trading days";
+        break;
+      case "dd":
+        title.textContent = "Drawdown (R)";
+        sub.textContent = "Peak-to-trough drawdown in R";
+        break;
+      case "streaks":
+        title.textContent = "Streaks";
+        sub.textContent = "Winning and losing streak distribution";
+        break;
+      case "calendar":
+        title.textContent = "Kalender";
+        sub.textContent = "Daily Trading Performance · Mo–Fr";
+        break;
+    }
+  }
+
+
   function renderCurve(withCrosshair=false){
+  updateChartHeader();
   const canvas = $("curveCanvas");
   const chartWrap = $("chartWrap");
   const calWrap = $("calendarWrap");
@@ -2151,7 +2201,7 @@ function computeScore(filteredTrades, tradeKPIs){
 
     $("curveSub").textContent =
       (mode === "equity")
-        ? "Daily (Calendar spine, carry-forward) · Source: Daily_Adjustments"
+        ? "<span id="chartSub">Daily (Calendar spine, carry-forward) · Source: Daily_Adjustments</span>"
         : (mode === "r")
           ? "Daily (Calendar spine) · Source: Trades (daily R summed, rebased, then cumulative)"
           : (mode === "dd")
