@@ -135,7 +135,7 @@ color:var(--txt);
 
     .desktop{
       display:grid;
-      grid-template-columns: 520px 1fr; /* links KPIs, rechts Chart */
+      grid-template-columns: 460px 1fr; /* links KPIs, rechts Chart */
       gap:14px;
       align-items:start;
     }
@@ -148,8 +148,8 @@ color:var(--txt);
 
     .kpiGrid{
       display:grid;
-      grid-template-columns: 1fr; /* statement stack */
-      gap:12px;
+      grid-template-columns: 1fr 1fr; /* 2 KPI-Spalten */
+      gap:14px;
     }
 
     .chartPanel{
@@ -447,20 +447,29 @@ color:var(--txt);
     }
 
     /* ===== END CALENDAR VIEW ===== */
-    /* ===== LAYOUT VARIANT V2: STATEMENT STACK ===== */
+    /* ===== LAYOUT VARIANT V3: BALANCED HERO ROW ===== */
     .kpiPanel{ gap:12px; }
+    .kpiGrid{ gap:12px; }
     .kpiGrid .card{ padding:16px 16px 14px 16px; }
-    .kpiGrid .card::after{
+    .kpiGrid .card:nth-child(1),
+    .kpiGrid .card:nth-child(2){
+      grid-column: 1 / -1;
+      background: linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.02));
+    }
+    .kpiGrid .card:nth-child(1)::after,
+    .kpiGrid .card:nth-child(2)::after{
       content:"";
       position:absolute;
-      left:0; top:12px; bottom:12px;
-      width:3px;
-      border-radius:3px;
-      background: linear-gradient(180deg, rgba(41,182,255,.92), rgba(45,107,255,.70));
-      opacity:.68;
+      inset:0;
+      pointer-events:none;
+      border-radius: inherit;
+      background:
+        radial-gradient(760px 240px at 18% 0%, rgba(41,182,255,.14), transparent 62%),
+        radial-gradient(520px 220px at 92% 16%, rgba(45,107,255,.10), transparent 58%);
+      opacity:.9;
     }
     @media (min-width: 1000px){
-      canvas{ height: 460px; }
+      canvas{ height: 440px; }
       .chartPanel{ position: sticky; top: 18px; }
     }
 
