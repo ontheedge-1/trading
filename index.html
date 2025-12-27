@@ -1520,6 +1520,7 @@ function computeScore(filteredTrades, tradeKPIs){
     const maps = GLOBAL._calMaps || {};
     const tradeCount = maps.tradeCount || new Map();
         const dailyPnL = maps.dailyPnL || new Map();
+    const dailyR = maps.dailyR || new Map();
     const cumRByDate = maps.cumRByDate || new Map();
 
     const instrumentNote = (GLOBAL.filters?.instrument && GLOBAL.filters.instrument !== "ALL");
@@ -1562,12 +1563,14 @@ function computeScore(filteredTrades, tradeKPIs){
         if(!inRange) div.className += " outRange";
 
         const nTrades = tradeCount.get(iso) || 0;
+        const dayRraw = dailyR.get(iso);
+        const dayR = (dayRraw === undefined) ? null : Number(dayRraw);
         const cumR = Number(cumRByDate.get(iso) || 0);
 
         const pnlRaw = dailyPnL.get(iso);
         const pnl = (pnlRaw === undefined) ? null : Number(pnlRaw);
 
-        const hasAnyData = (nTrades > 0) || (pnlRaw !== undefined);
+        const hasAnyData = (nTrades > 0) || (pnlRaw !== undefined) || (dayRraw !== undefined);
 
         // COLOR ONLY by Daily PnL
         const pnlCls = badgeClassFromValue(pnl);
@@ -1579,7 +1582,7 @@ function computeScore(filteredTrades, tradeKPIs){
             ${hasAnyData ? `
             <div class="dayBadges">
               ${nTrades > 0 ? `<div class="badge round">${nTrades}T</div>` : ``}
-              <div class="badge">${Number.isFinite(cumR) ? fmtCumR(cumR) : "—"}</div>
+              ${dayR === null ? `` : `<div class="badge">${Number.isFinite(dayR) ? fmtCumR(dayR) : "—"}</div>`}
               ${pnl === null ? `` : `<div class="badge ${pnlCls}">${fmtUSD0(pnl)}${instrumentNote ? "·A" : ""}</div>`}
             </div>` : ``}
           </div>
@@ -2160,10 +2163,11 @@ function computeScore(filteredTrades, tradeKPIs){
 
     $("curveTitle").textContent =
       (mode === "equity")    ? "Equity Curve" :
-      (mode === "r")         ? "Cumulative R Curve" :
+      (mode === "r")         ? "Cumulative R" :
       (mode === "dd")        ? "Drawdown (R)" :
-      (mode === "streaks")   ? "Streak Frequency (Days)" :
-      "Kalender";
+      (mode === "streaks")   ? "Streaks" :
+      (mode === "calendar")  ? "Kalender" :
+      "";
 
     $("curveSub").textContent =
       (mode === "equity")
@@ -2173,8 +2177,11 @@ function computeScore(filteredTrades, tradeKPIs){
           : (mode === "dd")
             ? "Peak-to-trough drawdown in R"
             : (mode === "streaks")
-              ? "X = streak length (days). Y = frequency. Win...s above 0, Losses below 0. Flats break. Inactive days ignored."
-              : "Daily Trading Performance · Mo–Fr";
+              ? "Winning and losing streaks"
+              : (mode === "calendar")
+                ? "Daily Trading Performance · Mo–Fr"
+                : "";
+
 
 
 
