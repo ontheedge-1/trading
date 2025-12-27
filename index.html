@@ -1216,7 +1216,7 @@ function computeScore(filteredTrades, tradeKPIs){
   
   // ---- Canvas chart (simple, performant) ----
 
-    function drawStreakBarChart(canvas, labels, values, opts){
+    function drawStreakBarChart(canvas, labels, wins, losses, opts){
       const ctx = canvas.getContext("2d");
 
       // size
@@ -1242,16 +1242,19 @@ function computeScore(filteredTrades, tradeKPIs){
 
       // determine y range (sym around 0 for nice look)
       let maxAbs = 1;
-      for(const v of (values || [])){
-        const x = Math.abs(Number(v) || 0);
-        if(x > maxAbs) maxAbs = x;
+      for(let i=0;i<(labels||[]).length;i++){
+        const w = Math.abs(Number(wins?.[i] || 0));
+        const l = Math.abs(Number(losses?.[i] || 0));
+        if(w > maxAbs) maxAbs = w;
+        if(l > maxAbs) maxAbs = l;
       }
+
       const yMax = maxAbs;
       const yMin = -maxAbs;
 
       const xCount = (labels || []).length;
       const step = xCount ? (plotW / xCount) : plotW;
-      const barW = Math.max(6, Math.min(26, step * 0.60));
+      const barW = Math.max(12, Math.min(step * 0.92, 90));
 
       const xToPx = (i) => padL + i * step + step/2;
       const yToPx = (v) => {
@@ -1290,22 +1293,33 @@ function computeScore(filteredTrades, tradeKPIs){
 
       // bars
       for(let i=0;i<xCount;i++){
-        const v = Number(values[i] || 0);
+        const w = Number(wins?.[i] || 0);      // >= 0
+        const l = Number(losses?.[i] || 0);    // >= 0 (we'll draw negative)
+
         const cx = xToPx(i);
         const x0 = cx - barW/2;
 
-        const yA = yToPx(0);
-        const yB = yToPx(v);
+        // Win bar (up)
+        if(w > 0){
+          const yA = yToPx(0);
+          const yB = yToPx(w);
+          const top = Math.min(yA, yB);
+          const h = Math.abs(yB - yA);
+          ctx.fillStyle = "rgba(53,208,127,.75)";
+          ctx.fillRect(x0, top, barW, Math.max(1, h));
+        }
 
-        const top = Math.min(yA, yB);
-        const h = Math.abs(yB - yA);
+        // Loss bar (down)
+        if(l > 0){
+          const yA = yToPx(0);
+          const yB = yToPx(-l);
+          const top = Math.min(yA, yB);
+          const h = Math.abs(yB - yA);
+          ctx.fillStyle = "rgba(255,77,109,.75)";
+          ctx.fillRect(x0, top, barW, Math.max(1, h));
+        }
 
-       // choose color by sign (no hard change needed, keep consistent)
-        ctx.fillStyle = (v >= 0) ? "rgba(53,208,127,.75)" : "rgba(255,77,109,.75)";
-        ctx.globalAlpha = 1.0;
-        ctx.fillRect(x0, top, barW, Math.max(1, h));
-
-        // x labels (length)
+        // x label
         ctx.globalAlpha = 0.80;
         ctx.fillStyle = "rgba(255,255,255,.60)";
         ctx.font = "12px ui-sans-serif, system-ui";
@@ -1314,11 +1328,10 @@ function computeScore(filteredTrades, tradeKPIs){
         ctx.textAlign = "left";
       }
 
+
       // tooltip hitboxes
-      drawStreakBarChart._hit = { padL, padT, plotW, plotH, step, barW, xToPx, y0, labels, values };
+      drawStreakBarChart._hit = { padL, padT, plotW, plotH, step, barW, xToPx, y0, labels, wins, losses };
    }
-
-
 
   
   function drawLineChart(canvas, spine, values, opts){
@@ -1595,9 +1608,9 @@ function computeScore(filteredTrades, tradeKPIs){
       }
 
       const len = hit.labels[i];
-      const v = Number(hit.values[i] || 0);
-      const winCount = (v > 0) ? v : 0;
-      const lossCount = (v < 0) ? Math.abs(v) : 0;
+      const winCount = Number(hit.wins?.[i] || 0);
+      const lossCount = Number(hit.losses?.[i] || 0);
+
 
       tip.style.display = "block";
       tip.style.left = `${Math.min(rect.width - 160, Math.max(10, x + 12))}px`;
@@ -1686,27 +1699,27 @@ function computeScore(filteredTrades, tradeKPIs){
       const maxLen = dist.maxLen || 0;
 
       const labels = [];
-      const vals = [];
+      const wins = [];
+      const losses = [];
 
       for(let L=1; L<=maxLen; L++){
-        const w = Number(dist.winFreq?.[L] || 0);
-        const l = Number(dist.lossFreq?.[L] || 0);
         labels.push(L);
-        vals.push(w - l); // BUT we need negative for losses, not net
+        wins.push(Number(dist.winFreq?.[L] || 0));
+        losses.push(Number(dist.lossFreq?.[L] || 0));
       }
 
-      // IMPORTANT: we want separate bars: win positive, loss negative.
-      // Build as (winCount) + (-lossCount)
-      for(let i=0;i<vals.length;i++){
-        const L = labels[i];
-        const w = Number(dist.winFreq?.[L] || 0);
-        const l = Number(dist.lossFreq?.[L] || 0);
-        vals[i] = w + (-l);
-      }
+      // disable line-chart hover handlers (Fix 1)
+      canvas.onmousemove = null;
+      canvas.onmouseleave = null;
+      canvas.ontouchstart = null;
+      canvas.ontouchmove = null;
+      canvas.ontouchend = null;
+      drawLineChart._lastCrosshair = null;
 
-      drawStreakBarChart(canvas, labels, vals, {
+      drawStreakBarChart(canvas, labels, wins, losses, {
         yFmt: (n) => String(Math.trunc(n))
       });
+
 
       bindStreakTooltip();
       if($("tooltip")) $("tooltip").style.display = "none";
