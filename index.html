@@ -663,6 +663,42 @@ background: var(--cardGrad);
     }
     #scoreCard .scoreStats .dot{ opacity:.65; font-weight:900; }
 
+
+    /* === Topbar Instrument Select (blue bg, white text) === */
+    .topbar .select{
+      appearance:none;
+      -webkit-appearance:none;
+      -moz-appearance:none;
+      background: linear-gradient(180deg, rgba(52,110,204,.55), rgba(18,46,92,.55));
+      color: rgba(240,248,255,.92);
+      border: 1px solid rgba(120,170,255,.28);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.10), 0 10px 26px rgba(0,0,0,.28);
+      padding: 8px 34px 8px 12px;
+      border-radius: 12px;
+      font-weight: 700;
+      letter-spacing: .01em;
+    }
+    .topbar .select:focus{
+      outline: none;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.10), 0 0 0 3px rgba(120,170,255,.18), 0 14px 34px rgba(0,0,0,.32);
+      border-color: rgba(120,170,255,.42);
+    }
+    /* custom caret */
+    .topbar .selectWrap{ position: relative; }
+    .topbar .selectWrap::after{
+      content:"";
+      position:absolute;
+      right:12px;
+      top:50%;
+      width:0;height:0;
+      border-left:6px solid transparent;
+      border-right:6px solid transparent;
+      border-top:7px solid rgba(230,243,255,.80);
+      transform: translateY(-35%);
+      pointer-events:none;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,.25));
+    }
+
 </style>
  </head>
 <body>
@@ -672,9 +708,9 @@ background: var(--cardGrad);
     <div class="title">Trading Dashboard</div>
 
     <div id="filtersBar" class="filters">
-      <select id="fInstrument" class="select">
+      <div class="selectWrap"><select id="fInstrument" class="select">
         <option value="ALL">Instr. | All</option>
-      </select>
+      </select></div>
 
       <div class="seg">
         <button data-preset="30D">30D</button>
@@ -2578,8 +2614,8 @@ scoreEl.title =
 
       // Stand tooltip on DATA: OK
       const asOfVal = (meta && (meta.as_of || meta.asOf || meta.date || meta.latest_date)) || "";
-      const ok = $("dataOk");
-      if(ok) ok.title = asOfVal ? `Stand: ${asOfVal}` : "";
+      const ok = const ok = $("dataOk");
+      if (ok) ok.title = asOfVal ? `Stand: ${asOfVal}` : "";
 GLOBAL.meta = meta;
       GLOBAL.equity = equity;
       GLOBAL.dailyAgg = dailyAgg;
