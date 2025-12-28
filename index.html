@@ -749,6 +749,40 @@ background: var(--cardGrad);
       .topbarRight{ justify-content:flex-start; }
     }
 
+
+    /* ===== Score color variants (glow depends on label) ===== */
+    .scoreCard{ --glow: rgba(151,255,198,.38); }
+    .scoreCard.score-strong{ --glow: rgba(151,255,198,.44); }
+    .scoreCard.score-good,
+    .scoreCard.score-ok,
+    .scoreCard.score-average{ --glow: rgba(120,170,255,.34); }
+    .scoreCard.score-weak{ --glow: rgba(255,150,95,.38); }
+    .scoreCard.score-poor{ --glow: rgba(255,105,125,.40); }
+
+    .scoreCard::before{
+      background:
+        radial-gradient(560px 240px at 50% 14%, var(--glow), transparent 68%),
+        radial-gradient(900px 520px at 50% 110%, rgba(0,0,0,0), rgba(0,0,0,.55));
+      opacity: 1;
+    }
+    .scoreCard{
+      box-shadow:
+        0 22px 60px rgba(0,0,0,.40),
+        0 0 0 1px rgba(255,255,255,.03) inset,
+        0 0 60px rgba(0,0,0,.25);
+    }
+    .scorePill{
+      border-color: color-mix(in srgb, var(--glow) 50%, rgba(255,255,255,.18));
+      background:
+        radial-gradient(560px 140px at 50% 0%, color-mix(in srgb, var(--glow) 65%, rgba(255,255,255,.08)), transparent 62%),
+        linear-gradient(180deg, color-mix(in srgb, var(--glow) 55%, rgba(0,0,0,.0)), rgba(255,255,255,.06));
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.12),
+        0 18px 44px rgba(0,0,0,.32),
+        0 0 26px color-mix(in srgb, var(--glow) 55%, transparent);
+      padding: 12px 16px; /* keep "hoch" */
+    }
+
 </style>
  </head>
 <body>
@@ -1288,7 +1322,20 @@ function computeScore(filteredTrades, tradeKPIs){
     score = clamp(score, 0, 100);
 
     const label = labelFromScore(score);
-    const color = colorFromScore(score);
+    
+      // Score color class on hero card
+      scoreEl.classList.remove("score-strong","score-good","score-ok","score-average","score-weak","score-poor");
+      const _lab = String(label || "").toLowerCase();
+      const cls =
+        _lab.includes("strong") ? "score-strong" :
+        (_lab.includes("good") || _lab.includes("excellent")) ? "score-good" :
+        (_lab.includes("ok") || _lab.includes("neutral")) ? "score-ok" :
+        _lab.includes("average") ? "score-average" :
+        (_lab.includes("weak") || _lab.includes("bad")) ? "score-weak" :
+        (_lab.includes("poor") || _lab.includes("terrible")) ? "score-poor" :
+        "";
+      if(cls) scoreEl.classList.add(cls);
+const color = colorFromScore(score);
 
     return {
       nTrades: n,
@@ -2791,17 +2838,6 @@ GLOBAL.meta = meta;
 
       renderKpiPanel(latest);
       renderCurve();
-      
-      // ===== Layout sync: make chart panel height match KPI panel (prevents chart being taller) =====
-      const syncPanelHeights = () => {
-        const kpi = document.querySelector(".kpiPanel");
-        const chart = document.querySelector("#chartPanel");
-        if(!kpi || !chart) return;
-        const h = kpi.getBoundingClientRect().height;
-        if(h > 0) chart.style.height = `${Math.round(h)}px`;
-      };
-      syncPanelHeights();
-      window.addEventListener("resize", syncPanelHeights, { passive:true });
 renderDebug();
 
     } catch(err){
