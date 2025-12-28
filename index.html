@@ -770,6 +770,52 @@ background: var(--cardGrad);
       align-items:baseline;
     }
 
+
+/* ===== Phase 2 – Premium KPI Cards (Equity + Next Trade Size only) ===== */
+.card.kpi-premium{
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.012));
+  border: 1px solid rgba(130,170,255,.22);
+  box-shadow:
+    0 22px 46px rgba(0,0,0,.34),
+    inset 0 1px 0 rgba(255,255,255,.08);
+  padding: 16px 16px 14px 16px;
+}
+
+.card.kpi-premium.ice{
+  --accent: rgba(120,170,255,.45);
+}
+
+.card.kpi-premium .kTitle{
+  font-size: 12px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgba(200,220,255,.75);
+  margin-bottom: 10px;
+}
+
+.card.kpi-premium .kValue{
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: .02em;
+  color: #eef4ff;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+
+.card.kpi-premium .kValue .unit{
+  font-size: 18px;
+  opacity: .85;
+  margin-left: 2px;
+}
+
+.card.kpi-premium .kMeta{
+  margin-top: 8px;
+  font-size: 12px;
+  color: rgba(190,210,255,.7);
+  line-height: 1.45;
+}
+
 </style>
  </head>
 <body>
@@ -1626,6 +1672,7 @@ function computeScore(filteredTrades, tradeKPIs){
     const tiles = [
       {
         title: "Equity",
+        cardClass: "kpi-premium ice",
         main: fmtUSD(latestEquityRow?.cash_equity_$),
         sub1: `ATH: ${fmtUSD(latestEquityRow?.ath_$)}`,
         sub2: `DD: <span class="${ddClass}">${fmtPct1(dd)}</span>`,
@@ -1633,6 +1680,7 @@ function computeScore(filteredTrades, tradeKPIs){
       },
       {
         title: "Next Trade Size",
+        cardClass: "kpi-premium ice",
         main: fmtUSD(risk$),
         sub1: `Tier: ${latestEquityRow?.dd_tier ?? "—"}`,
         sub2: `Mult: ${latestEquityRow?.dd_multiplier ?? "—"}`,
