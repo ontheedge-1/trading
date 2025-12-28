@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Trading Dashboard V1</title>
+  <title>Trading Dashboard</title>
   <style>
     :root{
       /* Base */
@@ -48,13 +48,11 @@
     }
 body{
       margin:0;
-      background:
-        radial-gradient(1200px 520px at 50% -10%, rgba(255,0,90,.08), transparent 62%),
-        var(--bgGlow), var(--bg);
+      background: var(--bgGlow), var(--bg);
 color:var(--txt);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
     }
-    .wrap{ max-width:1400px; margin:0 auto; padding:22px; }
+    .wrap{ max-width:1280px; margin:0 auto; padding:22px; }
     .top{
       display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:16px;
     }
@@ -141,7 +139,7 @@ background: var(--cardGrad);
 
     .desktop{
       display:grid;
-      grid-template-columns: 520px 1fr; /* links KPIs, rechts Chart */
+      grid-template-columns: 460px 1fr; /* links KPIs, rechts Chart */
       gap:14px;
       align-items:start;
     }
@@ -453,39 +451,11 @@ background: var(--cardGrad);
     }
 
     /* ===== END CALENDAR VIEW ===== */
-    .variantTag{
-      display:inline-flex;
-      margin-left:10px;
-      padding:6px 10px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:900;
-      letter-spacing:.3px;
-      color:#e7f0ff;
-      border:1px solid rgba(120,160,255,.28);
-      background: linear-gradient(180deg, rgba(45,107,255,.24), rgba(41,182,255,.12));
-      vertical-align:middle;
-    }
-
-    /* Stack later (keep chart beside tiles on typical desktop widths) */
-    @media (max-width: 1050px){
-      .desktop{ grid-template-columns: 1fr; }
-      .chartPanel{ position: static; }
-    }
-
-    /* ===== V1: HERO SCORE TOP + STICKY CHART ===== */
-    .kpiPanel{ gap:12px; }
-    .scoreCard{ min-height: 180px; }
-    @media (min-width: 1100px){
-      .chartPanel{ position: sticky; top: 18px; }
-      canvas{ height: 440px; }
-    }
     /* Statement polish */
     .k{ font-size:12px; letter-spacing:.25px; text-transform: none; }
     .kpiGrid .card .k{ color: rgba(170,200,255,.92); }
     .kpiGrid .card .v{ font-size:26px; }
     .kpiGrid .card{ box-shadow: 0 14px 34px rgba(0,0,0,.40); }
-
 
 
     @media (max-width: 900px){
@@ -495,22 +465,11 @@ background: var(--cardGrad);
   </style>
  </head>
 <body>
-
-  <div id="__variantDebugBanner" style="
-    position:fixed; left:14px; bottom:14px; z-index:9999;
-    padding:10px 12px; border-radius:12px;
-    background: rgba(255,0,90,.22);
-    border: 1px solid rgba(255,0,90,.45);
-    color:#fff; font-weight:900; letter-spacing:.3px;
-    box-shadow: 0 18px 44px rgba(0,0,0,.45);
-    backdrop-filter: blur(10px);
-  ">LOADED: V1 (DEBUG)</div>
-
    <div class="wrap">
      <div class="top">
       <div>
-         <div class="title">Trading Dashboard <span class="variantTag">V1</span></div>
-         <div class="sub" id="subtitle">Lade Daten… · Layout: Hero Score Top</div>
+         <div class="title">Trading Dashboard</div>
+         <div class="sub" id="subtitle">Lade Daten…</div>
        </div>
          <div class="filters" id="filtersBar">
           <select id="fInstrument" class="input">
@@ -532,8 +491,8 @@ background: var(--cardGrad);
       <div class="desktop">
     <!-- LEFT: KPI tiles -->
     <div class="kpiPanel">
-      <div class="scoreCard card" id="scoreCard"></div>
       <div class="kpiGrid" id="kpiGrid"></div>
+      <div class="scoreCard card" id="scoreCard"></div>
     </div>
 
     <!-- RIGHT: Chart -->
@@ -2372,7 +2331,6 @@ function computeScore(filteredTrades, tradeKPIs){
   }
 
   async function main(){
-    console.log("[DASHBOARD] LOADED VARIANT: V1 DEBUG");
     try{
       const [meta, equity, dailyAgg, kpis, trades] = await Promise.all([
         loadJSON("data/meta.json"),
