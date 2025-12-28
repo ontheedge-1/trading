@@ -73,7 +73,7 @@ color:var(--txt);
       margin:0;
     }
     .title{ font-size:28px; font-weight:800; letter-spacing:.2px; }
-    .sub{ display:none; }
+    .sub{ color: var(--muted); font-size: 12px; }
     .statusPills{
       display:flex;
       align-items:center;
@@ -587,36 +587,27 @@ background: var(--cardGrad);
    <div class="wrap">
      <div class="topbarBand">
   <div class="top">
-    <div>
-      <div class="title">Trading Dashboard</div>
-      <div class="sub" id="subtitle"></div>
-    </div>
+    <div class="title">Trading Dashboard</div>
 
-    <div class="filters">
-      <select id="instrSel" class="select">
+    <div id="filtersBar" class="filters">
+      <select id="fInstrument" class="select">
         <option value="ALL">Instr. | All</option>
       </select>
-      <div class="seg" id="rangeSeg">
-        <button data-range="30D">30D</button>
-        <button data-range="90D">90D</button>
-        <button data-range="180D">180D</button>
-        <button data-range="YTD">YTD</button>
-        <button data-range="ALL" class="active">All</button>
+
+      <div class="seg">
+        <button data-preset="30D">30D</button>
+        <button data-preset="90D">90D</button>
+        <button data-preset="180D">180D</button>
+        <button data-preset="YTD">YTD</button>
+        <button data-preset="ALL" class="active">All</button>
       </div>
     </div>
 
-    <div class="statusPills">
-<div class="badge ok" id="dataOk">DATA: OK</div>
-    </div>
+    <div class="badge ok" id="dataOk">DATA: OK</div>
   </div>
 </div>
-         <div class="sub" id="subtitle">Lade Daten…</div>
-       </div>
-         </div>
 
-       </div>
-
-      <div class="desktop">
+<div class="desktop">
     <!-- LEFT: KPI tiles -->
     <div class="kpiPanel">
       <div class="kpiGrid" id="kpiGrid"></div>
@@ -682,7 +673,7 @@ background: var(--cardGrad);
       <div class="k" style="margin:10px 0 8px;">Debug (raw snapshot)</div>
       <pre id="debug">…</pre>
     </div>
-  </div>
+  
 
 <script>
   
@@ -2698,5 +2689,7 @@ renderCurve();
 
   main();
 </script>
+
+</div>
 </body>
 </html>
