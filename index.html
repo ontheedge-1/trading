@@ -773,47 +773,56 @@ background: var(--cardGrad);
 
 /* ===== Phase 2 – Premium KPI Cards (Equity + Next Trade Size only) ===== */
 .card.kpi-premium{
+  --iceA: rgba(120,170,255,.55);
+  --iceB: rgba(120,170,255,.18);
   background:
-    linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.012));
-  border: 1px solid rgba(130,170,255,.22);
+    radial-gradient(120% 120% at 20% 12%, rgba(140,190,255,.16), rgba(0,0,0,0) 60%),
+    linear-gradient(180deg, rgba(255,255,255,.040), rgba(255,255,255,.014));
+  border: 1px solid rgba(140,190,255,.26);
   box-shadow:
-    0 22px 46px rgba(0,0,0,.34),
-    inset 0 1px 0 rgba(255,255,255,.08);
-  padding: 16px 16px 14px 16px;
+    0 22px 46px rgba(0,0,0,.36),
+    0 0 0 1px rgba(0,0,0,.18) inset,
+    inset 0 1px 0 rgba(255,255,255,.10);
+  padding: 16px 18px 14px 18px;
 }
 
-.card.kpi-premium.ice{
-  --accent: rgba(120,170,255,.45);
+.card.kpi-premium:before{
+  content:"";
+  position:absolute;
+  inset:-1px;
+  border-radius: inherit;
+  pointer-events:none;
+  background: radial-gradient(70% 55% at 35% 0%, rgba(140,190,255,.22), rgba(0,0,0,0) 65%);
+  opacity:.9;
+  mix-blend-mode: screen;
 }
 
-.card.kpi-premium .kTitle{
+.card.kpi-premium .k{
   font-size: 12px;
-  letter-spacing: .12em;
+  letter-spacing: .14em;
   text-transform: uppercase;
-  color: rgba(200,220,255,.75);
+  color: rgba(205,225,255,.82);
   margin-bottom: 10px;
 }
 
-.card.kpi-premium .kValue{
-  font-size: 32px;
+.card.kpi-premium .v{
+  font-size: 34px;
   font-weight: 900;
-  letter-spacing: .02em;
+  letter-spacing: .01em;
   color: #eef4ff;
   line-height: 1.05;
   font-variant-numeric: tabular-nums;
 }
 
-.card.kpi-premium .kValue .unit{
-  font-size: 18px;
-  opacity: .85;
-  margin-left: 2px;
+.card.kpi-premium .sub{
+  margin-top: 10px !important;
+  font-size: 12.5px;
+  color: rgba(190,212,255,.74);
+  line-height: 1.35;
 }
 
-.card.kpi-premium .kMeta{
-  margin-top: 8px;
-  font-size: 12px;
-  color: rgba(190,210,255,.7);
-  line-height: 1.45;
+.card.kpi-premium .sub span{
+  font-variant-numeric: tabular-nums;
 }
 
 </style>
@@ -910,7 +919,7 @@ const $ = (id) => document.getElementById(id);
 
   const fmtUSD = (n) => {
     if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
-    return Number(n).toLocaleString("en-US", { style:"currency", currency:"USD" });
+    return Number(n).toLocaleString("en-US", { style:"currency", currency:"USD", minimumFractionDigits:0, maximumFractionDigits:0 });
   };
 
   const fmtUSD0 = (n) => {
@@ -1718,7 +1727,7 @@ function computeScore(filteredTrades, tradeKPIs){
 
     for(const t of tiles){
       const div = document.createElement("div");
-      div.className = `card ${t.cls || ""}`;
+      div.className = `card ${(t.cardClass||"")} ${t.cls || ""}`;
       div.innerHTML = `
         <div class="k">${t.title}</div>
         <div class="v">${t.main}</div>
