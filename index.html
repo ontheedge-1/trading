@@ -313,6 +313,7 @@ background: var(--cardGrad);
       background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
       flex: 1 1 auto;
       min-height: 420px;
+      display:flex;
       flex-direction:column;
     }
     .calHead{
@@ -607,6 +608,13 @@ background: var(--cardGrad);
     <div class="statusPills">
 <div class="badge ok" id="dataOk">DATA: OK</div>
     </div>
+  </div>
+</div>
+         <div class="sub" id="subtitle">Lade Daten…</div>
+       </div>
+         </div>
+
+       </div>
 
       <div class="desktop">
     <!-- LEFT: KPI tiles -->
@@ -2479,16 +2487,11 @@ function computeScore(filteredTrades, tradeKPIs){
         loadJSON("data/trades_enriched.json"),
       ]);
 
-
-      
-      
       // Stand tooltip on DATA: OK
-      const asOf = (meta && (meta.as_of || meta.asOf || meta.date || meta.latest_date)) || "";
+      const asOfVal = (meta && (meta.as_of || meta.asOf || meta.date || meta.latest_date)) || "";
       const ok = $("dataOk");
-      if(ok) ok.title = asOf ? `Stand: ${asOf}` : "";
-// Stand (as-of) pill
-      const asOf = (meta && (meta.as_of || meta.asOf || meta.date || meta.latest_date)) || "";
-      GLOBAL.meta = meta;
+      if(ok) ok.title = asOfVal ? `Stand: ${asOfVal}` : "";
+GLOBAL.meta = meta;
       GLOBAL.equity = equity;
       GLOBAL.dailyAgg = dailyAgg;
       GLOBAL.kpis = kpis;
