@@ -2528,6 +2528,15 @@ GLOBAL.meta = meta;
         renderDebug();
 
 
+
+      // Ensure DATA badge reset (in case previous error)
+      const okEl = $("dataOk");
+      if(okEl){
+        okEl.textContent = "DATA: OK";
+        okEl.style.background = "";
+        okEl.style.borderColor = "";
+        okEl.style.color = "";
+      }
       });
     }
 
@@ -2568,10 +2577,10 @@ GLOBAL.meta = meta;
 
       $("subtitle").textContent = "";
 
-      $("statusPill").textContent = "DATA: OK";
-      $("statusPill").style.background = "rgba(53,208,127,.12)";
-      $("statusPill").style.borderColor = "rgba(53,208,127,.25)";
-      $("statusPill").style.color = "#bff2d9";
+      $("dataOk").textContent = "DATA: OK";
+      $("dataOk").style.background = "rgba(53,208,127,.12)";
+      $("dataOk").style.borderColor = "rgba(53,208,127,.25)";
+      $("dataOk").style.color = "#bff2d9";
 
       // renderCards(latest, meta);
       renderKpiPanel(latest);
@@ -2619,10 +2628,10 @@ GLOBAL.meta = meta;
 
     } catch(err){
       $("subtitle").textContent = "";
-      $("statusPill").textContent = "DATA: ERROR";
-      $("statusPill").style.background = "rgba(255,77,109,.12)";
-      $("statusPill").style.borderColor = "rgba(255,77,109,.25)";
-      $("statusPill").style.color = "#ffd1db";
+      $("dataOk").textContent = "DATA: ERROR";
+      $("dataOk").style.background = "rgba(255,77,109,.12)";
+      $("dataOk").style.borderColor = "rgba(255,77,109,.25)";
+      $("dataOk").style.color = "#ffd1db";
       $("debug").textContent = String(err);
       console.error(err);
     }
