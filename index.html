@@ -58,8 +58,8 @@ color:var(--txt);
       width:100%;
       border: 1px solid rgba(120,160,255,.16);
       background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015));
-      border-radius: 18px;
-      padding: 14px 16px;
+      border-radius: 16px;
+      padding: 10px 14px;
       box-shadow: 0 18px 44px rgba(0,0,0,.30);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
@@ -313,7 +313,6 @@ background: var(--cardGrad);
       background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
       flex: 1 1 auto;
       min-height: 420px;
-      display:flex;
       flex-direction:column;
     }
     .calHead{
@@ -606,29 +605,8 @@ background: var(--cardGrad);
     </div>
 
     <div class="statusPills">
-      <div class="pill" id="asOfPill">Stand: —</div>
-      <div class="badge ok" id="dataOk">DATA: OK</div>
+<div class="badge ok" id="dataOk">DATA: OK</div>
     </div>
-  </div>
-</div>
-         <div class="sub" id="subtitle">Lade Daten…</div>
-       </div>
-         <div class="filters" id="filtersBar">
-          <select id="fInstrument" class="input">
-            <option value="ALL">Instr. | All</option>
-          </select>
-
-          <div class="seg small" role="tablist" aria-label="Date Presets">
-            <button type="button" data-preset="30D">30D</button>
-            <button type="button" data-preset="90D">90D</button>
-            <button type="button" data-preset="180D">180D</button>
-            <button type="button" data-preset="YTD">YTD</button>
-            <button type="button" data-preset="ALL" class="active">All</button>
-          </div>
-        </div>
-
-       <div class="pill" id="statusPill">DATA: loading</div>
-     </div>
 
       <div class="desktop">
     <!-- LEFT: KPI tiles -->
@@ -2376,7 +2354,7 @@ function computeScore(filteredTrades, tradeKPIs){
 
   if(GLOBAL.mode === "calendar"){
     if(chartWrap) chartWrap.style.display = "none";
-    if(calWrap) calWrap.style.display = "block";
+    if(calWrap) calWrap.style.display = "flex";
     if($("tooltip")) $("tooltip").style.display = "none";
     renderCalendar();
     return;
@@ -2503,10 +2481,14 @@ function computeScore(filteredTrades, tradeKPIs){
 
 
       
-      // Stand (as-of) pill
+      
+      // Stand tooltip on DATA: OK
       const asOf = (meta && (meta.as_of || meta.asOf || meta.date || meta.latest_date)) || "";
-      if($("asOfPill")) $("asOfPill").textContent = asOf ? `Stand: ${asOf}` : "Stand: —";
-GLOBAL.meta = meta;
+      const ok = $("dataOk");
+      if(ok) ok.title = asOf ? `Stand: ${asOf}` : "";
+// Stand (as-of) pill
+      const asOf = (meta && (meta.as_of || meta.asOf || meta.date || meta.latest_date)) || "";
+      GLOBAL.meta = meta;
       GLOBAL.equity = equity;
       GLOBAL.dailyAgg = dailyAgg;
       GLOBAL.kpis = kpis;
