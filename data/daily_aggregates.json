@@ -1,12 +1,25 @@
 [
   {
     "date": "2025-09-01",
-    "trade_count": 1,
+    "trade_count": 0,
     "daily_R": 0.0,
     "wins": 0,
     "losses": 0,
     "daily_adjustments_total_$": 1.0,
     "daily_pnl_$": 1.0,
+    "withdrawal_$": 0.0,
+    "deposit_$": 0.0,
+    "fees_$": 0.0,
+    "correction_$": 0.0
+  },
+  {
+    "date": "2025-09-04",
+    "trade_count": 1,
+    "daily_R": 0.0,
+    "wins": 0,
+    "losses": 0,
+    "daily_adjustments_total_$": 0.0,
+    "daily_pnl_$": 0.0,
     "withdrawal_$": 0.0,
     "deposit_$": 0.0,
     "fees_$": 0.0,
