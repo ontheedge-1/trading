@@ -2569,7 +2569,7 @@ GLOBAL.meta = meta;
 
       const risk = Math.abs(Number(latest?.effective_risk_$ ?? 0));
 
-      $("subtitle").textContent = "";
+      const _sub=$("subtitle"); if(_sub) _sub.textContent="";
 
       $("dataOk").textContent = "DATA: OK";
       $("dataOk").style.background = "rgba(53,208,127,.12)";
@@ -2621,12 +2621,17 @@ GLOBAL.meta = meta;
       renderDebug();
 
     } catch(err){
-      $("subtitle").textContent = "";
-      $("dataOk").textContent = "DATA: ERROR";
-      $("dataOk").style.background = "rgba(255,77,109,.12)";
-      $("dataOk").style.borderColor = "rgba(255,77,109,.25)";
-      $("dataOk").style.color = "#ffd1db";
-      $("debug").textContent = String(err);
+      const sub = $("subtitle");
+      if(sub) sub.textContent = "";
+      const ok = $("dataOk");
+      if(ok){
+        ok.textContent = "DATA: ERROR";
+        ok.style.background = "rgba(255,77,109,.12)";
+        ok.style.borderColor = "rgba(255,77,109,.25)";
+        ok.style.color = "#ffd1db";
+      }
+      const dbg = $("debug");
+      if(dbg) dbg.textContent = String(err);
       console.error(err);
     }
   }
