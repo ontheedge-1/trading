@@ -2614,9 +2614,9 @@ scoreEl.title =
 
       // Stand tooltip on DATA: OK
       const asOfVal = (meta && (meta.as_of || meta.asOf || meta.date || meta.latest_date)) || "";
-      const ok = const ok = $("dataOk");
-      if (ok) ok.title = asOfVal ? `Stand: ${asOfVal}` : "";
-GLOBAL.meta = meta;
+      const ok = $("dataOk");
+if (ok) ok.title = asOfVal ? `Stand: ${asOfVal}` : "";
+      GLOBAL.meta = meta;
       GLOBAL.equity = equity;
       GLOBAL.dailyAgg = dailyAgg;
       GLOBAL.kpis = kpis;
