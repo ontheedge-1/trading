@@ -53,7 +53,7 @@ color:var(--txt);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
     }
     /* ===== TOP BAR (full-width band) ===== */
-    .wrap{ max-width: 1400px; margin: 0 auto; padding: 22px; }
+    .wrap{ width: min(1400px, calc(100% - 44px)); max-width: 1400px; margin: 0 auto; padding: 22px; }
     .topbarBand{
       width:100%;
       border: 1px solid rgba(120,160,255,.16);
@@ -172,7 +172,7 @@ background: var(--cardGrad);
 
     .desktop{
       display:grid;
-      grid-template-columns: 450px 1fr; /* links KPIs, rechts Chart */
+      grid-template-columns: minmax(520px, 520px) minmax(0, 1fr); /* links KPIs, rechts Chart */
       gap:14px;
       align-items:stretch; /* align chart panel to KPI panel height */
     }
@@ -740,7 +740,7 @@ background: var(--cardGrad);
     .scoreStats .dot{ opacity:.6; }
 
     /* Layout: make left and right match topbar width (wrap already) */
-    .wrap{ max-width: 1400px; margin: 0 auto; padding: 22px; }
+    .wrap{ width: min(1400px, calc(100% - 44px)); max-width: 1400px; margin: 0 auto; padding: 22px; }
 
     /* Responsive topbar */
     @media (max-width: 900px){
@@ -952,14 +952,6 @@ background: var(--cardGrad);
       </div>
     </div>
   </div>
-
-
-    <div style="margin-top:14px;">
-      <div class="k" style="margin:10px 0 8px;">Debug (raw snapshot)</div>
-      <pre id="debug">…</pre>
-    </div>
-  
-
 <script>
   
   // Calendar cell badge mode (default)
