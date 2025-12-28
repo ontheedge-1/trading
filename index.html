@@ -756,8 +756,8 @@ background: var(--cardGrad);
     .scoreCard.score-good,
     .scoreCard.score-ok,
     .scoreCard.score-average{ --glow: rgba(120,170,255,.34); }
-    .scoreCard.score-weak{ --glow: rgba(255,150,95,.38); }
-    .scoreCard.score-poor{ --glow: rgba(255,105,125,.40); }
+    .scoreCard.score-weak{ --glow: rgba(255,105,125,.44); }
+    .scoreCard.score-poor{ --glow: rgba(255,65,95,.46); }
 
     .scoreCard::before{
       background:
@@ -1322,19 +1322,21 @@ function computeScore(filteredTrades, tradeKPIs){
     score = clamp(score, 0, 100);
 
     const label = labelFromScore(score);
-    
       // Score color class on hero card
-      scoreEl.classList.remove("score-strong","score-good","score-ok","score-average","score-weak","score-poor");
-      const _lab = String(label || "").toLowerCase();
-      const cls =
-        _lab.includes("strong") ? "score-strong" :
-        (_lab.includes("good") || _lab.includes("excellent")) ? "score-good" :
-        (_lab.includes("ok") || _lab.includes("neutral")) ? "score-ok" :
-        _lab.includes("average") ? "score-average" :
-        (_lab.includes("weak") || _lab.includes("bad")) ? "score-weak" :
-        (_lab.includes("poor") || _lab.includes("terrible")) ? "score-poor" :
-        "";
-      if(cls) scoreEl.classList.add(cls);
+      const scoreEl = $("scoreCard");
+      if(scoreEl){
+        scoreEl.classList.remove("score-strong","score-good","score-ok","score-average","score-weak","score-poor");
+        const _lab = String(label || "").toLowerCase();
+        const cls =
+          _lab.includes("strong") ? "score-strong" :
+          (_lab.includes("good") || _lab.includes("excellent")) ? "score-good" :
+          (_lab.includes("ok") || _lab.includes("neutral")) ? "score-ok" :
+          _lab.includes("average") ? "score-average" :
+          (_lab.includes("weak") || _lab.includes("bad")) ? "score-weak" :
+          (_lab.includes("poor") || _lab.includes("terrible")) ? "score-poor" :
+          "";
+        if(cls) scoreEl.classList.add(cls);
+      }
 const color = colorFromScore(score);
 
     return {
