@@ -751,14 +751,15 @@ background: var(--cardGrad);
 
 
     /* ===== Score color variants (glow depends on label) ===== */
-    .scoreCard{ --glow: rgba(120,170,255,.30); } /* default: ice */
-    .scoreCard.score-strong{ --glow: rgba(151,255,198,.46); }
-    .scoreCard.score-good{ --glow: rgba(120,190,255,.36); } /* ice */
-    .scoreCard.score-ok{ --glow: rgba(255,170,90,.34); }   /* amber */
-    .scoreCard.score-average{ --glow: rgba(120,170,255,.30); }
-    .scoreCard.score-weak{ --glow: rgba(255,105,125,.44); } /* red */
-    .scoreCard.score-poor{ --glow: rgba(255,65,95,.46); }   /* deeper red */
-.scoreCard::before{
+    .scoreCard{ --glow: rgba(151,255,198,.38); }
+    .scoreCard.score-strong{ --glow: rgba(151,255,198,.44); }
+    .scoreCard.score-good,
+    .scoreCard.score-ok,
+    .scoreCard.score-average{ --glow: rgba(120,170,255,.34); }
+    .scoreCard.score-weak{ --glow: rgba(255,105,125,.44); }
+    .scoreCard.score-poor{ --glow: rgba(255,65,95,.46); }
+
+    .scoreCard::before{
       background:
         radial-gradient(560px 240px at 50% 14%, var(--glow), transparent 68%),
         radial-gradient(900px 520px at 50% 110%, rgba(0,0,0,0), rgba(0,0,0,.55));
@@ -783,14 +784,28 @@ background: var(--cardGrad);
     }
 
 
-    /* ===== Layout robustness (prevents chart collapse) ===== */
-    .desktop{ grid-template-columns: minmax(450px,450px) minmax(0, 1fr); }
-    .kpiPanel{ min-width:0; }
-    .chartPanel{ min-width:0; }
+    /* ===== Fix: prevent chart column collapse in CSS grid ===== */
+    .desktop{
+      grid-template-columns: minmax(450px, 450px) minmax(0, 1fr) !important;
+    }
+    .kpiPanel, .chartPanel{
+      min-width: 0;
+    }
+    .chartHead, .chartStage, .chartSvgWrap, canvas{
+      min-width: 0;
+    }
 
+    /* ===== Score alignment + exact color map ===== */
+    .scoreCard{
+      text-align: center;
+    }
+    .scoreTop{ text-align:center; }
+    .scorePill{ justify-content:center; }
+    .scoreStats{ justify-content:center; }
 
-    .scoreTop{ width:100%; text-align:center; }
-    .scoreStats{ width:100%; justify-content:center; align-items:center; text-align:center; }
+    .scoreCard.score-good{ --glow: rgba(120,170,255,.38); }  /* ice */
+    .scoreCard.score-ok{ --glow: rgba(255,180,90,.42); }     /* amber */
+    .scoreCard.score-average{ --glow: rgba(120,170,255,.34); } /* neutral ice */
 
 </style>
  </head>
