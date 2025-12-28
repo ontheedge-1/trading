@@ -52,12 +52,45 @@ body{
 color:var(--txt);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
     }
+    /* ===== TOP BAR (full-width band) ===== */
     .wrap{ max-width:1400px; margin:0 auto; padding:22px; }
-    .top{
-      display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:16px;
+    .topbarBand{
+      width:100%;
+      border: 1px solid rgba(120,160,255,.16);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015));
+      border-radius: 18px;
+      padding: 14px 16px;
+      box-shadow: 0 18px 44px rgba(0,0,0,.30);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      margin-bottom:16px;
     }
-    .title{ font-size:20px; font-weight:700; letter-spacing:.2px; }
-    .sub{ color:var(--muted); font-size:13px; margin-top:4px; }
+    .top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      margin:0;
+    }
+    .title{ font-size:28px; font-weight:800; letter-spacing:.2px; }
+    .sub{ display:none; }
+    .statusPills{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid rgba(120,160,255,.18);
+      background: rgba(10,16,32,.35);
+      color:#cfe3ff;
+      font-weight:900;
+      font-size:12px;
+      letter-spacing:.2px;
+    }
     .grid{
       display:grid;
       grid-template-columns: repeat(12, 1fr);
@@ -92,7 +125,7 @@ background: var(--cardGrad);
       opacity:.95;
     }
     .card:hover{
-      transform: translateY(-2px);
+      transform: none;
       border-color: var(--border2);
       box-shadow: var(--shadow);
       background: linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.02));
@@ -215,7 +248,7 @@ background: var(--cardGrad);
       letter-spacing: .2px;
       transition: background .15s ease, color .15s ease, transform .12s ease;
     }
-    .seg button:hover{ transform: translateY(-1px); }
+    .seg button:hover{ transform: none; }
     .seg button.active{
       background: linear-gradient(180deg, rgba(45,107,255,.30), rgba(41,182,255,.16));
       border: 1px solid rgba(45,107,255,.34);
@@ -260,11 +293,7 @@ background: var(--cardGrad);
       display:none;
     }
     .tooltip .muted{ color: var(--muted); font-size: 11px; margin-top: 2px; }
-    .hint{
-      color: var(--muted);
-      font-size: 12px;
-      margin-top: 12px;
-    }
+    .hint{ display:none; }
 
     pre{
       margin:0; overflow:auto; padding:12px;
@@ -393,36 +422,59 @@ background: var(--cardGrad);
       margin-bottom:8px;
     }
 
-    /* ===== CALENDAR COMPACT BADGE LAYOUT (chips top-right, single row) ===== */
+    /* ===== CALENDAR COMPACT BADGE LAYOUT (single chip row top-right) ===== */
     .dayCell{ padding:8px; min-height:54px; }
     .dayTop{ margin-bottom:4px; }
     .dayBadges{
       position:absolute;
       top:8px;
       right:8px;
-      left:auto;
-      bottom:auto;
       display:flex;
+      flex-direction:row;
       gap:6px;
       align-items:center;
       justify-content:flex-end;
       pointer-events:none;
+      white-space:nowrap;
     }
-    /* chip look */
     .badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
       font-size:10px;
       padding:3px 7px;
       border-radius:999px;
       border:1px solid rgba(120,160,255,.18);
-      background: rgba(10,16,32,.35);
-      box-shadow: 0 10px 22px rgba(0,0,0,.22);
+      background: rgba(10,16,32,.38);
+      box-shadow: 0 10px 22px rgba(0,0,0,.18);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
+      line-height:1;
     }
-    .badge.round{
-      width:auto; height:auto;
-      padding:3px 7px;
+    .badge.round{ width:auto; height:auto; padding:3px 7px; border-radius:999px; }
+    /* Calendar header toggle chips */
+    .calMode{
+      display:inline-flex;
+      gap:6px;
+      padding:4px;
       border-radius:999px;
+      border:1px solid rgba(120,160,255,.18);
+      background: rgba(10,16,32,.45);
+    }
+    .calMode button{
+      appearance:none; border:0; cursor:pointer;
+      background: transparent;
+      color:#bcd2ff;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.2px;
+    }
+    .calMode button.active{
+      background: linear-gradient(180deg, rgba(45,107,255,.30), rgba(41,182,255,.16));
+      border: 1px solid rgba(45,107,255,.34);
+      color:#e7f0ff;
     }
     .badge.pos{ border-color: rgba(53,208,127,.22); }
     .badge.neg{ border-color: rgba(255,77,109,.22); }
@@ -533,9 +585,32 @@ background: var(--cardGrad);
  </head>
 <body>
    <div class="wrap">
-     <div class="top">
-      <div>
-         <div class="title">Trading Dashboard</div>
+     <div class="topbarBand">
+  <div class="top">
+    <div>
+      <div class="title">Trading Dashboard</div>
+      <div class="sub" id="subtitle"></div>
+    </div>
+
+    <div class="filters">
+      <select id="instrSel" class="select">
+        <option value="ALL">Instr. | All</option>
+      </select>
+      <div class="seg" id="rangeSeg">
+        <button data-range="30D">30D</button>
+        <button data-range="90D">90D</button>
+        <button data-range="180D">180D</button>
+        <button data-range="YTD">YTD</button>
+        <button data-range="ALL" class="active">All</button>
+      </div>
+    </div>
+
+    <div class="statusPills">
+      <div class="pill" id="asOfPill">Stand: —</div>
+      <div class="badge ok" id="dataOk">DATA: OK</div>
+    </div>
+  </div>
+</div>
          <div class="sub" id="subtitle">Lade Daten…</div>
        </div>
          <div class="filters" id="filtersBar">
@@ -596,7 +671,14 @@ background: var(--cardGrad);
             </div>
             <button class="iconBtn" id="calNext" type="button" aria-label="Next month">›</button>
           </div>
-          <div class="chipRow" id="calChips"></div>
+
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div class="calMode" id="calMode">
+              <button data-mode="pnl" class="active">PnL</button>
+              <button data-mode="tr">Trades & R</button>
+            </div>
+            <div class="chipRow" id="calChips"></div>
+          </div>
         </div>
 
         <div class="calGrid" id="calGrid"></div>
@@ -1649,7 +1731,19 @@ function computeScore(filteredTrades, tradeKPIs){
         b.addEventListener("click", () => {
           GLOBAL.calendar.month = mk;
           renderCalendar();
-        });
+        
+    // Calendar mode toggle (PnL vs Trades & R)
+    const calModeEl = $("calMode");
+    if(calModeEl){
+      calModeEl.addEventListener("click", (e)=>{
+        const btn = e.target.closest("button[data-mode]");
+        if(!btn) return;
+        calendarBadgeMode = btn.dataset.mode;
+        [...calModeEl.querySelectorAll("button")].forEach(b=>b.classList.toggle("active", b===btn));
+        renderCalendar();
+      });
+    }
+});
         chips.appendChild(b);
       }
     }
@@ -1735,9 +1829,9 @@ function computeScore(filteredTrades, tradeKPIs){
             <div class="dayNum">${dayNum}</div>
             ${hasAnyData ? `
             <div class="dayBadges">
-              ${nTrades > 0 ? `<div class="badge round">${nTrades}T</div>` : ``}
-              ${dayR === null ? `` : `<div class="badge">${Number.isFinite(dayR) ? fmtCumR(dayR) : "—"}</div>`}
-              ${pnl === null ? `` : `<div class="badge ${pnlCls}">${fmtUSD0(pnl)}${instrumentNote ? "·A" : ""}</div>`}
+              ${calendarBadgeMode === "pnl"
+                ? (pnl === null ? `` : `<div class="badge ${pnlCls}">${fmtUSD0(pnl)}${instrumentNote ? "·A" : ""}</div>`)
+                : `${nTrades > 0 ? `<div class="badge round">${nTrades}T</div>` : ``}${dayR === null ? `` : `<div class="badge">${Number.isFinite(dayR) ? fmtCumR(dayR) : "—"}</div>`}` }
             </div>` : ``}
           </div>
         `;
@@ -2408,7 +2502,11 @@ function computeScore(filteredTrades, tradeKPIs){
       ]);
 
 
-      GLOBAL.meta = meta;
+      
+      // Stand (as-of) pill
+      const asOf = (meta && (meta.as_of || meta.asOf || meta.date || meta.latest_date)) || "";
+      if($("asOfPill")) $("asOfPill").textContent = asOf ? `Stand: ${asOf}` : "Stand: —";
+GLOBAL.meta = meta;
       GLOBAL.equity = equity;
       GLOBAL.dailyAgg = dailyAgg;
       GLOBAL.kpis = kpis;
@@ -2483,9 +2581,7 @@ function computeScore(filteredTrades, tradeKPIs){
 
       const risk = Math.abs(Number(latest?.effective_risk_$ ?? 0));
 
-      $("subtitle").textContent = latest
-        ? `Stand: ${latest.date} · Tier ${latest.dd_tier} · Risk ${fmtUSD(risk)}`
-        : "Keine Equity-Daten gefunden.";
+      $("subtitle").textContent = "";
 
       $("statusPill").textContent = "DATA: OK";
       $("statusPill").style.background = "rgba(53,208,127,.12)";
@@ -2537,7 +2633,7 @@ function computeScore(filteredTrades, tradeKPIs){
       renderDebug();
 
     } catch(err){
-      $("subtitle").textContent = "Fehler beim Laden der Daten.";
+      $("subtitle").textContent = "";
       $("statusPill").textContent = "DATA: ERROR";
       $("statusPill").style.background = "rgba(255,77,109,.12)";
       $("statusPill").style.borderColor = "rgba(255,77,109,.25)";
