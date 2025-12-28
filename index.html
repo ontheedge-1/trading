@@ -53,7 +53,7 @@ color:var(--txt);
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
     }
     /* ===== TOP BAR (full-width band) ===== */
-    .wrap{ max-width:1400px; margin:0 auto; padding:22px; }
+    .wrap{ max-width: 1400px; margin: 0 auto; padding: 22px; }
     .topbarBand{
       width:100%;
       border: 1px solid rgba(120,160,255,.16);
@@ -685,7 +685,10 @@ background: var(--cardGrad);
   </div>
 
 <script>
-  const $ = (id) => document.getElementById(id);
+  
+  // Calendar cell badge mode (default)
+  let calendarBadgeMode = "pnl"; // pnl | tr
+const $ = (id) => document.getElementById(id);
 
   const fmtUSD = (n) => {
     if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
