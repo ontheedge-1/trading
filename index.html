@@ -862,6 +862,13 @@ background: var(--cardGrad);
     #scoreCard.score-ok, #scoreCard.score-average{ --glow: rgba(255,190,110,.40); }
     #scoreCard.score-weak, #scoreCard.score-poor{ --glow: rgba(255,65,95,.46); }
 
+
+    /* Chart wrapper hardening */
+    .chartWrap{ width:100%; min-width:0; }
+    #curveCanvas{ width:100%; height:360px; display:block; }
+    @media (min-width: 1100px){
+      #curveCanvas{ height: 480px; }
+    }
 </style>
  </head>
 <body>
@@ -2342,10 +2349,21 @@ scoreEl.title =
     const wrap = $("chartWrap");
     const tooltip = $("tooltip");
 
-    const DPR = Math.max(1, Math.floor(window.devicePixelRatio || 1));
+    let DPR = Math.max(1, Math.floor(window.devicePixelRatio || 1));
+    // Safety: avoid huge backing-store sizes on very wide screens / high DPR
+    const MAX_CANVAS = 8192;
+
     const cssW = wrap.clientWidth;
     const cssH = canvas.clientHeight; // from CSS (height:360px)
-    canvas.width = cssW * DPR;
+    // If layout not settled yet, retry on next frame
+    if(cssW < 80 || cssH < 80){
+      requestAnimationFrame(() => renderCurve());
+      return;
+    }
+    // Clamp DPR to keep backing-store within limits
+    DPR = Math.min(DPR, MAX_CANVAS / cssW, MAX_CANVAS / cssH);
+    DPR = Math.max(1, DPR);
+canvas.width = cssW * DPR;
     canvas.height = cssH * DPR;
     ctx.setTransform(DPR,0,0,DPR,0,0);
 
