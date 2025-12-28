@@ -807,6 +807,61 @@ background: var(--cardGrad);
     .scoreCard.score-ok{ --glow: rgba(255,180,90,.42); }     /* amber */
     .scoreCard.score-average{ --glow: rgba(120,170,255,.34); } /* neutral ice */
 
+
+    /* ===== FIX11: restore sane .card + prevent grid-column spanning ===== */
+    .card{
+      grid-column: auto !important;
+      border-radius: 18px;
+      border: 1px solid rgba(120,160,255,.16);
+      box-shadow: 0 18px 44px rgba(0,0,0,.32);
+      background:
+        radial-gradient(900px 360px at 30% 0%, rgba(41,182,255,.10), transparent 62%),
+        linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.012));
+      overflow: hidden;
+    }
+
+    /* Desktop grid: allow right column to never collapse */
+    .desktop{
+      grid-template-columns: 450px minmax(0, 1fr) !important;
+    }
+    .kpiPanel, #chartPanel{ min-width:0; }
+
+    /* Chart panel should be a column so the plot can fill */
+    #chartPanel{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    #chartWrap{
+      flex: 1 1 auto;
+      min-height: 420px;
+      min-width: 0;
+    }
+
+    /* Calendar: default hidden; only show when active */
+    .calendarWrap{ display:none !important; }
+    .calendarWrap.active{ display:flex !important; }
+    .chartWrap{ display:flex !important; }
+
+    /* Score card: strict centering */
+    #scoreCard.scoreCard{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+    }
+    #scoreCard .scoreTop{ text-align:center; width:100%; }
+    #scoreCard .scorePill{ width:100%; }
+    #scoreCard .scoreStats{ justify-content:center; width:100%; }
+
+    /* Score color map: STRONG green, GOOD ice, OK amber, WEAK red */
+    #scoreCard{ --glow: rgba(151,255,198,.44); }
+    #scoreCard.score-strong{ --glow: rgba(151,255,198,.46); }
+    #scoreCard.score-good{ --glow: rgba(120,170,255,.40); }
+    #scoreCard.score-ok, #scoreCard.score-average{ --glow: rgba(255,190,110,.40); }
+    #scoreCard.score-weak, #scoreCard.score-poor{ --glow: rgba(255,65,95,.46); }
+
 </style>
  </head>
 <body>
@@ -1356,8 +1411,7 @@ function computeScore(filteredTrades, tradeKPIs){
           (_lab.includes("good") || _lab.includes("excellent")) ? "score-good" :
           (_lab.includes("ok") || _lab.includes("neutral")) ? "score-ok" :
           _lab.includes("average") ? "score-average" :
-          (_lab.includes("weak") || _lab.includes("bad")) ? "score-weak" :
-          (_lab.includes("poor") || _lab.includes("terrible")) ? "score-poor" :
+          (_lab.includes("weak") || _lab.includes("bad") || _lab.includes("poor") || _lab.includes("terrible")) ? "score-weak" :
           "";
         if(cls) scoreEl.classList.add(cls);
       }
