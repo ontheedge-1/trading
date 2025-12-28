@@ -778,26 +778,6 @@ background: var(--cardGrad);
     <div class="topbarRight">
       <div class="badge ok" id="dataOk">DATA: OK</div>
     </div>
-  </div>
-</div>
-
-    <div id="filtersBar" class="filters">
-      <select id="fInstrument" class="select">
-        <option value="ALL">Instr. | All</option>
-      </select>
-
-      <div class="seg">
-        <button data-preset="30D">30D</button>
-        <button data-preset="90D">90D</button>
-        <button data-preset="180D">180D</button>
-        <button data-preset="YTD">YTD</button>
-        <button data-preset="ALL" class="active">All</button>
-      </div>
-    </div>
-
-    <div class="badge ok" id="dataOk">DATA: OK</div>
-  </div>
-</div>
 
 <div class="desktop">
     <!-- LEFT: KPI tiles -->
@@ -1703,16 +1683,17 @@ function computeScore(filteredTrades, tradeKPIs){
 
       scoreEl.style.opacity = isLowSample ? "0.55" : "1";
       scoreEl.innerHTML = `
-        <div class="k">Strategy Score</div>
-        <div class="v" style="font-size:30px; margin-top:10px; color:${col};">
-          ${label}
-        </div>
-        <div class="sub" style="margin-top:8px;">
-          Trades: ${sc?.nTrades ?? "—"} · Exp: ${fmtR1(sc?.expectancy)} · PF: ${fmtPF1(sc?.profitFactor)} · RF: ${sc?.recoveryFactor === Infinity ? "∞" : (Number.isFinite(sc?.recoveryFactor) ? sc.recoveryFactor.toFixed(2) : "—")}
+        <div class="scoreTop">Strategy Quality</div>
+        <div class="scorePill"><span>${label}</span></div>
+        <div class="scoreStats">
+          RF ${Number.isFinite(sc?.recoveryFactor) ? sc.recoveryFactor.toFixed(2) : "—"}
+          <span class="dot">·</span>
+          Sharpe ${Number.isFinite(sc?.sharpe) ? sc.sharpe.toFixed(1) : "—"}
+          <span class="dot">·</span>
+          PF ${Number.isFinite(sc?.profitFactor) ? sc.profitFactor.toFixed(1) : "—"}
         </div>
       `;
-
-      scoreEl.title =
+scoreEl.title =
         `Score = Base(expectancy) + PF + Sharpe + Recovery\n` +
         `Base: ${sc?.base?.toFixed?.(1) ?? "—"}\n` +
         `PF mod: ${sc?.modPF?.toFixed?.(1) ?? "—"}\n` +
@@ -2810,7 +2791,18 @@ GLOBAL.meta = meta;
 
       renderKpiPanel(latest);
       renderCurve();
-      renderDebug();
+      
+      // ===== Layout sync: make chart panel height match KPI panel (prevents chart being taller) =====
+      const syncPanelHeights = () => {
+        const kpi = document.querySelector(".kpiPanel");
+        const chart = document.querySelector("#chartPanel");
+        if(!kpi || !chart) return;
+        const h = kpi.getBoundingClientRect().height;
+        if(h > 0) chart.style.height = `${Math.round(h)}px`;
+      };
+      syncPanelHeights();
+      window.addEventListener("resize", syncPanelHeights, { passive:true });
+renderDebug();
 
     } catch(err){
       const sub = $("subtitle");
