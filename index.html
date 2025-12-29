@@ -1056,8 +1056,8 @@ background: var(--cardGrad);
       font-weight:800;
       margin:0 2px;
     }
-    .kpiGrid .card .v .dualMain .winVal{ color: rgba(140, 190, 170, .85); }
-    .kpiGrid .card .v .dualMain .lossVal{ color: rgba(200, 150, 150, .85); }
+    .kpiGrid .card .v .dualMain .winVal{ color: rgba(120, 220, 170, .92); }
+    .kpiGrid .card .v .dualMain .lossVal{ color: rgba(245, 145, 155, .92); }
 
 
 /* --- Topbar: date segments + dropdown dark options --- */
@@ -2271,14 +2271,10 @@ function computeScore(filteredTrades, tradeKPIs){
         (_lab.includes("poor") || _lab.includes("terrible")) ? "score-poor" :
         "";
       if(cls) scoreEl.classList.add(cls);
-scoreEl.title =
-        `Score = Base(expectancy) + PF + Sharpe + Recovery\n` +
-        `Base: ${sc?.base?.toFixed?.(1) ?? "—"}\n` +
-        `PF mod: ${sc?.modPF?.toFixed?.(1) ?? "—"}\n` +
-        `Sharpe mod: ${sc?.modSharpe?.toFixed?.(1) ?? "—"}\n` +
-        `Recovery mod: ${sc?.modRec?.toFixed?.(1) ?? "—"}\n` +
-        (isLowSample ? "\nLow sample: < 30 trades" : "");
-    }
+      scoreEl.dataset.kpiTip = "score";
+      scoreEl.style.cursor = "help";
+      scoreEl.removeAttribute("title");
+}
 
     bindKpiTooltips();
   }
@@ -2300,7 +2296,34 @@ scoreEl.title =
 
     const buildHTML = (type) => {
       const k = GLOBAL.tradeKPIs || {};
-      if(type === "tradeQuality"){
+      
+      if(type === "score"){
+        const sc = GLOBAL.score || {};
+        const n = sc?.nTrades ?? 0;
+        const low = n < 30;
+
+        const fmt1 = (x) => (Number.isFinite(Number(x)) ? Number(x).toFixed(1) : "—");
+        const fmt2 = (x) => (Number.isFinite(Number(x)) ? Number(x).toFixed(2) : "—");
+
+        return `
+          <div><b>Strategy Score — Quick Read</b></div>
+          <div><b>Score:</b> ${Number.isFinite(sc?.score) ? Math.round(sc.score) : "—"}</div>
+          <div>Basis (Expectancy ${fmt2(sc?.expectancy)}): ${fmt1(sc?.base)}</div>
+          <div>Profit Factor (PF ${fmt2(sc?.profitFactor)}): ${fmt1(sc?.modPF)}</div>
+          <div>Sharpe (${fmt2(sc?.sharpe)}): ${fmt1(sc?.modSharpe)}</div>
+          <div>Recovery Factor (${fmt2(sc?.recoveryFactor)}): ${fmt1(sc?.modRec)}</div>
+          ${low ? `<div class="muted">⚠️ Sample size niedrig (${n} Trades) – Modifikatoren konservativ bewertet.</div>` : ``}
+          <hr/>
+          <div><b>Strategy Score — Details</b></div>
+          <div><b>Basis – Expectancy (E[R])</b><br/>(Winrate × Ø Win) − (Lossrate × Ø Loss)</div>
+          <div><b>Profit Factor</b><br/>Bewertet die Gewinn-/Verluststruktur. Wirkt stufenlos.</div>
+          <div><b>Sharpe Ratio</b><br/>Stabilität der Equity (Daily R, annualisiert).</div>
+          <div><b>Recovery Factor</b><br/>Net Profit / Max Drawdown.</div>
+          <div class="muted">Modifikatoren werden kontinuierlich berechnet – Zwischenwerte (z. B. +7.5) sind normal.</div>
+        `;
+      }
+
+if(type === "tradeQuality"){
         const totalR = k.totalR;
         const n = k.tradeCount;
         const formula = `${fmtR(totalR)} / ${Number.isFinite(Number(n)) ? n : "—"}`;
