@@ -380,7 +380,7 @@ background: var(--cardGrad);
       border: 1px solid rgba(120,160,255,.25);
       border-radius:9px;
       padding: 8px 10px;
-      font-size: 12px;
+      font-size: 16px;
       color: #e7f0ff;
       box-shadow: 0 12px 30px rgba(0,0,0,.45);
       white-space: nowrap;
@@ -408,7 +408,7 @@ background: var(--cardGrad);
       outline: none;
       box-shadow: 0 0 0 3px rgba(120,170,255,.18);
     }
-    .tooltip .muted{ color: var(--muted); font-size: 11px; margin-top: 2px; }
+    .tooltip .muted{ color: var(--muted); font-size: 14px; margin-top: 2px; }
 
     /* KPI tooltips should follow mouse (not chart-relative) */
     #kpiTooltip{
@@ -1058,6 +1058,11 @@ background: var(--cardGrad);
     }
 
 
+
+
+    .kpiGrid .card .v .dualMain .winVal{ color: rgba(120, 220, 170, .92); }
+    .kpiGrid .card .v .dualMain .lossVal{ color: rgba(245, 145, 155, .92); }
+    
 /* --- Topbar: date segments + dropdown dark options --- */
 .select{
   color-scheme: dark;
@@ -2015,6 +2020,28 @@ function computeScore(filteredTrades, tradeKPIs){
 
   
   
+
+  function computeStreakSummaryFromFreq(freqObj){
+    const winFreq = freqObj?.winFreq || {};
+    const lossFreq = freqObj?.lossFreq || {};
+    const keysW = Object.keys(winFreq).map(Number);
+    const keysL = Object.keys(lossFreq).map(Number);
+
+    const longestW = keysW.length ? Math.max(...keysW) : 0;
+    const longestL = keysL.length ? Math.max(...keysL) : 0;
+
+    const sumCountW = keysW.reduce((a,k)=>a+(winFreq[k]||0),0);
+    const sumCountL = keysL.reduce((a,k)=>a+(lossFreq[k]||0),0);
+
+    const sumLenW = keysW.reduce((a,k)=>a+k*(winFreq[k]||0),0);
+    const sumLenL = keysL.reduce((a,k)=>a+k*(lossFreq[k]||0),0);
+
+    const avgW = sumCountW ? (sumLenW / sumCountW) : 0;
+    const avgL = sumCountL ? (sumLenL / sumCountL) : 0;
+
+    return { avgW, avgL, longestW, longestL };
+  }
+
   function recomputeAnalysis(){
     GLOBAL.filteredTrades = filterEngine(GLOBAL.trades, GLOBAL.filters);
 
@@ -2042,9 +2069,8 @@ function computeScore(filteredTrades, tradeKPIs){
       instrument: GLOBAL.filters?.instrument || "ALL"
     });
     GLOBAL.dayStreakDist = computeStreakFrequencyFromSequence(seq);
-
-
-    // ---- CumR (rebased to 0 on period start, aligned to viewSpine) ----
+    GLOBAL.dayStreakSummary = computeStreakSummaryFromFreq(GLOBAL.dayStreakDist);
+// ---- CumR (rebased to 0 on period start, aligned to viewSpine) ----
     const cumView = buildCumR_Rebased_OnView(GLOBAL.viewSpine, dailyRows);
     const cumWithBaseline = addBaselinePointSameDay(GLOBAL.viewSpine, cumView, 0);
     GLOBAL.viewCumR = cumWithBaseline.values;
@@ -2208,13 +2234,13 @@ function computeScore(filteredTrades, tradeKPIs){
         cls: ""
       },
       {
-        title: "Ø Win / Loss Streaks",
+        title: "Ø Trade Streaks",
         tip: "winLossStreaks",
         cardClass: "kpi-premium ice",
         main: (() => {
           const aw = (GLOBAL.tradeStreaks?.avgWin ?? 0).toFixed(1);
           const al = (GLOBAL.tradeStreaks?.avgLoss ?? 0).toFixed(1);
-          return `<span class="dualMain"><span>${aw}</span><span class="sep">/</span><span>${al}</span></span>`;
+          return `<span class="dualMain"><span class="winVal">${aw}</span><span class="sep">/</span><span class="lossVal">${al}</span></span>`;
         })(),
         sub1: `Longest W/L: ${GLOBAL.tradeStreaks?.longestWin ?? 0} / ${GLOBAL.tradeStreaks?.longestLoss ?? 0}`,
         sub2: ``,
@@ -2320,8 +2346,17 @@ scoreEl.title =
         `;
       }
       if(type === "winLossStreaks"){
+        const s = GLOBAL.dayStreakSummary || { avgW:0, avgL:0, longestW:0, longestL:0 };
+        const aw = (s.avgW || 0).toFixed(1);
+        const al = (s.avgL || 0).toFixed(1);
+        const lw = (s.longestW || 0);
+        const ll = (s.longestL || 0);
         return `
-          <div><b>Ø Win / Loss DAYS</b></div>
+          <div><b>Ø Daily Win / Loss Streaks based on Equity change:</b></div>
+          <div>W-Days ${aw} / L-Days ${al}</div>
+          <div>Longest W/L days : ${lw} / ${ll}</div>
+        `;
+      }<div><b>Ø Win / Loss DAYS</b></div>
           <div class="muted">Based on Equity gain or loss</div>
         `;
       }
