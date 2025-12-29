@@ -1058,6 +1058,15 @@ background: var(--cardGrad);
   font-weight: 700;
   letter-spacing: .2px;
 }
+
+
+#filtersBar .seg .dateSeg .dateVal{
+  font-weight: 700;
+  font-size: 12px;
+  color: rgba(235,245,255,0.70);
+}
+#filtersBar .seg .dateSeg .dateVal:empty{ display:none; }
+
 #filtersBar .seg .dateSeg:hover{
   background: rgba(120,170,255,0.10);
   color: rgba(235,245,255,0.92);
@@ -1163,8 +1172,8 @@ background: var(--cardGrad);
         <button data-preset="YTD">YTD</button>
         <button data-preset="ALL" class="active">All</button>
         <div class="segDivider"></div>
-        <button class="dateSeg" id="btnFrom" data-date="from" type="button" aria-label="Von Datum">▶️ <span class="lbl">Von</span></button>
-        <button class="dateSeg" id="btnTo" data-date="to" type="button" aria-label="Bis Datum">◀️ <span class="lbl">Bis</span></button>
+        <button class="dateSeg" id="btnFrom" data-date="from" type="button" aria-label="Von Datum">▶️ <span class="dateVal"></span></button>
+        <button class="dateSeg" id="btnTo" data-date="to" type="button" aria-label="Bis Datum">◀️ <span class="dateVal"></span></button>
       </div>
     </div>
 
@@ -3348,8 +3357,8 @@ if (ok) ok.title = asOfVal ? `Stand: ${asOfVal}` : "";
 
         // Reset date segment UI
         const bf = $("btnFrom"); const bt = $("btnTo");
-        if(bf){ bf.classList.remove("active"); bf.querySelector(".lbl").textContent = "Von"; }
-        if(bt){ bt.classList.remove("active"); bt.querySelector(".lbl").textContent = "Bis"; }
+        if(bf){ bf.classList.remove("active"); const dv = bf.querySelector(".dateVal"); if(dv) dv.textContent = ""; }
+        if(bt){ bt.classList.remove("active"); const dv = bt.querySelector(".dateVal"); if(dv) dv.textContent = ""; }
 
         // Close manual date popup (if open)
         const dp = $("datePopup"); if(dp) dp.classList.add("hidden");
@@ -3434,19 +3443,19 @@ if (ok) ok.title = asOfVal ? `Stand: ${asOfVal}` : "";
       if(bf){
         if(GLOBAL.filters.manualFrom){
           bf.classList.add("active");
-          bf.querySelector(".lbl").textContent = GLOBAL.filters.manualFrom;
+          const dv = bf.querySelector(".dateVal"); if(dv) dv.textContent = GLOBAL.filters.manualFrom;
         }else{
           bf.classList.remove("active");
-          bf.querySelector(".lbl").textContent = "Von";
+          const dv = bf.querySelector(".dateVal"); if(dv) dv.textContent = "";
         }
       }
       if(bt){
         if(GLOBAL.filters.manualTo){
           bt.classList.add("active");
-          bt.querySelector(".lbl").textContent = GLOBAL.filters.manualTo;
+          const dv = bt.querySelector(".dateVal"); if(dv) dv.textContent = GLOBAL.filters.manualTo;
         }else{
           bt.classList.remove("active");
-          bt.querySelector(".lbl").textContent = "Bis";
+          const dv = bt.querySelector(".dateVal"); if(dv) dv.textContent = "";
         }
       }
 
@@ -3463,6 +3472,10 @@ if (ok) ok.title = asOfVal ? `Stand: ${asOfVal}` : "";
       }
 
       recomputeAnalysis();
+      // Render immediately after manual date change
+      const latest2 = Array.isArray(GLOBAL.equity) && GLOBAL.equity.length ? GLOBAL.equity[GLOBAL.equity.length - 1] : null;
+      renderKpiPanel(latest2);
+      renderCurve();
     }
 
     const btnFrom = $("btnFrom");
@@ -3477,7 +3490,18 @@ if (ok) ok.title = asOfVal ? `Stand: ${asOfVal}` : "";
       btnTo.addEventListener("click", () => openDatePopup("to", btnTo));
     }
 
-    if(dpApply && !dpApply._bound){
+    
+    // Instant apply on date selection (no Apply/Clear buttons)
+    if(dpInput && !dpInput._bound){
+      dpInput._bound = true;
+      dpInput.addEventListener("change", () => {
+        if(!DATE_UI.kind) return closeDatePopup();
+        setManualDate(DATE_UI.kind, dpInput.value || null);
+        closeDatePopup();
+      });
+    }
+
+if(dpApply && !dpApply._bound){
       dpApply._bound = true;
       dpApply.addEventListener("click", () => {
         if(!DATE_UI.kind) return closeDatePopup();
@@ -3656,11 +3680,7 @@ renderCurve();
   </div>
   <div class="dpBody">
     <input id="dpInput" class="dpInput" type="date" />
-    <div class="dpRow">
-      <button id="dpClear" class="dpBtn ghost" type="button">Clear</button>
-      <button id="dpApply" class="dpBtn" type="button">Apply</button>
-    </div>
-  </div>
+</div>
 </div>
 
 </body>
