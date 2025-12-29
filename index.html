@@ -1056,12 +1056,9 @@ background: var(--cardGrad);
       font-weight:800;
       margin:0 2px;
     }
-
-
-
-
     .kpiGrid .card .v .dualMain .winVal{ color: rgba(120, 220, 170, .92); }
     .kpiGrid .card .v .dualMain .lossVal{ color: rgba(245, 145, 155, .92); }
+
 
 /* --- Topbar: date segments + dropdown dark options --- */
 .select{
@@ -2020,29 +2017,6 @@ function computeScore(filteredTrades, tradeKPIs){
 
   
   
-
-  function computeStreakSummaryFromFreq(dist){
-    const winFreq = dist?.winFreq || {};
-    const lossFreq = dist?.lossFreq || {};
-
-    const keysW = Object.keys(winFreq).map(Number);
-    const keysL = Object.keys(lossFreq).map(Number);
-
-    const longestW = keysW.length ? Math.max(...keysW) : 0;
-    const longestL = keysL.length ? Math.max(...keysL) : 0;
-
-    const countW = keysW.reduce((a,k)=>a+(winFreq[k]||0),0);
-    const countL = keysL.reduce((a,k)=>a+(lossFreq[k]||0),0);
-
-    const sumLenW = keysW.reduce((a,k)=>a+k*(winFreq[k]||0),0);
-    const sumLenL = keysL.reduce((a,k)=>a+k*(lossFreq[k]||0),0);
-
-    const avgW = countW ? (sumLenW / countW) : 0;
-    const avgL = countL ? (sumLenL / countL) : 0;
-
-    return { avgW, avgL, longestW, longestL };
-  }
-
   function recomputeAnalysis(){
     GLOBAL.filteredTrades = filterEngine(GLOBAL.trades, GLOBAL.filters);
 
@@ -2072,8 +2046,7 @@ function computeScore(filteredTrades, tradeKPIs){
     GLOBAL.dayStreakDist = computeStreakFrequencyFromSequence(seq);
 
 
-        GLOBAL.dayStreakSummary = computeStreakSummaryFromFreq(GLOBAL.dayStreakDist);
-// ---- CumR (rebased to 0 on period start, aligned to viewSpine) ----
+    // ---- CumR (rebased to 0 on period start, aligned to viewSpine) ----
     const cumView = buildCumR_Rebased_OnView(GLOBAL.viewSpine, dailyRows);
     const cumWithBaseline = addBaselinePointSameDay(GLOBAL.viewSpine, cumView, 0);
     GLOBAL.viewCumR = cumWithBaseline.values;
@@ -2349,17 +2322,398 @@ scoreEl.title =
         `;
       }
       if(type === "winLossStreaks"){
-        const s = GLOBAL.dayStreakSummary || { avgW:0, avgL:0, longestW:0, longestL:0 };
-        const aw = (s.avgW || 0).toFixed(1);
-        const al = (s.avgL || 0).toFixed(1);
-        const lw = (s.longestW || 0);
-        const ll = (s.longestL || 0);
+        const dist = GLOBAL.dayStreakDist || { winFreq:{}, lossFreq:{} };
+        const winFreq = dist.winFreq || {};
+        const lossFreq = dist.lossFreq || {};
+
+        const keysW = Object.keys(winFreq).map(Number);
+        const keysL = Object.keys(lossFreq).map(Number);
+
+        const longestW = keysW.length ? Math.max(...keysW) : 0;
+        const longestL = keysL.length ? Math.max(...keysL) : 0;
+
+        const countW = keysW.reduce((a,k)=>a+(winFreq[k]||0),0);
+        const countL = keysL.reduce((a,k)=>a+(lossFreq[k]||0),0);
+
+        const sumLenW = keysW.reduce((a,k)=>a+k*(winFreq[k]||0),0);
+        const sumLenL = keysL.reduce((a,k)=>a+k*(lossFreq[k]||0),0);
+
+        const avgW = countW ? (sumLenW / countW) : 0;
+        const avgL = countL ? (sumLenL / countL) : 0;
+
         return `
           <div><b>Ø Daily Win / Loss Streaks based on Equity change:</b></div>
-          <div>W-Days ${aw} / L-Days ${al}</div>
-          <div>Longest W/L days : ${lw} / ${ll}</div>
+          <div>W-Days ${avgW.toFixed(1)} / L-Days ${avgL.toFixed(1)}</div>
+          <div>Longest W/L days : ${longestW} / ${longestL}</div>
         `;
-      }${dayR === null ? `` : `<div class="badge">${Number.isFinite(dayR) ? fmtCumR(dayR) : "—"}</div>`}` }
+      }
+      if(type === "equity"){
+        const vs = GLOBAL.viewSpine || [];
+        const spine = GLOBAL.spine || [];
+        const eq = GLOBAL.seriesEquity || [];
+        if(!vs.length || !spine.length || !eq.length) return "";
+        const startDate = vs[0];
+        const endDate = vs[vs.length-1];
+        const iStart = spine.indexOf(startDate);
+        const iEnd = spine.indexOf(endDate);
+        const startEquity = (iStart > 0) ? eq[iStart-1] : (iStart >= 0 ? eq[iStart] : null);
+        const endEquity = (iEnd >= 0) ? eq[iEnd] : null;
+        if(!Number.isFinite(Number(startEquity)) || !Number.isFinite(Number(endEquity))) return "";
+        const delta = Number(endEquity) - Number(startEquity);
+        const cls = (delta >= 0) ? "good" : "bad";
+        const sign = (delta >= 0) ? "+" : "-";
+        const abs = Math.abs(delta);
+        const num = fmtUSD(abs).replace("$","").trim();
+        return `
+          <div>Equity change: <span class="${cls}"><b>$ ${sign}${num}</b></span></div>
+        `;
+      }
+      if(type === "nextTrade"){
+        const row = GLOBAL._latestEquityRow || {};
+        const equity = Number(row.cash_equity_$);
+        const mult = Number.isFinite(Number(row.dd_multiplier)) ? Number(row.dd_multiplier) : 1;
+        const risk = Math.abs(Number(row.effective_risk_$ ?? GLOBAL._risk$ ?? 0));
+        if(!Number.isFinite(equity) || !Number.isFinite(risk)) return "";
+        const equityFactor = (mult !== 0) ? (risk / (equity * mult)) : (risk / equity);
+        const pct = equityFactor * 100;
+        let pctStr = Number.isFinite(pct) ? pct.toFixed(1) : "—";
+        if(pctStr.endsWith(".0")) pctStr = pctStr.slice(0,-2);
+        return `
+          <div>Tier ${row.dd_tier ?? "—"}</div>
+          <div><b>Trade Size ${fmtUSD(risk)} = ${fmtUSD(equity)} × ${pctStr}% × ${Number.isFinite(mult) ? mult : "—"}</b></div>
+        `;
+      }
+      return "";
+    };
+
+    const show = (html, x, y) => {
+      tip.innerHTML = html;
+      tip.style.display = "block";
+
+      // position with viewport clamp
+      const pad = 12;
+      const ox = 14, oy = 14;
+
+      const rect = tip.getBoundingClientRect();
+      let left = x + ox;
+      let top  = y + oy;
+
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+
+      if(left + rect.width + pad > vw) left = Math.max(pad, vw - rect.width - pad);
+      if(top + rect.height + pad > vh) top = Math.max(pad, vh - rect.height - pad);
+
+      tip.style.left = `${left}px`;
+      tip.style.top  = `${top}px`;
+    };
+
+    const hide = () => { tip.style.display = "none"; };
+
+    // de-duplicate binding (simple guard via attribute)
+    grid.querySelectorAll(".card[data-kpi-tip]").forEach(card => {
+      if(card.dataset.tipBound === "1") return;
+      card.dataset.tipBound = "1";
+
+      card.addEventListener("mouseenter", (e) => {
+        const type = card.dataset.kpiTip;
+        const html = buildHTML(type);
+        if(!html) return;
+        show(html, e.clientX, e.clientY);
+      });
+
+      card.addEventListener("mousemove", (e) => {
+        if(tip.style.display !== "block") return;
+        const type = card.dataset.kpiTip;
+        const html = buildHTML(type);
+        if(!html) return;
+        show(html, e.clientX, e.clientY);
+      });
+
+      card.addEventListener("mouseleave", () => hide());
+    });
+  }
+
+
+  function renderDebug(){
+    const el = $("debug");
+    if(!el) return;
+
+    el.textContent = JSON.stringify({
+      calendar_spine_days: GLOBAL.spine?.length ?? 0,
+      spine_start: GLOBAL.spine?.[0] ?? null,
+      spine_end: GLOBAL.spine?.at?.(-1) ?? null,
+
+      filters: GLOBAL.filters,
+      view_spine_days: GLOBAL.viewSpine?.length ?? 0,
+      view_start: GLOBAL.viewSpine?.[0] ?? null,
+      view_end: GLOBAL.viewSpine?.at?.(-1) ?? null,
+
+      day_streak_dist: GLOBAL.dayStreakDist
+    }, null, 2);
+  }
+
+  
+
+  // ---- Date spine helpers ----
+  function parseISO(s){ // YYYY-MM-DD
+    const [y,m,d] = String(s).split("-").map(Number);
+    return new Date(Date.UTC(y, (m||1)-1, d||1));
+  }
+  function isoFromDate(dt){
+    const y = dt.getUTCFullYear();
+    const m = String(dt.getUTCMonth()+1).padStart(2,"0");
+    const d = String(dt.getUTCDate()).padStart(2,"0");
+    return `${y}-${m}-${d}`;
+  }
+  function addDays(dt, n){
+    const x = new Date(dt.getTime());
+    x.setUTCDate(x.getUTCDate() + n);
+    return x;
+  }
+  const MONTHS_DE = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+  const DOW_DE = ["Mo","Di","Mi","Do","Fr"];
+
+  function monthKeyFromISO(iso){ return String(iso).slice(0,7); } // "YYYY-MM"
+  function monthLabelFromKey(key){
+    const y = Number(key.slice(0,4));
+    const m = Number(key.slice(5,7));
+    const mon = MONTHS_DE[(m-1) || 0] || key;
+    return `${mon} ${y}`;
+  }
+  function firstDayOfMonthUTC(key){
+    const y = Number(key.slice(0,4));
+    const m = Number(key.slice(5,7));
+    return new Date(Date.UTC(y, (m||1)-1, 1));
+  }
+  function daysInMonthUTC(key){
+    const y = Number(key.slice(0,4));
+    const m = Number(key.slice(5,7));
+    const last = new Date(Date.UTC(y, (m||1), 0));
+    return last.getUTCDate();
+  }
+  function addMonthsKey(key, delta){
+    const y = Number(key.slice(0,4));
+    const m = Number(key.slice(5,7));
+    const dt = new Date(Date.UTC(y, (m-1), 1));
+    dt.setUTCMonth(dt.getUTCMonth() + delta);
+    const yy = dt.getUTCFullYear();
+    const mm = String(dt.getUTCMonth()+1).padStart(2,"0");
+    return `${yy}-${mm}`;
+  }
+
+  function computeAllowedMonths(dateStart, dateEnd, spine){
+    const s = dateStart || (spine?.[0] ?? null);
+    const e = dateEnd   || (spine?.at?.(-1) ?? null);
+    if(!s || !e) return [];
+
+    const out = [];
+    let cur = monthKeyFromISO(s);
+    const last = monthKeyFromISO(e);
+    while(cur <= last){
+      out.push(cur);
+      cur = addMonthsKey(cur, 1);
+    }
+    return out;
+  }
+
+  function buildDailyTradeMaps(trades){
+    const count = new Map(); // date -> n trades
+    const sumR = new Map();  // date -> daily sum R
+    for(const tr of (trades || [])){
+      const d = tr?.trade_date || tr?.date;
+      if(!d) continue;
+      const r = Number(tr?.result_r ?? tr?.r ?? 0);
+      if(!Number.isFinite(r)) continue;
+      count.set(d, (count.get(d) || 0) + 1);
+      sumR.set(d, (sumR.get(d) || 0) + r);
+    }
+    return { count, sumR };
+  }
+
+  function buildDailyRMap(dailyAggRows){
+    const map = new Map();
+    for(const row of (dailyAggRows || [])){
+      if(row?.date && Number.isFinite(row.daily_R)){
+        map.set(row.date, Number(row.daily_R));
+      }
+    }
+    return map;
+  }
+
+  function buildDailyPnLMap(dailyAggRows){
+    const map = new Map();
+    for(const row of (dailyAggRows || [])){
+      const d = row?.date;
+      if(!d) continue;
+      const pnl = (row.daily_pnl_$ ?? row.daily_pnl ?? row.dailyPnl ?? row.pnl ?? row.dailyPnL ?? null);
+      if(pnl === null || pnl === undefined) continue;
+      const x = Number(pnl);
+      if(!Number.isFinite(x)) continue;
+      map.set(d, x);
+    }
+    return map;
+  }
+
+  function buildCumRByDateOnView(viewSpine, dailySumRMap){
+    let cum = 0;
+    const out = new Map(); // date -> cumR at end of day
+    for(const d of (viewSpine || [])){
+      const r = Number(dailySumRMap.get(d) || 0);
+      cum += (Number.isFinite(r) ? r : 0);
+      out.set(d, cum);
+    }
+    return out;
+  }
+
+  function badgeClassFromValue(v){
+    const x = Number(v);
+    if(!Number.isFinite(x) || x === 0) return "";
+    return x > 0 ? "good" : "bad";
+  }
+
+  function renderCalendar(){
+    const wrap = $("calendarWrap");
+    const grid = $("calGrid");
+    if(!wrap || !grid) return;
+
+    const ds = GLOBAL.filters?.dateStart || null;
+    const de = GLOBAL.filters?.dateEnd   || null;
+
+    const allowedMonths = computeAllowedMonths(ds, de, GLOBAL.spine);
+    GLOBAL.calendar = GLOBAL.calendar || {};
+    GLOBAL.calendar.allowedMonths = allowedMonths;
+
+    const defaultMonth = monthKeyFromISO(de || (GLOBAL.spine?.at?.(-1) ?? isoToday()));
+    if(!GLOBAL.calendar.month || !allowedMonths.includes(GLOBAL.calendar.month)){
+      GLOBAL.calendar.month = allowedMonths.includes(defaultMonth) ? defaultMonth : (allowedMonths.at(-1) || defaultMonth);
+    }
+    const monthKey = GLOBAL.calendar.month;
+
+    $("calTitle").textContent = monthLabelFromKey(monthKey);
+    $("calSub").textContent = (ds || de)
+      ? `Range: ${ds || (GLOBAL.spine?.[0] ?? "—")} – ${de || (GLOBAL.spine?.at?.(-1) ?? "—")}`
+      : "Range: All";
+
+    const idx = allowedMonths.indexOf(monthKey);
+    const btnPrev = $("calPrev");
+    const btnNext = $("calNext");
+    if(btnPrev) btnPrev.disabled = (idx <= 0);
+    if(btnNext) btnNext.disabled = (idx < 0 || idx >= allowedMonths.length - 1);
+
+    const chips = $("calChips");
+    if(chips){
+      chips.innerHTML = "";
+      for(const mk of allowedMonths){
+        const b = document.createElement("button");
+        b.className = "chip" + (mk === monthKey ? " active" : "");
+        b.type = "button";
+        b.textContent = MONTHS_DE[Number(mk.slice(5,7))-1] || mk;
+        b.title = monthLabelFromKey(mk);
+        b.addEventListener("click", () => {
+          GLOBAL.calendar.month = mk;
+          renderCalendar();
+        
+    // Calendar mode toggle (PnL vs Trades & R)
+    const calModeEl = $("calMode");
+    if(calModeEl){
+      calModeEl.addEventListener("click", (e)=>{
+        const btn = e.target.closest("button[data-mode]");
+        if(!btn) return;
+        calendarBadgeMode = btn.dataset.mode;
+        [...calModeEl.querySelectorAll("button")].forEach(b=>b.classList.toggle("active", b===btn));
+        renderCalendar();
+      });
+    }
+});
+        chips.appendChild(b);
+      }
+    }
+
+    // Grid build (Mon–So)
+    const first = firstDayOfMonthUTC(monthKey);
+    const dim = daysInMonthUTC(monthKey);
+
+    // getUTCDay(): 0=Sun..6=Sat; convert to Mon=0..Sun=6
+    const dowSun0 = first.getUTCDay();
+    const dowMon0 = (dowSun0 + 6) % 7;
+
+    grid.innerHTML = "";
+
+    for(const d of DOW_DE){
+      const el = document.createElement("div");
+      el.className = "calDow";
+      el.textContent = d;
+      grid.appendChild(el);
+    }
+
+    const maps = GLOBAL._calMaps || {};
+    const tradeCount = maps.tradeCount || new Map();
+        const dailyPnL = maps.dailyPnL || new Map();
+    const dailyR = maps.dailyR || new Map();
+    const cumRByDate = maps.cumRByDate || new Map();
+
+    const instrumentNote = (GLOBAL.filters?.instrument && GLOBAL.filters.instrument !== "ALL");
+
+    // Weekday-only grid (Mon–Fri)
+    const y = Number(monthKey.slice(0,4));
+    const mNum = Number(monthKey.slice(5,7)); // 1..12
+
+    const firstOfMonth = new Date(Date.UTC(y, mNum-1, 1));
+    const lastOfMonth  = new Date(Date.UTC(y, mNum-1, dim));
+
+    // Start at Monday on/before firstOfMonth
+    const firstDowMon0 = (firstOfMonth.getUTCDay() + 6) % 7; // Mon=0..Sun=6
+    const startDate = new Date(firstOfMonth);
+    startDate.setUTCDate(startDate.getUTCDate() - firstDowMon0);
+
+    // End at Friday on/after lastOfMonth (only if last day is Mon–Fri)
+    const lastDowMon0 = (lastOfMonth.getUTCDay() + 6) % 7;
+    const endDate = new Date(lastOfMonth);
+    const addDays = (lastDowMon0 <= 4) ? (4 - lastDowMon0) : 0;
+    endDate.setUTCDate(endDate.getUTCDate() + addDays);
+
+    for(let dt = new Date(startDate); dt <= endDate; dt.setUTCDate(dt.getUTCDate()+1)){
+      const dow = (dt.getUTCDay() + 6) % 7; // Mon=0..Sun=6
+      if(dow > 4) continue; // skip Sat/Sun
+
+      const yy = dt.getUTCFullYear();
+      const mm = String(dt.getUTCMonth()+1).padStart(2,"0");
+      const dd = String(dt.getUTCDate()).padStart(2,"0");
+      const iso = `${yy}-${mm}-${dd}`;
+
+      const inMonth = (yy === y) && (Number(mm) === mNum);
+      const dayNum = dt.getUTCDate();
+
+      const div = document.createElement("div");
+      div.className = "dayCell" + (inMonth ? "" : " outMonth");
+
+      if(inMonth){
+        const inRange = (!ds || iso >= ds) && (!de || iso <= de);
+        if(!inRange) div.className += " outRange";
+
+        const nTrades = tradeCount.get(iso) || 0;
+        const dayRraw = dailyR.get(iso);
+        const dayR = (dayRraw === undefined) ? null : Number(dayRraw);
+        const cumR = Number(cumRByDate.get(iso) || 0);
+
+        const pnlRaw = dailyPnL.get(iso);
+        const pnl = (pnlRaw === undefined) ? null : Number(pnlRaw);
+
+        const hasAnyData = (nTrades > 0) || (pnlRaw !== undefined) || (dayRraw !== undefined);
+
+        // COLOR ONLY by Daily PnL
+        const pnlCls = badgeClassFromValue(pnl);
+        if(pnlCls) div.className += " " + pnlCls;
+
+        div.innerHTML = `
+          <div class="dayTop">
+            <div class="dayNum">${dayNum}</div>
+            ${hasAnyData ? `
+            <div class="dayBadges">
+              ${calendarBadgeMode === "pnl"
+                ? (pnl === null ? `` : `<div class="badge ${pnlCls}">${fmtUSD0(pnl)}${instrumentNote ? "·A" : ""}</div>`)
+                : `${nTrades > 0 ? `<div class="badge round">${nTrades}T</div>` : ``}${dayR === null ? `` : `<div class="badge">${Number.isFinite(dayR) ? fmtCumR(dayR) : "—"}</div>`}` }
             </div>` : ``}
           </div>
         `;
