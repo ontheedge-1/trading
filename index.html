@@ -228,6 +228,56 @@ background: var(--cardGrad);
       display:flex; align-items:center; justify-content:space-between; gap:12px;
       margin-bottom:10px;
     }
+    /* Phase 3 – Chart header polish (no logic changes) */
+    .chartPanel .chartHead{
+      display:flex; align-items:flex-end; justify-content:space-between; gap:14px;
+      position:relative;
+      margin: -16px -16px 12px;
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid rgba(120,160,255,.14);
+      background:
+        radial-gradient(900px 260px at 20% 0%, rgba(41,182,255,.16), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.00));
+      border-top-left-radius: 18px;
+      border-top-right-radius: 18px;
+    }
+    .chartPanel .chartHead::after{
+      content:"";
+      position:absolute;
+      left:16px; right:16px; bottom:-1px;
+      height:1px;
+      background: linear-gradient(90deg, transparent, rgba(120,160,255,.22), transparent);
+      opacity:.7;
+      pointer-events:none;
+    }
+    .chartPanel .chartHead .k{
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: rgba(182,210,255,.86);
+    }
+    .chartTitle{
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: -.01em;
+      margin-top: 6px;
+      color: rgba(236,246,255,.96);
+      text-shadow: 0 12px 26px rgba(0,0,0,.35);
+      line-height: 1.12;
+    }
+    .chartSub{
+      font-size: 12px;
+      margin-top: 4px;
+      color: rgba(170,200,255,.78);
+      line-height: 1.35;
+      max-width: 520px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .chartPanel .chartHead > div:first-child{ min-width: 280px; }
+    .chartPanel .chartHead .seg{ margin-top: 2px; }
     .seg{
       display:inline-flex;
       background: rgba(10,16,32,.58);
@@ -762,7 +812,7 @@ background: var(--cardGrad);
     }
     .v{
       font-size: 28px;
-      font-weight: 950;
+      font-weight: 900;
       letter-spacing: .02em;
       margin-top: 8px;
       color: rgba(238,247,255,.94);
@@ -896,8 +946,8 @@ background: var(--cardGrad);
       <div class="chartHead">
         <div>
           <div class="k">Chart</div>
-          <div class="v" style="font-size:16px; font-weight:800; margin-top:6px;" id="curveTitle">Kalender</div>
-          <div class="sub" id="curveSub">Daily (Calendar spine, carry-forward)</div>
+          <div class="chartTitle" id="curveTitle">Kalender</div>
+          <div class="chartSub" id="curveSub">Daily (Calendar spine, carry-forward)</div>
         </div>
         <div class="seg" role="tablist" aria-label="Curve Toggle">
           <button id="btnEquity" class="active" type="button">Equity ($)</button>
