@@ -398,6 +398,16 @@ background: var(--cardGrad);
     }
     #kpiTooltip b{ font-weight: 900; }
 
+    /* DATA:OK tooltip */
+    #dataTooltip{
+      position: fixed;
+      transform: none;
+      z-index: 9999;
+      white-space: normal;
+      max-width: 260px;
+    }
+    #dataTooltip b{ font-weight: 900; }
+
     .hint{ display:none; }
 
     pre{
@@ -1211,6 +1221,7 @@ background: var(--cardGrad);
         <canvas id="curveCanvas"></canvas>
         <div class="tooltip" id="tooltip"></div>
         <div class="tooltip" id="kpiTooltip" style="display:none;"></div>
+        <div class="tooltip" id="dataTooltip" style="display:none;"></div>
       </div>
 
       <div class="calendarWrap" id="calendarWrap">
@@ -3281,11 +3292,65 @@ scoreEl.title =
         loadJSON("data/trades_enriched.json"),
       ]);
 
-      // Stand tooltip on DATA: OK
-      const asOfVal = (meta && (meta.as_of || meta.asOf || meta.date || meta.latest_date)) || "";
+      // Stand tooltip on DATA: OK (Europe/Berlin)
       const ok = $("dataOk");
-if (ok) ok.title = asOfVal ? `Stand: ${asOfVal}` : "";
-      GLOBAL.meta = meta;
+      const dataTip = $("dataTooltip");
+      const asOfRaw = (meta && (meta.as_of || meta.asOf || meta.date || meta.latest_date)) || "";
+
+      function formatBerlinStand(raw){
+        const tz = "Europe/Berlin";
+        const pad = (n)=> String(n).padStart(2,"0");
+        // If raw already includes time, use it directly (converted to Berlin).
+        try{
+          if(raw && typeof raw === "string" && raw.includes("T")){
+            const d = new Date(raw);
+            const parts = new Intl.DateTimeFormat("sv-SE", {
+              timeZone: tz, year:"numeric", month:"2-digit", day:"2-digit",
+              hour:"2-digit", minute:"2-digit", hourCycle:"h23"
+            }).formatToParts(d);
+            const get = (t)=> parts.find(p=>p.type===t)?.value || "";
+            return `${get("year")}-${get("month")}-${get("day")} ${get("hour")}:${get("minute")}`;
+          }
+        }catch(e){}
+
+        // raw is date-only (YYYY-MM-DD). Use current Berlin HH:mm.
+        const now = new Date();
+        const parts2 = new Intl.DateTimeFormat("sv-SE", {
+          timeZone: tz, hour:"2-digit", minute:"2-digit", hourCycle:"h23"
+        }).formatToParts(now);
+        const hh = parts2.find(p=>p.type==="hour")?.value || "00";
+        const mm = parts2.find(p=>p.type==="minute")?.value || "00";
+
+        if(raw) return `${raw} ${hh}:${mm}`;
+
+        // fallback: today date in local with Berlin time
+        return `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${hh}:${mm}`;
+      }
+
+      const standText = formatBerlinStand(asOfRaw);
+
+      if(ok && dataTip){
+        const position = (e) => {
+          const rect = ok.getBoundingClientRect();
+          const x = (e?.clientX ?? (rect.left + rect.width/2)) + 14;
+          const y = (e?.clientY ?? rect.bottom) + 14;
+          dataTip.style.left = x + "px";
+          dataTip.style.top  = y + "px";
+        };
+
+        const show = (e) => {
+          dataTip.innerHTML = `<b>Stand:</b> ${standText}<div class="muted">Europe/Berlin</div>`;
+          dataTip.style.display = "block";
+          position(e);
+        };
+
+        const hide = () => { dataTip.style.display = "none"; };
+
+        ok.addEventListener("mouseenter", show);
+        ok.addEventListener("mousemove", (e) => { if(dataTip.style.display !== "none") position(e); });
+        ok.addEventListener("mouseleave", hide);
+      }
+GLOBAL.meta = meta;
       GLOBAL.equity = equity;
       GLOBAL.dailyAgg = dailyAgg;
       GLOBAL.kpis = kpis;
@@ -3419,6 +3484,15 @@ if (ok) ok.title = asOfVal ? `Stand: ${asOfVal}` : "";
 
       datePopup.style.left = left + "px";
       datePopup.style.top  = top + "px";
+
+      // Open native date picker immediately (1 click UX)
+      requestAnimationFrame(() => {
+        try{
+          dpInput.focus({ preventScroll: true });
+          if(typeof dpInput.showPicker === "function") dpInput.showPicker();
+          else dpInput.click();
+        }catch(e){ try{ dpInput.focus(); }catch(_e){} }
+      });
     }
 
     function setManualDate(kind, val){
