@@ -304,6 +304,47 @@ background: var(--cardGrad);
       border: 1px solid rgba(45,107,255,.34);
       color: #e7f0ff;
     }
+
+    /* Phase 3: Tabs as true segment control (chart only) */
+    .chartPanel .chartHead .chartSeg{
+      background: rgba(8,12,22,.62);
+      border: 1px solid rgba(140,180,255,.22);
+      padding: 5px;
+      gap: 6px;
+      box-shadow:
+        0 10px 26px rgba(0,0,0,.28) inset,
+        0 10px 26px rgba(0,0,0,.18);
+    }
+    .chartPanel .chartHead .chartSeg button{
+      padding: 10px 12px;
+      font-size: 12.5px;
+      font-weight: 900;
+      letter-spacing: .2px;
+      color: rgba(198,218,255,.78);
+      border: 1px solid transparent;
+      background: transparent;
+      border-radius: 999px;
+      line-height: 1;
+    }
+    .chartPanel .chartHead .chartSeg button:hover{
+      background: rgba(255,255,255,.03);
+      border-color: rgba(140,180,255,.18);
+      color: rgba(226,240,255,.92);
+    }
+    .chartPanel .chartHead .chartSeg button.active{
+      background: linear-gradient(180deg, rgba(45,107,255,.34), rgba(41,182,255,.16));
+      border: 1px solid rgba(80,140,255,.38);
+      color: rgba(236,246,255,.98);
+      box-shadow:
+        0 10px 24px rgba(0,0,0,.22) inset,
+        0 0 0 1px rgba(255,255,255,.04) inset;
+    }
+    .chartPanel .chartHead .chartSeg #btnCal{
+      width: 42px;
+      padding: 10px 0;
+      text-align: center;
+      font-size: 14px;
+    }
     .chartWrap{
       position:relative;
       border-radius:16px;
@@ -946,10 +987,10 @@ background: var(--cardGrad);
       <div class="chartHead">
         <div>
           <div class="k">Chart</div>
-          <div class="chartTitle" id="curveTitle">Kalender</div>
-          <div class="chartSub" id="curveSub">Daily (Calendar spine, carry-forward)</div>
+          <div class="chartTitle" id="curveTitle">Equity Curve</div>
+          <div class="chartSub" id="curveSub">Daily (Calendar spine, carry-forward) · Source: Daily_Adjustments</div>
         </div>
-        <div class="seg" role="tablist" aria-label="Curve Toggle">
+        <div class="seg chartSeg" role="tablist" aria-label="Curve Toggle">
           <button id="btnEquity" class="active" type="button">Equity ($)</button>
           <button id="btnR" type="button">Cum R</button>
           <button id="btnDD" type="button">DD (R)</button>
@@ -2881,10 +2922,41 @@ scoreEl.title =
   }
 
 
+  function setCurveHeader(mode){
+    const t = $("curveTitle");
+    const s = $("curveSub");
+    if(!t || !s) return;
+
+    t.textContent =
+      (mode === "equity")    ? "Equity Curve" :
+      (mode === "r")         ? "Cumulative R" :
+      (mode === "dd")        ? "Drawdown (R)" :
+      (mode === "streaks")   ? "Streaks" :
+      (mode === "calendar")  ? "Kalender" :
+      "";
+
+    s.textContent =
+      (mode === "equity")
+        ? "Daily (Calendar spine, carry-forward) · Source: Daily_Adjustments"
+        : (mode === "r")
+          ? "Daily cumulative R · Source: daily_aggregates.json"
+          : (mode === "dd")
+            ? "Peak-to-trough drawdown in R"
+            : (mode === "streaks")
+              ? "Winning and losing streaks"
+              : (mode === "calendar")
+                ? "Daily Trading Performance · Mo–Fr"
+                : "";
+  }
+
+
   function renderCurve(withCrosshair=false){
   const canvas = $("curveCanvas");
   const chartWrap = $("chartWrap");
   const calWrap = $("calendarWrap");
+
+  // Always keep header in sync with the currently shown view
+  setCurveHeader(GLOBAL.mode);
 
   if(GLOBAL.mode === "calendar"){
     if(chartWrap) chartWrap.style.display = "none";
@@ -2927,26 +2999,7 @@ scoreEl.title =
     }
 
 
-    $("curveTitle").textContent =
-      (mode === "equity")    ? "Equity Curve" :
-      (mode === "r")         ? "Cumulative R" :
-      (mode === "dd")        ? "Drawdown (R)" :
-      (mode === "streaks")   ? "Streaks" :
-      (mode === "calendar")  ? "Kalender" :
-      "";
-
-    $("curveSub").textContent =
-      (mode === "equity")
-        ? "Daily (Calendar spine, carry-forward) · Source: Daily_Adjustments"
-        : (mode === "r")
-          ? "Daily cumulative R · Source: daily_aggregates.json"
-          : (mode === "dd")
-            ? "Peak-to-trough drawdown in R"
-            : (mode === "streaks")
-              ? "Winning and losing streaks"
-              : (mode === "calendar")
-                ? "Daily Trading Performance · Mo–Fr"
-                : "";
+    // (header is set via setCurveHeader)
 
 
 
