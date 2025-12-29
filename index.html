@@ -832,7 +832,7 @@ background: var(--cardGrad);
     .kpiGrid .card .v .kpiMain.weak{ color: rgba(210,225,255,.58); }
     .kpiGrid .card .v .kpiMain.ok{ color: rgba(210,225,255,.78); }
     .kpiGrid .card .v .kpiMain.good{ color: rgba(160,205,255,.92); text-shadow: 0 0 18px rgba(120,170,255,.22); }
-    .kpiGrid .card .v .kpiMain.strong{ color: rgba(235,245,255,.98); text-shadow: 0 0 22px rgba(120,170,255,.30); }
+    .kpiGrid .card .v .kpiMain.strong{ color: rgba(95, 232, 150, .96); text-shadow: 0 0 20px rgba(60, 200, 130, .28); }
 
     /* Dual main values (e.g., Ø Win / Loss) */
     .kpiGrid .card .v .dualMain{
@@ -902,6 +902,7 @@ background: var(--cardGrad);
       <div class="chartWrap" id="chartWrap">
         <canvas id="curveCanvas"></canvas>
         <div class="tooltip" id="tooltip"></div>
+        <div class="tooltip" id="kpiTooltip" style="display:none;"></div>
       </div>
 
       <div class="calendarWrap" id="calendarWrap">
@@ -1123,16 +1124,35 @@ const $ = (id) => document.getElementById(id);
         ? (winrate * avgWin + (1 - winrate) * avgLoss)
         : avgR; // fallback (bei wenig Daten gleichwertig)
 
+    // Sharpe (daily R): mean(dailyR) / stdev(dailyR) * sqrt(252)
+    // computed from trade-days aggregated to daily R (filter reactive).
+    let sharpe = null;
+    try{
+      const dailyRows = aggregateDailyRFromTrades(t);
+      const vals = (dailyRows || []).map(x => Number(x?.dailyR)).filter(x => Number.isFinite(x));
+      if(vals.length >= 10){
+        const mean = vals.reduce((a,b)=>a+b,0) / vals.length;
+        const varr = vals.reduce((a,b)=>a + (b-mean)*(b-mean), 0) / (vals.length - 1);
+        const sd = Math.sqrt(varr);
+        if(sd > 0) sharpe = (mean / sd) * Math.sqrt(252);
+      }
+    } catch(e){ sharpe = null; }
+
+    const lossrate = (winrate !== null) ? (1 - winrate) : null;
+
     return {
       tradeCount: n,
       wins,
       losses,
       winrate,      // 0..1 oder null
+      lossrate,     // 0..1 oder null
+      totalR: sumR, // Total R over trades
       avgR,         // R/trade
       avgWin,       // R
       avgLoss,      // R (negativ)
       profitFactor, // number | Infinity | null
-      expectancy    // R/trade
+      expectancy,   // R/trade
+      sharpe        // annualized Sharpe on daily R
     };
   }
 
@@ -1742,6 +1762,7 @@ function computeScore(filteredTrades, tradeKPIs){
       },
       {
         title: "Trade Quality",
+        tip: "tradeQuality",
         cardClass: "kpi-premium ice",
         main: (() => {
           const cls = tradeQualityClass(k.avgR);
@@ -1753,6 +1774,7 @@ function computeScore(filteredTrades, tradeKPIs){
       },
       {
         title: "System Edge",
+        tip: "systemEdge",
         cardClass: "kpi-premium ice",
         main: (() => {
           const cls = systemEdgeClass(k.expectancy);
@@ -1787,6 +1809,7 @@ function computeScore(filteredTrades, tradeKPIs){
     for(const t of tiles){
       const div = document.createElement("div");
       div.className = `card ${(t.cardClass||"")} ${t.cls || ""}`;
+      if(t.tip) div.dataset.kpiTip = t.tip;
       div.innerHTML = `
         <div class="k">${t.title}</div>
         <div class="v">${t.main}</div>
@@ -1839,7 +1862,91 @@ scoreEl.title =
         (isLowSample ? "\nLow sample: < 30 trades" : "");
     }
 
+    bindKpiTooltips();
+  }
 
+
+
+  function bindKpiTooltips(){
+    const tip = $("kpiTooltip");
+    const grid = $("kpiGrid");
+    if(!tip || !grid) return;
+
+    const fmtR = (n) => (Number.isFinite(Number(n)) ? `${Number(n).toFixed(1)} R` : "—");
+    const fmtPct = (x) => (Number.isFinite(Number(x)) ? `${(Number(x)*100).toFixed(1)}%` : "—");
+
+    const buildHTML = (type) => {
+      const k = GLOBAL.tradeKPIs || {};
+      if(type === "tradeQuality"){
+        const totalR = k.totalR;
+        const n = k.tradeCount;
+        const formula = `${fmtR(totalR)} / ${Number.isFinite(Number(n)) ? n : "—"}`;
+        return `
+          <div><b>Trade Quality = ${formula}</b></div>
+          <div class="muted">Unabhängig von Winrate</div>
+        `;
+      }
+      if(type === "systemEdge"){
+        const wr = k.winrate;
+        const lr = k.lossrate;
+        const aw = k.avgWin;
+        const alAbs = Number.isFinite(Number(k.avgLoss)) ? Math.abs(Number(k.avgLoss)) : null;
+
+        const formula = `(${fmtPct(wr)} × ${fmtR(aw)}) − (${fmtPct(lr)} × ${fmtR(alAbs)})`;
+        return `
+          <div><b>Expectancy = ${formula}</b></div>
+          <div class="muted">Winrate wird einbezogen</div>
+        `;
+      }
+      return "";
+    };
+
+    const show = (html, x, y) => {
+      tip.innerHTML = html;
+      tip.style.display = "block";
+
+      // position with viewport clamp
+      const pad = 12;
+      const ox = 14, oy = 14;
+
+      const rect = tip.getBoundingClientRect();
+      let left = x + ox;
+      let top  = y + oy;
+
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+
+      if(left + rect.width + pad > vw) left = Math.max(pad, vw - rect.width - pad);
+      if(top + rect.height + pad > vh) top = Math.max(pad, vh - rect.height - pad);
+
+      tip.style.left = `${left}px`;
+      tip.style.top  = `${top}px`;
+    };
+
+    const hide = () => { tip.style.display = "none"; };
+
+    // de-duplicate binding (simple guard via attribute)
+    grid.querySelectorAll(".card[data-kpi-tip]").forEach(card => {
+      if(card.dataset.tipBound === "1") return;
+      card.dataset.tipBound = "1";
+
+      card.addEventListener("mouseenter", (e) => {
+        const type = card.dataset.kpiTip;
+        const html = buildHTML(type);
+        if(!html) return;
+        show(html, e.clientX, e.clientY);
+      });
+
+      card.addEventListener("mousemove", (e) => {
+        if(tip.style.display !== "block") return;
+        const type = card.dataset.kpiTip;
+        const html = buildHTML(type);
+        if(!html) return;
+        show(html, e.clientX, e.clientY);
+      });
+
+      card.addEventListener("mouseleave", () => hide());
+    });
   }
 
 
