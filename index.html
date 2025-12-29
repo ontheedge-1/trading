@@ -2434,7 +2434,7 @@ if(type === "tradeQuality"){
     const hide = () => { tip.style.display = "none"; };
 
     // de-duplicate binding (simple guard via attribute)
-    grid.querySelectorAll(".card[data-kpi-tip]").forEach(card => {
+    document.querySelectorAll(".card[data-kpi-tip]").forEach(card => {
       if(card.dataset.tipBound === "1") return;
       card.dataset.tipBound = "1";
 
