@@ -825,6 +825,28 @@ background: var(--cardGrad);
   font-variant-numeric: tabular-nums;
 }
 
+
+
+    /* KPI main value color coding (ice scale, no emerald) */
+    .kpiGrid .card .v .kpiMain{ font-variant-numeric: tabular-nums; }
+    .kpiGrid .card .v .kpiMain.weak{ color: rgba(210,225,255,.58); }
+    .kpiGrid .card .v .kpiMain.ok{ color: rgba(210,225,255,.78); }
+    .kpiGrid .card .v .kpiMain.good{ color: rgba(160,205,255,.92); text-shadow: 0 0 18px rgba(120,170,255,.22); }
+    .kpiGrid .card .v .kpiMain.strong{ color: rgba(235,245,255,.98); text-shadow: 0 0 22px rgba(120,170,255,.30); }
+
+    /* Dual main values (e.g., Ø Win / Loss) */
+    .kpiGrid .card .v .dualMain{
+      display:flex;
+      align-items:baseline;
+      gap:10px;
+      white-space:nowrap;
+    }
+    .kpiGrid .card .v .dualMain .sep{
+      opacity:.55;
+      font-weight:800;
+      margin:0 2px;
+    }
+
 </style>
  </head>
 <body>
@@ -1663,6 +1685,29 @@ function computeScore(filteredTrades, tradeKPIs){
     return Number(n).toFixed(1);
   };
 
+  // KPI strength classes (ice scale)
+  const kpiStrengthClass = (v, ranges) => {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return "";
+    if (n < ranges.okMin) return "weak";
+    if (n < ranges.goodMin) return "ok";
+    if (n < ranges.strongMin) return "good";
+    return "strong";
+  };
+
+  const tradeQualityClass = (avgR) => kpiStrengthClass(avgR, {
+    okMin: 0.20,
+    goodMin: 0.30,
+    strongMin: 0.60
+  });
+
+  const systemEdgeClass = (expR) => kpiStrengthClass(expR, {
+    okMin: 0.20,
+    goodMin: 0.30,
+    strongMin: 0.50
+  });
+
+
 
 
 
@@ -1697,30 +1742,44 @@ function computeScore(filteredTrades, tradeKPIs){
       },
       {
         title: "Trade Quality",
-        main: fmtR1(k.avgR),
+        cardClass: "kpi-premium ice",
+        main: (() => {
+          const cls = tradeQualityClass(k.avgR);
+          return `<span class="kpiMain ${cls}">${fmtR1(k.avgR)}</span>`;
+        })(),
         sub1: `Ø Win: ${fmtR1(k.avgWin)}`,
         sub2: `Ø Loss: ${fmtR1(k.avgLoss)}`,
         cls: ""
       },
       {
         title: "System Edge",
-        main: fmtR1(k.expectancy),
+        cardClass: "kpi-premium ice",
+        main: (() => {
+          const cls = systemEdgeClass(k.expectancy);
+          return `<span class="kpiMain ${cls}">${fmtR1(k.expectancy)}</span>`;
+        })(),
         sub1: `PF: ${fmtPF1(k.profitFactor)}`,
         sub2: `Trades: ${k.tradeCount ?? "—"}`,
         cls: ""
       },
       {
-        title: "Strike Rate",
+        title: "Winrate",
+        cardClass: "kpi-premium ice",
         main: fmtPct1(k.winrate),
         sub1: `W/L: ${k.wins ?? "—"} / ${k.losses ?? "—"}`,
         sub2: `Trades: ${k.tradeCount ?? "—"}`,
         cls: ""
       },
       {
-        title: "Streaks",
-        main: `${GLOBAL.tradeStreaks?.longestWin ?? 0}`,
-        sub1: `Longest Loss: ${GLOBAL.tradeStreaks?.longestLoss ?? 0}`,
-        sub2: `Ø W/L: ${(GLOBAL.tradeStreaks?.avgWin ?? 0).toFixed(1)} / ${(GLOBAL.tradeStreaks?.avgLoss ?? 0).toFixed(1)}`,
+        title: "Ø Win / Loss",
+        cardClass: "kpi-premium ice",
+        main: (() => {
+          const aw = (GLOBAL.tradeStreaks?.avgWin ?? 0).toFixed(1);
+          const al = (GLOBAL.tradeStreaks?.avgLoss ?? 0).toFixed(1);
+          return `<span class="dualMain"><span>${aw}</span><span class="sep">/</span><span>${al}</span></span>`;
+        })(),
+        sub1: `Longest W/L: ${GLOBAL.tradeStreaks?.longestWin ?? 0} / ${GLOBAL.tradeStreaks?.longestLoss ?? 0}`,
+        sub2: ``,
         cls: ""
       },
     ];
