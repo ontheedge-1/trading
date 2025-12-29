@@ -598,17 +598,22 @@ background: var(--cardGrad);
       flex-wrap:nowrap;
     }
     .badge.round{
-      width:34px;
-      height:34px;
-      padding:0;
+      /* Make Trades badge identical to R badge (no fixed square) */
+      width:auto;
+      height:auto;
+      padding:4px 8px;
       border-radius:12px;
-      display:flex;
+      display:inline-flex;
       align-items:center;
       justify-content:center;
       font-weight:900;
       letter-spacing:.2px;
+      line-height:1;
     }
     .badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
       font-size:11px;
       padding:4px 8px;
       border-radius:12px;
@@ -616,6 +621,7 @@ background: var(--cardGrad);
       background: rgba(255,255,255,.02);
       color:#bcd2ff;
       white-space:nowrap;
+      line-height:1;
     }
     .badge.good{
       border-color: rgba(53,208,127,.30);
@@ -804,6 +810,73 @@ background: var(--cardGrad);
       filter: drop-shadow(0 6px 10px rgba(0,0,0,.25));
     }
 
+
+    /* === Topbar Filter Group: true segment control + integrated select === */
+    #filtersBar.filters{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:6px;
+      background: rgba(8,12,22,.62);
+      border: 1px solid rgba(140,180,255,.22);
+      border-radius: 12px;
+      box-shadow:
+        0 10px 26px rgba(0,0,0,.28) inset,
+        0 10px 26px rgba(0,0,0,.18);
+    }
+    #filtersBar .selectWrap{
+      position:relative;
+      display:flex;
+      align-items:center;
+    }
+    #filtersBar .select{
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.08);
+      color: rgba(236,246,255,.92);
+      padding: 10px 34px 10px 12px;
+      border-radius: 10px;
+      font-weight: 900;
+      letter-spacing: .2px;
+      box-shadow: none;
+    }
+    #filtersBar .select:focus{
+      outline:none;
+      border-color: rgba(140,180,255,.28);
+      box-shadow: 0 0 0 3px rgba(120,170,255,.14);
+    }
+    /* Make the preset bar look like segments inside the same control */
+    #filtersBar .seg{
+      background: transparent;
+      border: 0;
+      padding: 0;
+      gap: 2px;
+      border-radius: 0;
+      box-shadow: none;
+    }
+    #filtersBar .seg button{
+      padding: 10px 12px;
+      font-size: 12.5px;
+      font-weight: 900;
+      letter-spacing: .2px;
+      color: rgba(198,218,255,.78);
+      border: 1px solid transparent;
+      border-radius: 10px;
+      line-height: 1;
+      box-shadow: none;
+    }
+    #filtersBar .seg button:hover{
+      background: rgba(255,255,255,.03);
+      color: rgba(226,240,255,.92);
+      transform: none;
+    }
+    #filtersBar .seg button.active{
+      background: linear-gradient(180deg, rgba(45,107,255,.34), rgba(41,182,255,.14));
+      border: 1px solid rgba(80,140,255,.34);
+      color: rgba(236,246,255,.98);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.10),
+        0 10px 22px rgba(0,0,0,.18);
+    }
 
     /* === KPI Cards: premium upgrade (no layout/JS changes) === */
     .kpiGrid .card:not(.kpi-premium){
