@@ -1025,6 +1025,124 @@ background: var(--cardGrad);
       margin:0 2px;
     }
 
+
+/* --- Topbar: date segments + dropdown dark options --- */
+.select{
+  color-scheme: dark;
+  background: rgba(10,18,30,0.92) !important;
+  color: rgba(235,245,255,0.92) !important;
+}
+.select option{
+  background: rgba(10,18,30,0.98) !important;
+  color: rgba(235,245,255,0.95) !important;
+}
+
+#filtersBar .segDivider{
+  width:1px;
+  height: 26px;
+  background: rgba(160,195,255,0.12);
+  align-self:center;
+  margin: 0 10px;
+  border-radius: 1px;
+}
+
+#filtersBar .seg .dateSeg{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(235,245,255,0.78);
+  font-weight: 700;
+  letter-spacing: .2px;
+}
+#filtersBar .seg .dateSeg:hover{
+  background: rgba(120,170,255,0.10);
+  color: rgba(235,245,255,0.92);
+}
+#filtersBar .seg .dateSeg.active{
+  background: rgba(40,105,210,0.22);
+  border-color: rgba(120,170,255,0.22);
+  color: rgba(235,245,255,0.95);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.10);
+}
+#filtersBar .seg .dateSeg .lbl{
+  font-variant-numeric: tabular-nums;
+}
+
+/* Date popup */
+.datePopup{
+  position: fixed;
+  z-index: 9999;
+  width: 260px;
+  border-radius: 12px;
+  border: 1px solid rgba(140,185,255,0.18);
+  background: linear-gradient(180deg, rgba(12,22,36,0.96), rgba(8,14,24,0.96));
+  box-shadow: 0 18px 40px rgba(0,0,0,0.45);
+  padding: 10px 10px 12px;
+}
+.datePopup.hidden{ display:none; }
+.datePopup .dpHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 4px 4px 10px;
+}
+.datePopup .dpTitle{
+  font-weight: 800;
+  color: rgba(235,245,255,0.92);
+  font-size: 13px;
+  letter-spacing: .2px;
+}
+.datePopup .dpClose{
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  border: 1px solid rgba(140,185,255,0.14);
+  background: rgba(120,170,255,0.06);
+  color: rgba(235,245,255,0.85);
+}
+.datePopup .dpClose:hover{ background: rgba(120,170,255,0.10); }
+.datePopup .dpBody{ padding: 0 4px; }
+.datePopup .dpInput{
+  width: 100%;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid rgba(140,185,255,0.14);
+  background: rgba(10,18,30,0.92);
+  color: rgba(235,245,255,0.92);
+  padding: 0 10px;
+  font-weight: 700;
+  outline: none;
+}
+.datePopup .dpInput::-webkit-calendar-picker-indicator{
+  filter: invert(1) opacity(0.85);
+}
+.datePopup .dpRow{
+  display:flex;
+  justify-content:space-between;
+  gap: 10px;
+  margin-top: 10px;
+}
+.datePopup .dpBtn{
+  flex:1;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid rgba(140,185,255,0.14);
+  background: rgba(40,105,210,0.20);
+  color: rgba(235,245,255,0.92);
+  font-weight: 800;
+}
+.datePopup .dpBtn:hover{ background: rgba(40,105,210,0.26); }
+.datePopup .dpBtn.ghost{
+  background: rgba(120,170,255,0.06);
+}
+.datePopup .dpBtn.ghost:hover{
+  background: rgba(120,170,255,0.10);
+}
+
 </style>
  </head>
 <body>
@@ -1044,6 +1162,9 @@ background: var(--cardGrad);
         <button data-preset="180D">180D</button>
         <button data-preset="YTD">YTD</button>
         <button data-preset="ALL" class="active">All</button>
+        <div class="segDivider"></div>
+        <button class="dateSeg" id="btnFrom" data-date="from" type="button" aria-label="Von Datum">▶️ <span class="lbl">Von</span></button>
+        <button class="dateSeg" id="btnTo" data-date="to" type="button" aria-label="Bis Datum">◀️ <span class="lbl">Bis</span></button>
       </div>
     </div>
 
@@ -2924,8 +3045,17 @@ scoreEl.title =
 
 
     filters: {
-      dateStart: null,    // YYYY-MM-DD oder null
-      dateEnd: null,      // YYYY-MM-DD oder null
+      // Effective filter range used by filterEngine (YYYY-MM-DD or null)
+      dateStart: null,
+      dateEnd: null,
+
+      // Manual date filters (can be set independently; presets are disabled when any manual date is set)
+      manualFrom: null,   // YYYY-MM-DD or null
+      manualTo: null,     // YYYY-MM-DD or null
+
+      // Active preset (30D/90D/180D/YTD/ALL) or null when manual dates are used
+      preset: "ALL",
+
       instrument: "ALL"
     },
 
@@ -3208,8 +3338,21 @@ if (ok) ok.title = asOfVal ? `Stand: ${asOfVal}` : "";
         const preset = btn.getAttribute("data-preset");
         const { dateStart, dateEnd } = computePresetRange(preset, GLOBAL.trades);
 
+        // Preset selected -> clear manual dates
+        GLOBAL.filters.preset = preset;
+        GLOBAL.filters.manualFrom = null;
+        GLOBAL.filters.manualTo = null;
+
         GLOBAL.filters.dateStart = dateStart;
         GLOBAL.filters.dateEnd = dateEnd;
+
+        // Reset date segment UI
+        const bf = $("btnFrom"); const bt = $("btnTo");
+        if(bf){ bf.classList.remove("active"); bf.querySelector(".lbl").textContent = "Von"; }
+        if(bt){ bt.classList.remove("active"); bt.querySelector(".lbl").textContent = "Bis"; }
+
+        // Close manual date popup (if open)
+        const dp = $("datePopup"); if(dp) dp.classList.add("hidden");
 
         recomputeAnalysis();
 
@@ -3223,6 +3366,153 @@ if (ok) ok.title = asOfVal ? `Stand: ${asOfVal}` : "";
 
 
       });
+    // ---- Manual date filters (▶️ Von / ◀️ Bis) ----
+    const datePopup = $("datePopup");
+    const dpTitle = $("dpTitle");
+    const dpInput = $("dpInput");
+    const dpApply = $("dpApply");
+    const dpClear = $("dpClear");
+    const dpClose = $("dpClose");
+
+    const DATE_UI = { kind: null, anchor: null };
+
+    function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+
+    function closeDatePopup(){
+      if(datePopup) datePopup.classList.add("hidden");
+      DATE_UI.kind = null;
+      DATE_UI.anchor = null;
+    }
+
+    function openDatePopup(kind, anchorEl){
+      if(!datePopup || !dpInput) return;
+      DATE_UI.kind = kind;
+      DATE_UI.anchor = anchorEl || null;
+
+      const cur = (kind === "from") ? GLOBAL.filters.manualFrom : GLOBAL.filters.manualTo;
+      dpInput.value = cur || "";
+
+      if(dpTitle) dpTitle.textContent = (kind === "from") ? "Von (inkl.)" : "Bis (inkl.)";
+
+      // Position near anchor
+      const r = anchorEl?.getBoundingClientRect?.() || { left: 20, bottom: 60, width: 0 };
+      datePopup.classList.remove("hidden");
+
+      const w = datePopup.offsetWidth || 260;
+      const h = datePopup.offsetHeight || 140;
+      const pad = 12;
+
+      let left = r.left;
+      let top = r.bottom + 10;
+
+      left = clamp(left, pad, window.innerWidth - w - pad);
+      top  = clamp(top, pad, window.innerHeight - h - pad);
+
+      datePopup.style.left = left + "px";
+      datePopup.style.top  = top + "px";
+    }
+
+    function setManualDate(kind, val){
+      const bf = $("btnFrom");
+      const bt = $("btnTo");
+
+      if(kind === "from") GLOBAL.filters.manualFrom = val || null;
+      if(kind === "to") GLOBAL.filters.manualTo = val || null;
+
+      // Disable presets as soon as any manual date is set
+      const presetBar2 = document.querySelector("#filtersBar .seg");
+      if(presetBar2){
+        presetBar2.querySelectorAll("button[data-preset]").forEach(b => b.classList.remove("active"));
+      }
+      GLOBAL.filters.preset = null;
+
+      // Apply effective filter range
+      GLOBAL.filters.dateStart = GLOBAL.filters.manualFrom;
+      GLOBAL.filters.dateEnd   = GLOBAL.filters.manualTo;
+
+      // Update UI
+      if(bf){
+        if(GLOBAL.filters.manualFrom){
+          bf.classList.add("active");
+          bf.querySelector(".lbl").textContent = GLOBAL.filters.manualFrom;
+        }else{
+          bf.classList.remove("active");
+          bf.querySelector(".lbl").textContent = "Von";
+        }
+      }
+      if(bt){
+        if(GLOBAL.filters.manualTo){
+          bt.classList.add("active");
+          bt.querySelector(".lbl").textContent = GLOBAL.filters.manualTo;
+        }else{
+          bt.classList.remove("active");
+          bt.querySelector(".lbl").textContent = "Bis";
+        }
+      }
+
+      // If both cleared -> revert to ALL preset (default)
+      if(!GLOBAL.filters.manualFrom && !GLOBAL.filters.manualTo){
+        GLOBAL.filters.preset = "ALL";
+        const presetBar3 = document.querySelector("#filtersBar .seg");
+        const allBtn = presetBar3?.querySelector('button[data-preset="ALL"]');
+        presetBar3?.querySelectorAll('button[data-preset]').forEach(b => b.classList.remove("active"));
+        if(allBtn) allBtn.classList.add("active");
+        const { dateStart, dateEnd } = computePresetRange("ALL", GLOBAL.trades);
+        GLOBAL.filters.dateStart = dateStart;
+        GLOBAL.filters.dateEnd = dateEnd;
+      }
+
+      recomputeAnalysis();
+    }
+
+    const btnFrom = $("btnFrom");
+    const btnTo = $("btnTo");
+
+    if(btnFrom && !btnFrom._bound){
+      btnFrom._bound = true;
+      btnFrom.addEventListener("click", () => openDatePopup("from", btnFrom));
+    }
+    if(btnTo && !btnTo._bound){
+      btnTo._bound = true;
+      btnTo.addEventListener("click", () => openDatePopup("to", btnTo));
+    }
+
+    if(dpApply && !dpApply._bound){
+      dpApply._bound = true;
+      dpApply.addEventListener("click", () => {
+        if(!DATE_UI.kind) return closeDatePopup();
+        setManualDate(DATE_UI.kind, dpInput?.value || null);
+        closeDatePopup();
+      });
+    }
+    if(dpClear && !dpClear._bound){
+      dpClear._bound = true;
+      dpClear.addEventListener("click", () => {
+        if(!DATE_UI.kind) return closeDatePopup();
+        setManualDate(DATE_UI.kind, null);
+        closeDatePopup();
+      });
+    }
+    if(dpClose && !dpClose._bound){
+      dpClose._bound = true;
+      dpClose.addEventListener("click", closeDatePopup);
+    }
+
+    // Close on outside click / escape
+    if(!document._datePopupBound){
+      document._datePopupBound = true;
+      document.addEventListener("mousedown", (e) => {
+        if(!datePopup || datePopup.classList.contains("hidden")) return;
+        const t = e.target;
+        if(datePopup.contains(t)) return;
+        if(t && (t === btnFrom || t === btnTo || btnFrom?.contains(t) || btnTo?.contains(t))) return;
+        closeDatePopup();
+      });
+      document.addEventListener("keydown", (e) => {
+        if(e.key === "Escape") closeDatePopup();
+      });
+    }
+
     }
 
      
@@ -3357,5 +3647,21 @@ renderCurve();
 </script>
 
 </div>
+
+<!-- Date Filter Popup -->
+<div id="datePopup" class="datePopup hidden" role="dialog" aria-modal="true">
+  <div class="dpHead">
+    <div class="dpTitle" id="dpTitle">Datum wählen</div>
+    <button class="dpClose" id="dpClose" type="button" aria-label="Close">✕</button>
+  </div>
+  <div class="dpBody">
+    <input id="dpInput" class="dpInput" type="date" />
+    <div class="dpRow">
+      <button id="dpClear" class="dpBtn ghost" type="button">Clear</button>
+      <button id="dpApply" class="dpBtn" type="button">Apply</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
