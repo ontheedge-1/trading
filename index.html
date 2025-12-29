@@ -1056,8 +1056,8 @@ background: var(--cardGrad);
       font-weight:800;
       margin:0 2px;
     }
-    .kpiGrid .card .v .dualMain .winVal{ color: rgba(120, 220, 170, .92); }
-    .kpiGrid .card .v .dualMain .lossVal{ color: rgba(245, 145, 155, .92); }
+    .kpiGrid .card .v .dualMain .winVal{ color: rgba(140, 190, 170, .80); }
+    .kpiGrid .card .v .dualMain .lossVal{ color: rgba(200, 150, 150, .80); }
 
 
 /* --- Topbar: date segments + dropdown dark options --- */
@@ -2306,20 +2306,20 @@ function computeScore(filteredTrades, tradeKPIs){
         const fmt2 = (x) => (Number.isFinite(Number(x)) ? Number(x).toFixed(2) : "—");
 
         return `
-          <div><b>Strategy Score — Quick Read</b></div>
-          <div><b>Score:</b> ${Number.isFinite(sc?.score) ? Math.round(sc.score) : "—"}</div>
+          <div><b>Strategy Score: ${Number.isFinite(sc?.score) ? Math.round(sc.score) : "—"} </b></div>
+          <hr/>
           <div>Basis (Expectancy ${fmt2(sc?.expectancy)}): ${fmt1(sc?.base)}</div>
-          <div>Profit Factor (PF ${fmt2(sc?.profitFactor)}): ${fmt1(sc?.modPF)}</div>
+          <div>Profit Factor (${fmt2(sc?.profitFactor)}): ${fmt1(sc?.modPF)}</div>
           <div>Sharpe (${fmt2(sc?.sharpe)}): ${fmt1(sc?.modSharpe)}</div>
           <div>Recovery Factor (${fmt2(sc?.recoveryFactor)}): ${fmt1(sc?.modRec)}</div>
-          ${low ? `<div class="muted">⚠️ Sample size niedrig (${n} Trades) – Modifikatoren konservativ bewertet.</div>` : ``}
+          ${low ? `<div class="muted">⚠️ Sample size niedrig (${n} Trades)</div>` : ``}
           <hr/>
-          <div><b>Strategy Score — Details</b></div>
-          <div><b>Basis – Expectancy (E[R])</b><br/>(Winrate × Ø Win) − (Lossrate × Ø Loss)</div>
-          <div><b>Profit Factor</b><br/>Bewertet die Gewinn-/Verluststruktur. Wirkt stufenlos.</div>
+          <div><b>Details:</b></div>
+          <div><b>Basis – Expectancy</b><br/>(Winrate × Ø Win) − (Lossrate × Ø Loss)</div>
+          <div><b>Profit Factor</b><br/>Bewertet die Gewinn-/Verluststruktur.</div>
           <div><b>Sharpe Ratio</b><br/>Stabilität der Equity (Daily R, annualisiert).</div>
           <div><b>Recovery Factor</b><br/>Net Profit / Max Drawdown.</div>
-          <div class="muted">Modifikatoren werden kontinuierlich berechnet – Zwischenwerte (z. B. +7.5) sind normal.</div>
+          
         `;
       }
 
@@ -2365,9 +2365,9 @@ if(type === "tradeQuality"){
         const avgL = countL ? (sumLenL / countL) : 0;
 
         return `
-          <div><b>Ø Daily Win / Loss Streaks based on Equity change:</b></div>
+          <div><b>Ø Daily W/L Streaks based on Equity:</b></div>
           <div>W-Days ${avgW.toFixed(1)} / L-Days ${avgL.toFixed(1)}</div>
-          <div>Longest W/L days : ${longestW} / ${longestL}</div>
+          <div class="muted">Longest W/L days : ${longestW} / ${longestL}</div>
         `;
       }
       if(type === "equity"){
