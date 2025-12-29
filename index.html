@@ -293,6 +293,17 @@ background: var(--cardGrad);
       display:none;
     }
     .tooltip .muted{ color: var(--muted); font-size: 11px; margin-top: 2px; }
+
+    /* KPI tooltips should follow mouse (not chart-relative) */
+    #kpiTooltip{
+      position: fixed;
+      transform: none;
+      z-index: 9999;
+      white-space: normal;
+      max-width: 360px;
+    }
+    #kpiTooltip b{ font-weight: 900; }
+
     .hint{ display:none; }
 
     pre{
@@ -1743,9 +1754,14 @@ function computeScore(filteredTrades, tradeKPIs){
     const ddClass = (dd !== null && dd < 0) ? "bad" : "good";
     const risk$ = Math.abs(Number(latestEquityRow?.effective_risk_$ ?? 0));
 
+    // expose latest equity row for KPI tooltips
+    GLOBAL._latestEquityRow = latestEquityRow || null;
+    GLOBAL._risk$ = risk$;
+
     const tiles = [
       {
         title: "Equity",
+        tip: "equity",
         cardClass: "kpi-premium ice",
         main: fmtUSD(latestEquityRow?.cash_equity_$),
         sub1: `ATH: ${fmtUSD(latestEquityRow?.ath_$)}`,
@@ -1754,6 +1770,7 @@ function computeScore(filteredTrades, tradeKPIs){
       },
       {
         title: "Next Trade Size",
+        tip: "nextTrade",
         cardClass: "kpi-premium ice",
         main: fmtUSD(risk$),
         sub1: `Tier: ${latestEquityRow?.dd_tier ?? "—"}`,
@@ -1781,7 +1798,7 @@ function computeScore(filteredTrades, tradeKPIs){
           return `<span class="kpiMain ${cls}">${fmtR1(k.expectancy)}</span>`;
         })(),
         sub1: `PF: ${fmtPF1(k.profitFactor)}`,
-        sub2: `Trades: ${k.tradeCount ?? "—"}`,
+        sub2: ``, 
         cls: ""
       },
       {
@@ -1793,7 +1810,8 @@ function computeScore(filteredTrades, tradeKPIs){
         cls: ""
       },
       {
-        title: "Ø Win / Loss",
+        title: "Ø Win / Loss Streaks",
+        tip: "winLossStreaks",
         cardClass: "kpi-premium ice",
         main: (() => {
           const aw = (GLOBAL.tradeStreaks?.avgWin ?? 0).toFixed(1);
@@ -1872,6 +1890,11 @@ scoreEl.title =
     const grid = $("kpiGrid");
     if(!tip || !grid) return;
 
+    // ensure tooltip is not clipped by chart containers
+    if(tip.parentElement !== document.body){
+      document.body.appendChild(tip);
+    }
+
     const fmtR = (n) => (Number.isFinite(Number(n)) ? `${Number(n).toFixed(1)} R` : "—");
     const fmtPct = (x) => (Number.isFinite(Number(x)) ? `${(Number(x)*100).toFixed(1)}%` : "—");
 
@@ -1896,6 +1919,48 @@ scoreEl.title =
         return `
           <div><b>Expectancy = ${formula}</b></div>
           <div class="muted">Winrate wird einbezogen</div>
+        `;
+      }
+      if(type === "winLossStreaks"){
+        return `
+          <div><b>Ø Win / Loss DAYS</b></div>
+          <div class="muted">Based on Equity gain or loss</div>
+        `;
+      }
+      if(type === "equity"){
+        const vs = GLOBAL.viewSpine || [];
+        const spine = GLOBAL.spine || [];
+        const eq = GLOBAL.seriesEquity || [];
+        if(!vs.length || !spine.length || !eq.length) return "";
+        const startDate = vs[0];
+        const endDate = vs[vs.length-1];
+        const iStart = spine.indexOf(startDate);
+        const iEnd = spine.indexOf(endDate);
+        const startEquity = (iStart > 0) ? eq[iStart-1] : (iStart >= 0 ? eq[iStart] : null);
+        const endEquity = (iEnd >= 0) ? eq[iEnd] : null;
+        if(!Number.isFinite(Number(startEquity)) || !Number.isFinite(Number(endEquity))) return "";
+        const delta = Number(endEquity) - Number(startEquity);
+        const cls = (delta >= 0) ? "good" : "bad";
+        const sign = (delta >= 0) ? "+" : "-";
+        const abs = Math.abs(delta);
+        const num = fmtUSD(abs).replace("$","").trim();
+        return `
+          <div>Equity change: <span class="${cls}"><b>$ ${sign}${num}</b></span></div>
+        `;
+      }
+      if(type === "nextTrade"){
+        const row = GLOBAL._latestEquityRow || {};
+        const equity = Number(row.cash_equity_$);
+        const mult = Number.isFinite(Number(row.dd_multiplier)) ? Number(row.dd_multiplier) : 1;
+        const risk = Math.abs(Number(row.effective_risk_$ ?? GLOBAL._risk$ ?? 0));
+        if(!Number.isFinite(equity) || !Number.isFinite(risk)) return "";
+        const equityFactor = (mult !== 0) ? (risk / (equity * mult)) : (risk / equity);
+        const pct = equityFactor * 100;
+        let pctStr = Number.isFinite(pct) ? pct.toFixed(1) : "—";
+        if(pctStr.endsWith(".0")) pctStr = pctStr.slice(0,-2);
+        return `
+          <div>Tier ${row.dd_tier ?? "—"}</div>
+          <div><b>Trade Size ${fmtUSD(risk)} = ${fmtUSD(equity)} × ${pctStr}% × ${Number.isFinite(mult) ? mult : "—"}</b></div>
         `;
       }
       return "";
