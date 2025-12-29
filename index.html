@@ -701,7 +701,7 @@ background: var(--cardGrad);
 
 
     /* === KPI Cards: premium upgrade (no layout/JS changes) === */
-    .card:not(#scoreCard){
+    .kpiGrid .card:not(.kpi-premium){
       border-radius: 22px;
       padding: 16px 16px 14px;
       border: 1px solid rgba(160,205,255,.18);
@@ -713,7 +713,7 @@ background: var(--cardGrad);
         inset 0 1px 0 rgba(255,255,255,.10),
         0 22px 60px rgba(0,0,0,.42);
     }
-    .card:not(#scoreCard)::before{
+    .kpiGrid .card:not(.kpi-premium)::before{
       content:"";
       position:absolute; inset:-1px;
       border-radius: inherit;
@@ -730,7 +730,7 @@ background: var(--cardGrad);
       pointer-events:none;
       opacity:.75;
     }
-    .card:not(#scoreCard)::after{
+    .kpiGrid .card:not(.kpi-premium)::after{
       content:"";
       position:absolute; inset:0;
       border-radius: inherit;
@@ -739,8 +739,8 @@ background: var(--cardGrad);
       pointer-events:none;
       opacity:.9;
     }
-    /* no bouncy/hover movement */
-    .card:hover{ transform: none !important; }
+    /* no bouncy/hover movement (KPIs only) */
+    .kpiGrid .card:hover{ transform: none !important; }
 
     /* typography hierarchy */
     .k{
@@ -772,7 +772,7 @@ background: var(--cardGrad);
 
 
 /* ===== Phase 2 – Premium KPI Cards (Equity + Next Trade Size only) ===== */
-.card.kpi-premium{
+.kpiGrid .card.kpi-premium{
   --iceA: rgba(120,170,255,.55);
   --iceB: rgba(120,170,255,.18);
   background:
@@ -786,7 +786,7 @@ background: var(--cardGrad);
   padding: 16px 18px 14px 18px;
 }
 
-.card.kpi-premium:before{
+.kpiGrid .card.kpi-premium:before{
   content:"";
   position:absolute;
   inset:-1px;
@@ -797,7 +797,7 @@ background: var(--cardGrad);
   mix-blend-mode: screen;
 }
 
-.card.kpi-premium .k{
+.kpiGrid .card.kpi-premium .k{
   font-size: 12px;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -805,7 +805,7 @@ background: var(--cardGrad);
   margin-bottom: 10px;
 }
 
-.card.kpi-premium .v{
+.kpiGrid .card.kpi-premium .v{
   font-size: 34px;
   font-weight: 900;
   letter-spacing: .01em;
@@ -814,14 +814,14 @@ background: var(--cardGrad);
   font-variant-numeric: tabular-nums;
 }
 
-.card.kpi-premium .sub{
+.kpiGrid .card.kpi-premium .sub{
   margin-top: 10px !important;
   font-size: 12.5px;
   color: rgba(190,212,255,.74);
   line-height: 1.35;
 }
 
-.card.kpi-premium .sub span{
+.kpiGrid .card.kpi-premium .sub span{
   font-variant-numeric: tabular-nums;
 }
 
