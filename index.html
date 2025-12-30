@@ -212,6 +212,26 @@ background: var(--cardGrad);
       border-color: rgba(34,197,94,.22);
     }
     #scoreCard:hover{ border-color: rgba(34,197,94,.36); }
+    /* Tier accents for ULTRA / BLESSED */
+    #scoreCard.tier-ultra{
+      --glow: rgba(120,170,255,.55);
+      background:
+        radial-gradient(760px 260px at 22% 0%, rgba(120,170,255,.22), transparent 62%),
+        radial-gradient(520px 220px at 92% 16%, rgba(120,170,255,.12), transparent 58%),
+        var(--cardGradStrong);
+      border-color: rgba(120,170,255,.34);
+    }
+    #scoreCard.tier-ultra:hover{ border-color: rgba(120,170,255,.52); }
+
+    #scoreCard.tier-blessed{
+      --glow: rgba(255,77,209,.55);
+      background:
+        radial-gradient(760px 260px at 22% 0%, rgba(255,77,209,.20), transparent 62%),
+        radial-gradient(520px 220px at 92% 16%, rgba(255,77,209,.12), transparent 58%),
+        var(--cardGradStrong);
+      border-color: rgba(255,77,209,.36);
+    }
+    #scoreCard.tier-blessed:hover{ border-color: rgba(255,77,209,.54); }
 /* Next Trade Size optisch hervorheben */
     .card.riskAccent{
       background:
@@ -1693,14 +1713,15 @@ function aggregateDailyRFromTrades(trades){
 function lerp(a,b,t){ return a + (b-a)*t; }
 
 function scoreBaseFromExpectancy(exp){
-  // maps expectancy to 0..70 (linear), then clamp
-  // <= -0.20 => 0
-  // >= +0.30 => 70
+  // NEW: Base is strictly 0 for negative/zero expectancy.
+  // Maps expectancy e in [0.00 .. 0.35] linearly to base in [0 .. 70], then clamp.
+  // e <= 0.00 => 0
+  // e >= 0.35 => 70
   const e = Number(exp);
-  if(!Number.isFinite(e)) return 0;
+  if(!Number.isFinite(e) || e <= 0) return 0;
 
-  const minE = -0.20;
-  const maxE =  0.30;
+  const minE = 0.00;
+  const maxE = 0.35;
 
   const t = clamp((e - minE) / (maxE - minE), 0, 1);
   return 70 * t;
@@ -1795,17 +1816,39 @@ function computeScore(filteredTrades, tradeKPIs){
     const modPF = modifierFromRange(pf === Infinity ? 3.0 : pf, 1.0, 1.8, -10, +10);
 
     // Sharpe: 0.0 => -10, 1.6 => +10
-    const modSharpe = modifierFromRange(sharpe, 0.0, 1.6, -10, +10);
+    const hasSharpe = (tradeKPIs && Object.prototype.hasOwnProperty.call(tradeKPIs,'sharpe')) && Number.isFinite(Number(sharpe));
+    const modSharpe = hasSharpe ? modifierFromRange(sharpe, 0.0, 1.6, -10, +10) : 0;
 
     // Recovery: 0.8 => -10, 2.0 => +10 (Infinity treated as max)
     const recVal = (rec === Infinity) ? 3.0 : rec;
     const modRec = modifierFromRange(recVal, 0.8, 2.0, -10, +10);
 
-    let score = base + modPF + modSharpe + modRec;
-    score = clamp(score, 0, 100);
+    const modsSum = modPF + modSharpe + modRec;
+    const rawScore = base + modsSum;
+
+    // Main score stays in 0..100 for WEAK/OK/GOOD/STRONG
+    let score = clamp(rawScore, 0, 100);
 
     const label = labelFromScore(score);
     const color = colorFromScore(score);
+
+    // ULTRA/BLESSED tiers (separate from WEAK..STRONG labels)
+    // Requirements:
+    //   ULTRA:  Expectancy >= 0.50 AND < 0.60 AND modsSum >= 18
+    //   BLESSED: Expectancy >= 0.60 AND modsSum >= 18
+    const eVal = Number(expectancy);
+    const modsGate = (modsSum >= 18);
+    const isBlessed = modsGate && Number.isFinite(eVal) && (eVal >= 0.60);
+    const isUltra   = modsGate && Number.isFinite(eVal) && (eVal >= 0.50) && (eVal < 0.60);
+
+    // Overdrive exists only to allow tier threshold >100 without changing main score/labels
+    const overdrive = (isBlessed || isUltra) ? 15 : 0;
+    const scoreUltra = rawScore + overdrive;
+
+    const tier =
+      (isBlessed && scoreUltra > 100) ? "BLESSED" :
+      (isUltra   && scoreUltra > 100) ? "ULTRA" :
+      null;
 
     return {
       nTrades: n,
@@ -1816,6 +1859,11 @@ function computeScore(filteredTrades, tradeKPIs){
       modPF,
       modSharpe,
       modRec,
+      modsSum,
+      rawScore,
+      overdrive,
+      scoreUltra,
+      tier,
       profitFactor: pf,
       expectancy,
       sharpe,
@@ -2245,12 +2293,14 @@ function computeScore(filteredTrades, tradeKPIs){
     if(scoreEl){
       const isLowSample = (sc?.nTrades ?? 0) < 30;
       const label = sc?.label ?? "—";
+      const tier = sc?.tier ?? null;
+      const displayLabel = tier || label;
       const col = sc?.color ?? "rgb(235,242,255)";
 
       scoreEl.style.opacity = isLowSample ? "0.55" : "1";
       scoreEl.innerHTML = `
         <div class="scoreTop">Strategy Quality</div>
-        <div class="scorePill"><span>${label}</span></div>
+        <div class="scorePill"><span>${displayLabel}</span></div>
         <div class="scoreStats">
           RF ${Number.isFinite(sc?.recoveryFactor) ? sc.recoveryFactor.toFixed(2) : "—"}
           <span class="dot">·</span>
@@ -2260,7 +2310,7 @@ function computeScore(filteredTrades, tradeKPIs){
         </div>
       `;
       // Score color class (glow depends on label)
-      scoreEl.classList.remove("score-strong","score-good","score-ok","score-average","score-weak","score-poor");
+      scoreEl.classList.remove("score-strong","score-good","score-ok","score-average","score-weak","score-poor","tier-ultra","tier-blessed");
       const _lab = String(label||"").toLowerCase();
       const cls =
         _lab.includes("strong") ? "score-strong" :
@@ -2271,6 +2321,11 @@ function computeScore(filteredTrades, tradeKPIs){
         (_lab.includes("poor") || _lab.includes("terrible")) ? "score-poor" :
         "";
       if(cls) scoreEl.classList.add(cls);
+
+      // Tier accent (ULTRA/BLESSED) overrides hero styling
+      if(tier === "ULTRA") scoreEl.classList.add("tier-ultra");
+      if(tier === "BLESSED") scoreEl.classList.add("tier-blessed");
+
       scoreEl.dataset.kpiTip = "score";
       scoreEl.style.cursor = "help";
       scoreEl.removeAttribute("title");
