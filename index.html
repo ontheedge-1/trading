@@ -224,18 +224,18 @@ background: var(--cardGrad);
     #scoreCard.tier-ultra:hover{ border-color: rgba(120,170,255,.52); }
 
     #scoreCard.tier-blessed{
-      --glow: rgba(255,77,209,.55);
+      --glow: rgba(255,77,209,.78);
       background:
-        radial-gradient(760px 260px at 22% 0%, rgba(255,77,209,.22), transparent 62%),
-        radial-gradient(520px 220px at 92% 16%, rgba(255,77,209,.14), transparent 58%),
-        linear-gradient(180deg, rgba(255,77,209,.10), rgba(255,255,255,.02));
-      border-color: rgba(255,77,209,.36);
+        radial-gradient(760px 260px at 22% 0%, rgba(255,77,209,.34), transparent 62%),
+        radial-gradient(520px 220px at 92% 16%, rgba(255,77,209,.24), transparent 58%),
+        linear-gradient(180deg, rgba(255,77,209,.16), rgba(255,255,255,.02));
+      border-color: rgba(255,77,209,.48);
     }
-    #scoreCard.tier-blessed:hover{ border-color: rgba(255,77,209,.54); }
+    #scoreCard.tier-blessed:hover{ border-color: rgba(255,77,209,.64); }
 
     /* Ensure ULTRA/BLESSED override STRONG glow + any default tier visuals */
     #scoreCard.score-strong.tier-ultra{ --glow: rgba(120,170,255,.55); }
-    #scoreCard.score-strong.tier-blessed{ --glow: rgba(255,77,209,.55); }
+    #scoreCard.score-strong.tier-blessed{ --glow: rgba(255,77,209,.78); }
 /* Next Trade Size optisch hervorheben */
     .card.riskAccent{
       background:
@@ -1846,7 +1846,7 @@ function computeScore(filteredTrades, tradeKPIs){
     const isUltra   = modsGate && Number.isFinite(eVal) && (eVal >= 0.50) && (eVal < 0.60);
 
     // Overdrive exists only to allow tier threshold >100 without changing main score/labels
-    const overdrive = (isBlessed || isUltra) ? 15 : 0;
+    const overdrive = (isBlessed || isUltra) ? (15 + Math.max(0, (eVal - 0.50) * 100)) : 0;
     const scoreUltra = rawScore + overdrive;
 
     const tier =
@@ -2365,12 +2365,13 @@ function computeScore(filteredTrades, tradeKPIs){
         const fmt2 = (x) => (Number.isFinite(x) ? Number(x).toFixed(2) : "—");
 
         return `
-          <div><b>Strategy Score: ${Number.isFinite(sc?.score) ? Math.round(sc.score) : "—"} </b></div>
+          <div><b>Final Score: ${Number.isFinite(sc?.scoreUltra) ? Math.round(sc.scoreUltra) : "—"}</b></div>
           <hr/>
           <div>Basis (Expectancy ${fmt2(sc?.expectancy)}): ${fmt1(sc?.base)}</div>
           <div>Profit Factor (${fmt2(sc?.profitFactor)}): ${fmt1(sc?.modPF)}</div>
           <div>Sharpe (${fmt2(sc?.sharpe)}): ${fmt1(sc?.modSharpe)}</div>
           <div>Recovery Factor (${fmt2(sc?.recoveryFactor)}): ${fmt1(sc?.modRec)}</div>
+          ${sc?.tier ? `<div>Overdrive: +${fmt1(sc?.overdrive)} (${sc.tier})</div>` : ``}
           ${low ? `<div class="muted">⚠️ Sample size niedrig (${n} Trades)</div>` : ``}
           <hr/>
           <div><b>Details:</b></div>
@@ -2378,6 +2379,7 @@ function computeScore(filteredTrades, tradeKPIs){
           <div><b>Profit Factor</b><br/>Bewertet die Gewinn-/Verluststruktur.</div>
           <div><b>Sharpe Ratio</b><br/>Stabilität der Equity (Daily R, annualisiert).</div>
           <div><b>Recovery Factor</b><br/>Net Profit / Max Drawdown.</div>
+          ${sc?.tier ? `<div><b>Overdrive</b><br/>High Expectancy Reward.</div>` : ``}
           
         `;
       }
