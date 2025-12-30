@@ -3152,11 +3152,9 @@ if(type === "tradeQuality"){
       ctx.lineWidth = lineW;
       ctx.globalAlpha = alpha;
 
-      if(glow){
-        ctx.shadowBlur = 18;
-      } else {
-        ctx.shadowBlur = 0;
-      }
+      ctx.shadowBlur = 0;
+      ctx.shadowColor = "transparent";
+
 
       for(let i=1;i<spine.length;i++){
         const v0 = Number(values[i-1]);
