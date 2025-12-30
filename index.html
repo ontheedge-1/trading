@@ -216,9 +216,9 @@ background: var(--cardGrad);
     #scoreCard.tier-ultra{
       --glow: rgba(120,170,255,.55);
       background:
-        radial-gradient(760px 260px at 22% 0%, rgba(120,170,255,.22), transparent 62%),
-        radial-gradient(520px 220px at 92% 16%, rgba(120,170,255,.12), transparent 58%),
-        var(--cardGradStrong);
+        radial-gradient(760px 260px at 22% 0%, rgba(120,170,255,.24), transparent 62%),
+        radial-gradient(520px 220px at 92% 16%, rgba(120,170,255,.14), transparent 58%),
+        linear-gradient(180deg, rgba(120,170,255,.10), rgba(255,255,255,.02));
       border-color: rgba(120,170,255,.34);
     }
     #scoreCard.tier-ultra:hover{ border-color: rgba(120,170,255,.52); }
@@ -226,12 +226,16 @@ background: var(--cardGrad);
     #scoreCard.tier-blessed{
       --glow: rgba(255,77,209,.55);
       background:
-        radial-gradient(760px 260px at 22% 0%, rgba(255,77,209,.20), transparent 62%),
-        radial-gradient(520px 220px at 92% 16%, rgba(255,77,209,.12), transparent 58%),
-        var(--cardGradStrong);
+        radial-gradient(760px 260px at 22% 0%, rgba(255,77,209,.22), transparent 62%),
+        radial-gradient(520px 220px at 92% 16%, rgba(255,77,209,.14), transparent 58%),
+        linear-gradient(180deg, rgba(255,77,209,.10), rgba(255,255,255,.02));
       border-color: rgba(255,77,209,.36);
     }
     #scoreCard.tier-blessed:hover{ border-color: rgba(255,77,209,.54); }
+
+    /* Ensure ULTRA/BLESSED override STRONG glow + any default tier visuals */
+    #scoreCard.score-strong.tier-ultra{ --glow: rgba(120,170,255,.55); }
+    #scoreCard.score-strong.tier-blessed{ --glow: rgba(255,77,209,.55); }
 /* Next Trade Size optisch hervorheben */
     .card.riskAccent{
       background:
@@ -1816,7 +1820,7 @@ function computeScore(filteredTrades, tradeKPIs){
     const modPF = modifierFromRange(pf === Infinity ? 3.0 : pf, 1.0, 1.8, -10, +10);
 
     // Sharpe: 0.0 => -10, 1.6 => +10
-    const hasSharpe = (tradeKPIs && Object.prototype.hasOwnProperty.call(tradeKPIs,'sharpe')) && Number.isFinite(Number(sharpe));
+    const hasSharpe = Number.isFinite(sharpe);
     const modSharpe = hasSharpe ? modifierFromRange(sharpe, 0.0, 1.6, -10, +10) : 0;
 
     // Recovery: 0.8 => -10, 2.0 => +10 (Infinity treated as max)
@@ -2357,8 +2361,8 @@ function computeScore(filteredTrades, tradeKPIs){
         const n = sc?.nTrades ?? 0;
         const low = n < 30;
 
-        const fmt1 = (x) => (Number.isFinite(Number(x)) ? Number(x).toFixed(1) : "—");
-        const fmt2 = (x) => (Number.isFinite(Number(x)) ? Number(x).toFixed(2) : "—");
+        const fmt1 = (x) => (Number.isFinite(x) ? Number(x).toFixed(1) : "—");
+        const fmt2 = (x) => (Number.isFinite(x) ? Number(x).toFixed(2) : "—");
 
         return `
           <div><b>Strategy Score: ${Number.isFinite(sc?.score) ? Math.round(sc.score) : "—"} </b></div>
