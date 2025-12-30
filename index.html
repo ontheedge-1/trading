@@ -3110,39 +3110,87 @@ if(type === "tradeQuality"){
       }
     }
 
-    // line (Ice glow)
-    const grad = ctx.createLinearGradient(0, padT, 0, padT + H);
-    grad.addColorStop(0, "rgba(41,182,255,.95)");
-    grad.addColorStop(1, "rgba(45,107,255,.92)");
+    // line (Ice glow) — value gradient (below start: red→blue, above start: blue→green)
+    const BLUE = [58,140,255];
+    const GREEN = [64,247,194];
+    const DARK_RED = [177,31,58];
 
-    // build path once
-    ctx.beginPath();
-    let first = true;
-    for(let i=0;i<spine.length;i++){
-      const v = values[i];
-      if(!Number.isFinite(Number(v))) continue;
-      const x = xFor(i);
-      const y = yFor(Number(v));
-      if(first){ ctx.moveTo(x,y); first = false; }
-      else { ctx.lineTo(x,y); }
-    }
+    const clamp01 = (t) => Math.max(0, Math.min(1, t));
+    const mixRGB = (a,b,t) => [Math.round(a[0] + (b[0]-a[0])*t), Math.round(a[1] + (b[1]-a[1])*t), Math.round(a[2] + (b[2]-a[2])*t)];
+    const rgbStr = (c) => `rgb(${c[0]},${c[1]},${c[2]})`;
+    const rgbaStr = (c,a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+
+    const useValueGradient = (opts && opts.colorMode === "startAtlAth" && spine.length > 1);
+
+    // fallback: classic ice vertical gradient
+    const iceGrad = ctx.createLinearGradient(0, padT, 0, padT + H);
+    iceGrad.addColorStop(0, "rgba(41,182,255,.95)");
+    iceGrad.addColorStop(1, "rgba(45,107,255,.92)");
+
+    const startV = Number(values[0]);
+    const hiV = maxV;
+    const loV = minV;
+
+    const colorForValue = (v) => {
+      if(!useValueGradient || !Number.isFinite(startV) || !Number.isFinite(v) || !Number.isFinite(hiV) || !Number.isFinite(loV)) return null;
+
+      if(v >= startV){
+        const denom = (hiV - startV);
+        const t = denom === 0 ? 0 : clamp01((v - startV) / denom);
+        return mixRGB(BLUE, GREEN, t);
+      } else {
+        const denom = (startV - loV);
+        const t = denom === 0 ? 0 : clamp01((startV - v) / denom);
+        return mixRGB(BLUE, DARK_RED, t);
+      }
+    };
+
+    const strokeSegments = (lineW, alpha, glow=false) => {
+      ctx.save();
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.lineWidth = lineW;
+      ctx.globalAlpha = alpha;
+
+      if(glow){
+        ctx.shadowBlur = 18;
+      } else {
+        ctx.shadowBlur = 0;
+      }
+
+      for(let i=1;i<spine.length;i++){
+        const v0 = Number(values[i-1]);
+        const v1 = Number(values[i]);
+        if(!Number.isFinite(v0) || !Number.isFinite(v1)) continue;
+
+        const x0 = xFor(i-1), y0 = yFor(v0);
+        const x1 = xFor(i),   y1 = yFor(v1);
+
+        const vMid = (v0 + v1) / 2;
+        const c = colorForValue(vMid);
+
+        if(c){
+          ctx.strokeStyle = rgbStr(c);
+          if(glow) ctx.shadowColor = rgbaStr(c, 0.75);
+        } else {
+          ctx.strokeStyle = iceGrad;
+          if(glow) ctx.shadowColor = "rgba(41,182,255,.65)";
+        }
+
+        ctx.beginPath();
+        ctx.moveTo(x0,y0);
+        ctx.lineTo(x1,y1);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    };
 
     // glow pass
-    ctx.save();
-    ctx.strokeStyle = grad;
-    ctx.lineWidth = 6;
-    ctx.globalAlpha = 0.22;
-    ctx.shadowBlur = 18;
-    ctx.shadowColor = "rgba(41,182,255,.65)";
-    ctx.stroke();
-    ctx.restore();
+    strokeSegments(6, 0.22, true);
 
     // main stroke
-    ctx.strokeStyle = grad;
-    ctx.lineWidth = 2.25;
-    ctx.globalAlpha = 0.98;
-    ctx.stroke();
-// hover interaction
+    strokeSegments(2.25, 0.98, false);// hover interaction
     let hoverIndex = null;
 
     function showAt(clientX, clientY){
@@ -3432,6 +3480,8 @@ if(type === "tradeQuality"){
         (mode === "r") ? "Cum R" : "DD (R)",
       yFmt: (mode === "equity") ? yFmtUSD : yFmtR,
       vFmt: (v) => (mode === "equity") ? fmtUSD(v) : fmtR(v),
+
+      colorMode: ((mode === "equity") || (mode === "r")) ? "startAtlAth" : "ice",
 
       onRequestRender: (keepCrosshair=false) => {
         // re-render
