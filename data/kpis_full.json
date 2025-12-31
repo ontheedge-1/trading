@@ -1,12 +1,12 @@
 {
-  "trade_count": 42,
+  "trade_count": 41,
   "win_count": 19,
   "loss_count": 20,
-  "breakeven_count": 3,
+  "breakeven_count": 2,
   "total_R": 21.68,
-  "winrate": 0.452381,
+  "winrate": 0.463415,
   "profit_factor": 2.19779,
-  "expectancy_R": 0.51619,
+  "expectancy_R": 0.52878,
   "avg_win_R": 2.093684,
   "avg_loss_R": -0.905,
   "longest_winning_streak": 3,
@@ -14,8 +14,8 @@
   "longest_losing_streak": 4,
   "avg_losing_streak": 2.0,
   "starting_equity_$": 31116.0,
-  "ending_equity_$": 35001.0,
-  "net_profit_$": 3885.0,
-  "max_drawdown_pct": -0.022447,
-  "recovery_factor": 5.56223
+  "ending_equity_$": 35000.0,
+  "net_profit_$": 3884.0,
+  "max_drawdown_pct": -0.022448,
+  "recovery_factor": 5.560551
 }
