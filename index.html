@@ -3147,7 +3147,7 @@ if(type === "tradeQuality"){
 
     const strokeSegments = (lineW, alpha, glow=false) => {
       ctx.save();
-      ctx.lineCap = "round";
+      ctx.lineCap = "butt";
       ctx.lineJoin = "round";
       ctx.lineWidth = lineW;
       ctx.globalAlpha = alpha;
