@@ -3130,7 +3130,7 @@ if(type === "tradeQuality"){
       // tooltip
       const dateLabel = spine[hoverIndex];
       // tooltip
-      const dateLabel = spine[hoverIndex];
+      const dateLbl = spine[hoverIndex];
 
       let delta = null;
       let deltaHtml = "";
@@ -3170,7 +3170,7 @@ if(type === "tradeQuality"){
       tooltip.innerHTML = `
         <div><b>${opts.title}</b>: ${opts.vFmt(vv)}</div>
         ${deltaHtml}
-        <div class="muted">${dateLabel}</div>
+        <div class="muted">${dateLbl}</div>
       `;
 
       // position: above by default; below when point is in upper half of plot
