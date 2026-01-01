@@ -3031,6 +3031,76 @@ if(type === "tradeQuality"){
     const xFor = (i) => padL + (i/(spine.length-1 || 1)) * W;
     const yFor = (v) => padT + (1 - ((v - minV)/(maxV - minV))) * H;
 
+    // value-gradient helpers (Equity / Cum R)
+    const BLUE  = [ 41, 182, 255];
+    const GREEN = [ 53, 208, 127];
+    const RED   = [255,  77, 109];
+
+    const mixRGB = (a,b,t) => {
+      t = clamp(t, 0, 1);
+      return [
+        Math.round(lerp(a[0], b[0], t)),
+        Math.round(lerp(a[1], b[1], t)),
+        Math.round(lerp(a[2], b[2], t))
+      ];
+    };
+    const rgbA = (rgb, a=1) => `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a})`;
+
+    const colorForValue = (v, startV, loV, hiV) => {
+      if(!Number.isFinite(v) || !Number.isFinite(startV) || !Number.isFinite(loV) || !Number.isFinite(hiV)) return null;
+      if(v >= startV){
+        const denom = (hiV - startV);
+        const t = denom === 0 ? 0 : (v - startV) / denom;
+        return mixRGB(BLUE, GREEN, t);
+      } else {
+        const denom = (startV - loV);
+        const t = denom === 0 ? 0 : (startV - v) / denom;
+        return mixRGB(BLUE, RED, t);
+      }
+    };
+
+    const strokeSegments = (vals, glow=false) => {
+      const n = spine.length;
+      const startV = Number(vals[0]);
+      let loV = Infinity, hiV = -Infinity;
+      for(let i=0;i<n;i++){
+        const vv = Number(vals[i]);
+        if(!Number.isFinite(vv)) continue;
+        loV = Math.min(loV, vv);
+        hiV = Math.max(hiV, vv);
+      }
+      if(!Number.isFinite(startV) || !Number.isFinite(loV) || !Number.isFinite(hiV)){
+        return false;
+      }
+
+      ctx.save();
+      ctx.globalAlpha = glow ? 0.22 : 0.98;
+      ctx.lineWidth   = glow ? 6 : 2.25;
+      ctx.shadowBlur  = glow ? 18 : 0;
+      ctx.shadowColor = glow ? "rgba(41,182,255,.65)" : "transparent";
+
+      for(let i=1;i<n;i++){
+        const v0 = Number(vals[i-1]);
+        const v1 = Number(vals[i]);
+        if(!Number.isFinite(v0) || !Number.isFinite(v1)) continue;
+
+        const c = colorForValue(v1, startV, loV, hiV);
+        if(!c) continue;
+
+        const x0 = xFor(i-1), y0 = yFor(v0);
+        const x1 = xFor(i),   y1 = yFor(v1);
+
+        ctx.beginPath();
+        ctx.moveTo(x0,y0);
+        ctx.lineTo(x1,y1);
+        ctx.strokeStyle = rgbA(c, 1);
+        ctx.stroke();
+      }
+      ctx.restore();
+      return true;
+    };
+
+
     // grid + y labels (4 lines)
     ctx.strokeStyle = "rgba(120,160,255,.10)";
     ctx.lineWidth = 1;
@@ -3091,21 +3161,27 @@ if(type === "tradeQuality"){
       else { ctx.lineTo(x,y); }
     }
 
-    // glow pass
-    ctx.save();
-    ctx.strokeStyle = grad;
-    ctx.lineWidth = 6;
-    ctx.globalAlpha = 0.22;
-    ctx.shadowBlur = 18;
-    ctx.shadowColor = "rgba(41,182,255,.65)";
-    ctx.stroke();
-    ctx.restore();
+    // stroke (value-gradient only for Equity / Cum R)
+    if(opts.mode === "equity" || opts.mode === "r"){
+      strokeSegments(vals, true);
+      strokeSegments(vals, false);
+    } else {
+      // glow pass
+      ctx.save();
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 6;
+      ctx.globalAlpha = 0.22;
+      ctx.shadowBlur = 18;
+      ctx.shadowColor = "rgba(41,182,255,.65)";
+      ctx.stroke();
+      ctx.restore();
 
-    // main stroke
-    ctx.strokeStyle = grad;
-    ctx.lineWidth = 2.25;
-    ctx.globalAlpha = 0.98;
-    ctx.stroke();
+      // main stroke
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 2.25;
+      ctx.globalAlpha = 0.98;
+      ctx.stroke();
+    }
 // hover interaction
     let hoverIndex = null;
 
