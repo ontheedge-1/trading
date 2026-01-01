@@ -3163,8 +3163,8 @@ if(type === "tradeQuality"){
 
     // stroke (value-gradient only for Equity / Cum R)
     if(opts.mode === "equity" || opts.mode === "r"){
-      strokeSegments(vals, true);
-      strokeSegments(vals, false);
+      strokeSegments(values, true);
+      strokeSegments(values, false);
     } else {
       // glow pass
       ctx.save();
