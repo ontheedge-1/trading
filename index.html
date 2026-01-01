@@ -396,7 +396,32 @@ background: var(--cardGrad);
       opacity:.65;
     }
     canvas{ display:block; width:100%; height:100%; }
-    .tooltip{
+    
+    .chartDelta{
+      position:absolute;
+      left: 22px;
+      top: 18px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: rgba(10,16,32,.70);
+      border: 1px solid rgba(120,160,255,.22);
+      box-shadow: 0 10px 26px rgba(0,0,0,.35);
+      font-weight: 900;
+      letter-spacing: .2px;
+      font-size: 18px;
+      pointer-events:none;
+      backdrop-filter: blur(6px);
+    }
+    .chartDelta.pos{ color: rgba(120, 220, 170, .92); }
+    .chartDelta.neg{ color: rgba(245, 145, 155, .92); }
+    .chartDelta.neu{ color: rgba(224, 234, 255, .78); }
+
+    .tooltip .deltaLine{ font-weight: 900; }
+    .tooltip .deltaPos{ color: rgba(120, 220, 170, .92); }
+    .tooltip .deltaNeg{ color: rgba(245, 145, 155, .92); }
+    .tooltip .deltaNeu{ color: rgba(224, 234, 255, .72); }
+
+.tooltip{
       position:absolute;
       pointer-events:none;
       transform: translate(-50%, -110%);
@@ -410,28 +435,6 @@ background: var(--cardGrad);
       white-space: nowrap;
       display:none;
     }
-
-    .rangeBadge{
-      position:absolute;
-      left: 18px;
-      top: 18px;
-      padding: 10px 14px;
-      background: rgba(10,16,32,.78);
-      border: 1px solid rgba(120,160,255,.22);
-      border-radius: 10px;
-      font-weight: 800;
-      letter-spacing: .2px;
-      color: rgba(240,248,255,.92);
-      box-shadow: 0 10px 28px rgba(0,0,0,.38);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      pointer-events:none;
-      user-select:none;
-      font-size: 18px;
-    }
-    .rangeBadge .pos{ color: rgba(110, 230, 160, .95); }
-    .rangeBadge .neg{ color: rgba(255, 120, 140, .95); }
-
 
     /* DATA:OK tooltip must be viewport-anchored (topbar lives outside chartPanel) */
     #dataTooltip{
@@ -1358,7 +1361,7 @@ background: var(--cardGrad);
       <div class="chartWrap" id="chartWrap">
         <canvas id="curveCanvas"></canvas>
         <div class="tooltip" id="tooltip"></div>
-        <div class="rangeBadge" id="rangeBadge" style="display:none;"></div>
+        <div id="chartDelta" class="chartDelta" style="display:none;"></div>
         <div class="tooltip" id="kpiTooltip" style="display:none;"></div>
         <div class="tooltip" id="dataTooltip" style="display:none;"></div>
       </div>
@@ -3030,7 +3033,31 @@ if(type === "tradeQuality"){
         }
 
         // Loss bar (down)
- function drawLineChart(canvas, spine, values, opts){
+        if(l > 0){
+          const yA = yToPx(0);
+          const yB = yToPx(-l);
+          const top = Math.min(yA, yB);
+          const h = Math.abs(yB - yA);
+          ctx.fillStyle = "rgba(255,77,109,.75)";
+          ctx.fillRect(x0, top, barW, Math.max(1, h));
+        }
+
+        // x label
+        ctx.globalAlpha = 0.80;
+        ctx.fillStyle = "rgba(255,255,255,.60)";
+        ctx.font = "12px ui-sans-serif, system-ui";
+        ctx.textAlign = "center";
+        ctx.fillText(String(labels[i]), cx, H - 10);
+        ctx.textAlign = "left";
+      }
+
+
+      // tooltip hitboxes
+      drawStreakBarChart._hit = { padL, padT, plotW, plotH, step, barW, xToPx, y0, labels, wins, losses };
+   }
+
+  
+  function drawLineChart(canvas, spine, values, opts){
     const ctx = canvas.getContext("2d");
     const wrap = $("chartWrap");
     const tooltip = $("tooltip");
@@ -3209,47 +3236,58 @@ if(type === "tradeQuality"){
 
       // crosshair
       drawLineChart._lastCrosshair = { vx, vy, vv, iso: spine[hoverIndex] };
+
       // tooltip
       const dateLabel = spine[hoverIndex];
-      const delta = (typeof opts.deltaFn === "function") ? opts.deltaFn(dateLabel, hoverIndex, vv) : null;
 
-      // Build tooltip HTML
-      const hasDelta = opts.showDelta && Number.isFinite(delta);
+      let deltaHtml = "";
+      if(opts.mode === "equity" || opts.mode === "r"){
+        const fullIdx = Array.isArray(GLOBAL.spine) ? GLOBAL.spine.indexOf(dateLabel) : -1;
+        let delta = null;
+
+        if(fullIdx > 0){
+          if(opts.mode === "equity"){
+            const a = Number(GLOBAL.seriesEquity?.[fullIdx]);
+            const b = Number(GLOBAL.seriesEquity?.[fullIdx-1]);
+            delta = (Number.isFinite(a) && Number.isFinite(b)) ? (a-b) : null;
+          } else {
+            const dr = Number(GLOBAL.seriesDailyR?.[fullIdx] ?? 0);
+            delta = Number.isFinite(dr) ? dr : null;
+          }
+        }
+
+        if(delta !== null && Number.isFinite(Number(delta))){
+          const isPos = Number(delta) > 0;
+          const isNeg = Number(delta) < 0;
+          const cls = isPos ? "deltaPos" : (isNeg ? "deltaNeg" : "deltaNeu");
+
+          if(opts.mode === "equity"){
+            const sign = isPos ? "+" : (isNeg ? "−" : "");
+            const abs = Math.abs(Number(delta));
+            deltaHtml = `<div class="deltaLine ${cls}"><b>${sign}${fmtUSD(abs)}</b></div>`;
+          } else {
+            const sign = isPos ? "+" : (isNeg ? "−" : "");
+            const abs = Math.abs(Number(delta));
+            deltaHtml = `<div class="deltaLine ${cls}"><b>${sign}${abs.toFixed(1)} R</b></div>`;
+          }
+        }
+      }
+
       tooltip.innerHTML = `
         <div><b>${opts.title}</b>: ${opts.vFmt(vv)}</div>
-        ${hasDelta ? `<div class="deltaLine" style="font-weight:800; color:${delta>=0 ? "rgba(80,220,150,.98)" : "rgba(255,110,110,.98)"};">Δ ${opts.deltaFmt ? opts.deltaFmt(delta) : opts.vFmt(delta)}</div>` : ``}
+        ${deltaHtml}
         <div class="muted">${dateLabel}</div>
       `;
 
-      // Position tooltip intelligently (avoid clipping at top/bottom)
+      // position: below when point is in upper half of plot, otherwise above
+      const midY = padT + (H/2);
+      const below = (vy < midY);
+      tooltip.style.left = `${vx}px`;
+      tooltip.style.top = `${vy}px`;
+      tooltip.style.transform = below ? "translate(-50%, 12%)" : "translate(-50%, -110%)";
       tooltip.style.display = "block";
-      tooltip.style.transform = "none";
 
-      // Measure after content update
-      const tw = tooltip.offsetWidth || 0;
-      const th = tooltip.offsetHeight || 0;
-
-      const margin = 10;
-      const upperHalf = vy < (padT + H/2);
-
-      // desired anchor point
-      let left = vx;
-      let top = upperHalf ? (vy + 14) : (vy - 14 - th);
-
-      // clamp inside chart area
-      const minLeft = margin + tw/2;
-      const maxLeft = cssW - margin - tw/2;
-      left = Math.max(minLeft, Math.min(maxLeft, left));
-
-      const minTop = margin;
-      const maxTop = cssH - margin - th;
-      top = Math.max(minTop, Math.min(maxTop, top));
-
-      tooltip.style.left = `${left}px`;
-      tooltip.style.top = `${top}px`;
-      tooltip.style.transform = "translate(-50%, 0)";
-
-// redraw with crosshair
+      // redraw with crosshair
       redrawWithCrosshair();
     }
 
@@ -3292,29 +3330,6 @@ if(type === "tradeQuality"){
         showAt(e.touches[0].clientX, e.touches[0].clientY);
       }
     };
-    canvas.ontouchend = hide;
-
-    // draw crosshair if requested by external re-render
-    function drawCrosshair(){
-      const c = drawLineChart._lastCrosshair;
-      if(!c) return;
-      ctx.strokeStyle = "rgba(231,240,255,.28)";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(c.vx, padT);
-      ctx.lineTo(c.vx, padT+H);
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.arc(c.vx, c.vy, 3.5, 0, Math.PI*2);
-      ctx.fillStyle = "rgba(207,232,255,.98)";
-      ctx.fill();
-    }
-
-    // Expose overlay draw function and bounds so caller can re-render with crosshair
-    drawLineChart._overlay = { drawCrosshair };
-    drawLineChart._state = { spine, values, opts };
-  }   };
     canvas.ontouchend = hide;
 
     // draw crosshair if requested by external re-render
@@ -3408,13 +3423,109 @@ if(type === "tradeQuality"){
 
     wrap.addEventListener("mousemove", (e) => {
       if(GLOBAL.mode !== "streaks") return;
-      const hit = dfunction renderCurve(withCrosshair=false){
+      const hit = drawStreakBarChart._hit;
+      if(!hit) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+
+      // find nearest bar index
+      const i = Math.floor((x - hit.padL) / hit.step);
+      if(i < 0 || i >= (hit.labels?.length || 0)){
+        tip.style.display = "none";
+        return;
+      }
+
+      const len = hit.labels[i];
+      const winCount = Number(hit.wins?.[i] || 0);
+      const lossCount = Number(hit.losses?.[i] || 0);
+
+
+      tip.style.display = "block";
+      tip.style.left = `${Math.min(rect.width - 160, Math.max(10, x + 12))}px`;
+      tip.style.top = `${Math.max(10, (e.clientY - rect.top) - 28)}px`;
+      tip.innerHTML = `
+        <div style="font-weight:800;">Streak length: ${len}</div>
+        <div style="margin-top:4px;">
+          Win: ${winCount} &nbsp;|&nbsp; Loss: ${lossCount}
+        </div>
+      `;
+    });
+
+    wrap.addEventListener("mouseleave", () => {
+      if($("tooltip")) $("tooltip").style.display = "none";
+    });
+  }
+
+
+  function setCurveHeader(mode){
+    const t = $("curveTitle");
+    const s = $("curveSub");
+    if(!t || !s) return;
+
+    t.textContent =
+      (mode === "equity")    ? "Equity Curve" :
+      (mode === "r")         ? "Cumulative R" :
+      (mode === "dd")        ? "Drawdown (R)" :
+      (mode === "streaks")   ? "Streaks" :
+      (mode === "calendar")  ? "Kalender" :
+      "";
+
+    s.textContent =
+      (mode === "equity")
+        ? "Daily (Calendar spine, carry-forward) · Source: Daily_Adjustments"
+        : (mode === "r")
+          ? "Daily cumulative R · Source: daily_aggregates.json"
+          : (mode === "dd")
+            ? "Peak-to-trough drawdown in R"
+            : (mode === "streaks")
+              ? "Winning and losing streaks"
+              : (mode === "calendar")
+                ? "Daily Trading Performance · Mo–Fr"
+                : "";
+  }
+
+
+  function renderCurve(withCrosshair=false){
+  syncEquityTabVisibility();
   const canvas = $("curveCanvas");
   const chartWrap = $("chartWrap");
   const calWrap = $("calendarWrap");
 
   // Always keep header in sync with the currently shown view
   setCurveHeader(GLOBAL.mode);
+
+  // small delta badge (Equity / Cum R only)
+  const deltaBadge = $("chartDelta");
+  if(deltaBadge){
+    if(GLOBAL.mode === "equity" || GLOBAL.mode === "r"){
+      const vals = (GLOBAL.mode === "equity") ? (GLOBAL.viewEquity || []) : (GLOBAL.viewCumR || []);
+      if(Array.isArray(vals) && vals.length >= 2 && Number.isFinite(Number(vals[0])) && Number.isFinite(Number(vals[vals.length-1]))){
+        const firstV = Number(vals[0]);
+        const lastV  = Number(vals[vals.length-1]);
+        const ch = lastV - firstV;
+
+        const isPos = ch > 0;
+        const isNeg = ch < 0;
+        deltaBadge.classList.remove("pos","neg","neu");
+        deltaBadge.classList.add(isPos ? "pos" : (isNeg ? "neg" : "neu"));
+
+        if(GLOBAL.mode === "equity"){
+          const sign = isPos ? "+ " : (isNeg ? "− " : "");
+          deltaBadge.textContent = `${sign}${fmtUSD(Math.abs(ch))}`;
+        } else {
+          const sign = isPos ? "+ " : (isNeg ? "− " : "");
+          deltaBadge.textContent = `${sign}${Math.abs(ch).toFixed(1)} R`;
+        }
+        deltaBadge.style.display = "block";
+      } else {
+        deltaBadge.style.display = "none";
+      }
+    } else {
+      deltaBadge.style.display = "none";
+    }
+  }
+
 
   if(GLOBAL.mode === "calendar"){
     if(chartWrap) chartWrap.style.display = "none";
@@ -3432,19 +3543,7 @@ if(type === "tradeQuality"){
     ? GLOBAL._chartSpine
     : GLOBAL.spine;
 
-  const mode = GLOBAL.mode;
-  const rangeBadge = $("rangeBadge");
-
-  // If an instrument is selected, Equity is not meaningful -> auto-switch to Cum R
-  if((GLOBAL.filters?.instrument || "ALL") !== "ALL" && mode === "equity"){
-    GLOBAL.mode = "r";
-    $("btnR")?.classList.add("active");
-    $("btnEquity")?.classList.remove("active");
-    $("btnDD")?.classList.remove("active");
-    $("btnStreaks")?.classList.remove("active");
-    $("btnCal")?.classList.remove("active");
-  }
- // "equity" | "r" | "dd"
+  const mode = GLOBAL.mode; // "equity" | "r" | "dd"
   const useView = hasDateFilter();
 
   let values = [];
@@ -3474,120 +3573,8 @@ if(type === "tradeQuality"){
 
 
 
-    
-    // Range badge (Equity / Cum R) and tooltip delta (Δ vs previous day)
-    let showDelta = false;
-    let deltaFn = null;
-
-    if(rangeBadge){
-      rangeBadge.style.display = "none";
-      rangeBadge.innerHTML = "";
-    }
-
-    if((mode === "equity") || (mode === "r")){
-      showDelta = (mode !== "dd");
-      deltaFn = (_date, i, _v) => {
-        if(!Number.isFinite(i) || i <= 0) return NaN;
-        const a = Number(values[i]);
-        const b = Number(values[i-1]);
-        if(!Number.isFinite(a) || !Number.isFinite(b)) return NaN;
-        return a - b;
-      };
-
-      if(rangeBadge && Array.isArray(values) && values.length >= 2){
-        const baseline = (spine.length > 1 && spine[0] === spine[1]);
-        const startI = baseline ? 1 : 0;
-        const endI = values.length - 1;
-        const startV = Number(values[startI]);
-        const endV = Number(values[endI]);
-        if(Number.isFinite(startV) && Number.isFinite(endV)){
-          const d = endV - startV;
-          const isEq = (mode === "equity");
-          const txt = isEq ? fmtUSD(d) : fmtR(d);
-          rangeBadge.textContent = (d >= 0 ? "+ " : "- ") + (isEq ? fmtUSD(Math.abs(d)) : fmtR(Math.abs(d)));
-          rangeBadge.style.color = (d >= 0) ? "rgba(80,220,150,.95)" : "rgba(255,110,110,.95)";
-          rangeBadge.style.display = "block";
-        }
-      }
-    } else {
-      if(rangeBadge) rangeBadge.style.display = "none";
-    }
-
-const opts = {
-      title:
-        (mode === "equity") ? "Equity" :
-        (mode === "r") ? "Cum R" : "DD (R)",
-      yFmt: (mode === "equity") ? yFmtUSD : yFmtR,
-      vFmt: (v) => (mode === "equity") ? fmtUSD(v) : fmtR(v),
-
-      showDelta: (mode === "equity") || (mode === "r"),
-      deltaFn,
-      deltaFmt: (d) => (mode === "equity") ? fmtUSD(d) : fmtR(d),
-
-      colorMode: ((mode === "equity") || (mode === "r")) ? "startAtlAth" : "ice",
-
-      onRequestRender: (keepCrosshair=false) => {
-        // re-render
-        drawLineChart(canvas, spine, values, opts);
-        if(keepCrosshair && drawLineChart._overlay) drawLineChart._overlay.drawCrosshair();
-      }
-    };
-
-    if(mode === "streaks"){
-      const dist = GLOBAL.dayStreakDist || { winFreq:{}, lossFreq:{}, maxLen:0 };
-      const maxLen = dist.maxLen || 0;
-
-      const labels = [];
-      const wins = [];
-      const losses = [];
-
-      for(let L=1; L<=maxLen; L++){
-        labels.push(L);
-        wins.push(Number(dist.winFreq?.[L] || 0));
-        losses.push(Number(dist.lossFreq?.[L] || 0));
-      }
-
-      // disable line-chart hover handlers (Fix 1)
-      canvas.onmousemove = null;
-      canvas.onmouseleave = null;
-      canvas.ontouchstart = null;
-      canvas.ontouchmove = null;
-      canvas.ontouchend = null;
-      drawLineChart._lastCrosshair = null;
-
-      drawStreakBarChart(canvas, labels, wins, losses, {
-        yFmt: (n) => String(Math.trunc(n))
-      });
-
-
-      bindStreakTooltip();
-      if($("tooltip")) $("tooltip").style.display = "none";
-      return;
-  }
-
-  // default: line chart
-  drawLineChart(canvas, spine, values, opts);
-  if(withCrosshair && drawLineChart._overlay) drawLineChart._overlay.drawCrosshair();
-
-  }ues = [];
-  } else {
-    values = useView ? (GLOBAL.viewEquity || []) : (GLOBAL.seriesEquity || []);
-  }
-
-
-    if(!spine.length){
-      const ctx = canvas.getContext("2d");
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      return;
-    }
-
-
-    // (header is set via setCurveHeader)
-
-
-
-
     const opts = {
+      mode: mode,
       title:
         (mode === "equity") ? "Equity" :
         (mode === "r") ? "Cum R" : "DD (R)",
@@ -3722,23 +3709,7 @@ GLOBAL.meta = meta;
       // recomputeAnalysis();  // <-- NICHT hier (spine noch leer)
 
 
-      // -
-  function updateEquityTabVisibility(){
-    const isAll = (GLOBAL.filters?.instrument || "ALL") === "ALL";
-    const btnEq = $("btnEquity");
-    if(btnEq) btnEq.style.display = isAll ? "" : "none";
-    if(!isAll && GLOBAL.mode === "equity"){
-      GLOBAL.mode = "r";
-      $("btnR").classList.add("active");
-      $("btnEquity").classList.remove("active");
-      $("btnDD").classList.remove("active");
-      $("btnStreaks").classList.remove("active");
-      $("btnCal").classList.remove("active");
-      renderCurve();
-    }
-  }
-
---- Filter UI init + wiring ----
+      // ---- Filter UI init + wiring ----
     const instSel = $("fInstrument");
     if(instSel){
       // build options (once)
@@ -3752,13 +3723,13 @@ GLOBAL.meta = meta;
 
       // set default
       instSel.value = GLOBAL.filters.instrument || "ALL";
-      updateEquityTabVisibility();
+      syncEquityTabVisibility();
 
       // change handler
       instSel.addEventListener("change", () => {
         GLOBAL.filters.instrument = instSel.value || "ALL";
+        syncEquityTabVisibility();
         recomputeAnalysis();
-        updateEquityTabVisibility();
 
         const latest2 = Array.isArray(GLOBAL.equity) && GLOBAL.equity.length
           ? GLOBAL.equity[GLOBAL.equity.length - 1]
@@ -3811,7 +3782,6 @@ GLOBAL.meta = meta;
         const dp = $("datePopup"); if(dp) dp.classList.add("hidden");
 
         recomputeAnalysis();
-        updateEquityTabVisibility();
 
         const latest2 = Array.isArray(GLOBAL.equity) && GLOBAL.equity.length
           ? GLOBAL.equity[GLOBAL.equity.length - 1]
@@ -4068,7 +4038,26 @@ if(dpApply && !dpApply._bound){
     }
   }
 
-  // Toggle wiring
+  
+  function syncEquityTabVisibility(){
+    const eqBtn = $("btnEquity");
+    const rBtn  = $("btnR");
+    if(!eqBtn || !rBtn) return;
+    const inst = GLOBAL?.filters?.instrument || "ALL";
+    const hideEq = inst !== "ALL";
+    eqBtn.style.display = hideEq ? "none" : "";
+    if(hideEq && GLOBAL.mode === "equity"){
+      GLOBAL.mode = "r";
+      rBtn.classList.add("active");
+      eqBtn.classList.remove("active");
+      $("btnDD").classList.remove("active");
+      $("btnStreaks").classList.remove("active");
+      $("btnCal").classList.remove("active");
+      renderCurve();
+    }
+  }
+
+// Toggle wiring
   $("btnEquity").addEventListener("click", () => {
     GLOBAL.mode = "equity";
     $("btnEquity").classList.add("active");
