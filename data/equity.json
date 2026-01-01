@@ -1,5 +1,20 @@
 [
   {
+    "date": "2025-09-30",
+    "equity_start_$": 31116.0,
+    "equity_end_$": 31116.0,
+    "cash_equity_$": 31116.0,
+    "ath_$": 31116.0,
+    "drawdown_pct": 0.0,
+    "dd_tier": "0–12%",
+    "dd_multiplier": 1.0,
+    "base_equity_for_sizing_$": 31116.0,
+    "next_resize_up_threshold_$": 32671.8,
+    "next_resize_down_threshold_$": 29560.2,
+    "base_risk_$": 311.16,
+    "effective_risk_$": 311.16
+  },
+  {
     "date": "2025-10-01",
     "equity_start_$": 31116.0,
     "equity_end_$": 32139.0,

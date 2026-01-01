@@ -1,5 +1,18 @@
 [
   {
+    "date": "2025-09-30",
+    "instrument": "GC",
+    "result_r": 0.0,
+    "is_win": false,
+    "is_loss": false,
+    "is_be": true,
+    "cum_R": 0.0,
+    "win_streak": 0,
+    "loss_streak": 0,
+    "trade_id": "T-20260101-122141-6159",
+    "notes": null
+  },
+  {
     "date": "2025-10-01",
     "instrument": "ES",
     "result_r": -0.5,
