@@ -1919,7 +1919,9 @@ async function ensureAIInsightLoaded({ force=false } = {}){
 }
 
 function showAIPanel(){
-  const panel = $("aiPanel");
+  
+  try{ loadBenchmarksOnce(); }catch(e){}
+const panel = $("aiPanel");
   const canvas = $("curveCanvas");
   const cal = $("calendarWrap");
   if(panel) panel.style.display = "block";
