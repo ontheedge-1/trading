@@ -3,7 +3,7 @@ name: Pull KPI Snapshots (daily)
 on:
   workflow_dispatch:
   schedule:
-    - cron: "15 11 * * *" # 12:15 Berlin im Winter (CET). Adjust in summer if you care.
+    - cron: "15 11 * * *" # 12:15 Berlin (CET winter). Good enough.
 
 permissions:
   contents: write
@@ -21,12 +21,13 @@ jobs:
           KPI_EXPORT_KEY: ${{ secrets.KPI_EXPORT_KEY }}
         run: |
           set -e
-          mkdir -p trading/data
+          mkdir -p data
           curl -fsSL "${KPI_EXPORT_URL}?key=${KPI_EXPORT_KEY}&format=kpi_snapshots_daily" -o data/kpi_snapshots_daily.json
+
           # sanity check: must be valid JSON
           python - << 'PY'
           import json
-          with open("trading/data/kpi_snapshots_daily.json","r",encoding="utf-8") as f:
+          with open("data/kpi_snapshots_daily.json","r",encoding="utf-8") as f:
               json.load(f)
           print("JSON OK")
           PY
