@@ -1634,7 +1634,7 @@ async function loadBenchmarksOnce(){
   if(window.__benchmarks_managed_futures || __benchmarksLoading) return window.__benchmarks_managed_futures;
   __benchmarksLoading = true;
   try{
-    const res = await fetch("trading/data/benchmarks_managed_futures.json", { cache: "no-store" });
+    const res = await fetch("/trading/data/benchmarks_managed_futures.json", { cache: "no-store" });
     if(!res.ok) throw new Error(`benchmarks load failed (HTTP ${res.status})`);
     window.__benchmarks_managed_futures = await res.json();
   } catch(e){
