@@ -1482,7 +1482,8 @@ background: var(--cardGrad);
       <div id="aiLoading" class="aiLoading">Analyzing…</div>
     </div>
     <div style="display:flex; gap:8px; align-items:center;">
-      <button id="btnAIRefresh" class="aiBtn" type="button" title="Run analysis again">Refresh</button>
+      <button id="btnAIRun" class="aiBtn" type="button" title="Run analysis (costs tokens)">🤖 Analyse starten</button>
+      <button id="btnAIRefresh" class="aiBtn" type="button" title="Run analysis again">↻ Refresh</button>
     </div>
   </div>
 
@@ -1510,7 +1511,7 @@ background: var(--cardGrad);
     </div>
   </div>
 
-  <div id="aiError" class="aiError"></div>
+  <div id="aiError" class="aiError" style="display:none;"></div>
 </div>
 
       </div>
@@ -1591,8 +1592,10 @@ function setAIStatus({ state_badge="READY", confidence="", primary_driver="", wi
 function setAILoading(isLoading){
   const el = $("aiLoading");
   const btn = $("btnAIRefresh");
+  const run = $("btnAIRun");
   if(el) el.style.display = isLoading ? "" : "none";
   if(btn) btn.disabled = !!isLoading;
+  if(run) run.disabled = !!isLoading;
 }
 
 function showAIError(msg){
@@ -1752,6 +1755,20 @@ function showAIPanel(){
   if(panel) panel.style.display = "";
   if(canvas) canvas.style.display = "none";
   if(cal) cal.style.display = "none";
+
+
+// If nothing loaded yet, show a helpful placeholder
+if(!__aiCache && !__aiLoading){
+  setAIStatus({ state_badge: "READY" });
+  $("aiSystemHeadline").textContent = "On-demand Coach";
+  $("aiSystemSummary").textContent = "Klicke „🤖 Analyse starten“, um System Check + Coach Mode zu laden.";
+  $("aiSystemEvidence").innerHTML = "";
+  $("aiSystemChanged").innerHTML = "";
+  $("aiCoachReframe").textContent = "";
+  $("aiCoachFocus").innerHTML = "";
+  $("aiCoachPitfall").textContent = "";
+  $("aiCoachRitual").textContent = "";
+}
 }
 
 function hideAIPanel(){
@@ -3865,9 +3882,9 @@ if(type === "tradeQuality"){
   // AI Coach tab (on-demand, cached per session)
   if(GLOBAL.mode === "ai"){
     showAIPanel();
-    // The backend must not provide trade signals; this UI only displays interpretation/coaching.
-    ensureAIInsightLoaded().catch(()=>{});
-    return;
+    // On-demand: do NOT auto-call the LLM when entering the tab.
+    // Use the "Analyse starten" button.
+return;
   } else {
     // If we leave AI mode, restore normal chart UI. (Calendar mode will handle its own visibility.)
     if($("aiPanel") && $("aiPanel").style.display !== "none") hideAIPanel();
@@ -4499,6 +4516,11 @@ $("btnAI").addEventListener("click", () => {
   $("btnCal").classList.remove("active");
   renderCurve();
   // On-demand: request is only made when you actively open the AI tab (or press Refresh).
+});
+
+
+$("btnAIRun").addEventListener("click", () => {
+  // Manual run (cost control)
   ensureAIInsightLoaded().catch(()=>{});
 });
 
