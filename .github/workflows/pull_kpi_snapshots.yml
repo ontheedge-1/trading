@@ -34,18 +34,18 @@ jobs:
 
           echo "Download JSON..."
           curl -fsSL "${KPI_EXPORT_URL}?key=${KPI_EXPORT_KEY}&format=kpi_snapshots_daily" \
-            -o trading/data/kpi_snapshots_daily.json
+            -o data/kpi_snapshots_daily.json
 
           echo "Downloaded file info:"
           ls -la trading/data
-          wc -c trading/data/kpi_snapshots_daily.json
-          head -c 120 trading/data/kpi_snapshots_daily.json || true
+          wc -c data/kpi_snapshots_daily.json
+          head -c 120 data/kpi_snapshots_daily.json || true
           echo ""
 
           echo "JSON validation..."
           python - << 'PY'
           import json
-          with open("trading/data/kpi_snapshots_daily.json","r",encoding="utf-8") as f:
+          with open("data/kpi_snapshots_daily.json","r",encoding="utf-8") as f:
               json.load(f)
           print("JSON OK")
           PY
@@ -57,7 +57,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           # Always stage the KPI file (covers untracked + modified)
-          git add trading/data/kpi_snapshots_daily.json
+          git add data/kpi_snapshots_daily.json
 
           # If nothing staged, stop
           if git diff --cached --quiet; then
