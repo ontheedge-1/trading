@@ -1,0 +1,37 @@
+{
+  "focus": "managed_futures_trend_following",
+  "sources": [
+    {
+      "name": "AQR - Understanding Managed Futures",
+      "type": "whitepaper",
+      "url": "https://www.aqr.com/Insights/Research/White-Papers/Understanding-Managed-Futures"
+    },
+    {
+      "name": "SG CTA / Trend Index Factsheets",
+      "type": "index_factsheets"
+    }
+  ],
+  "ranges": {
+    "sharpe": [
+      0.8,
+      1.5
+    ],
+    "max_drawdown_pct": [
+      -0.3,
+      -0.1
+    ],
+    "expectancy_R": [
+      0.1,
+      0.5
+    ],
+    "winrate": [
+      0.3,
+      0.5
+    ]
+  },
+  "notes": [
+    "Ranges reflect long-term professional systematic trading norms",
+    "Expectancy and winrate are trade-level heuristics, not officially reported by funds",
+    "Comparisons must be relative and qualitative"
+  ]
+}
