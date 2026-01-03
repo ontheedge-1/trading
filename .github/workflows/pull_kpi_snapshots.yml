@@ -53,12 +53,45 @@ jobs:
       - name: Commit if changed
         run: |
           set -e
-          if git diff --quiet; then
-            echo "No changes."
+
+          echo "== Git status (short) =="
+          git status --porcelain=v1
+
+          echo "== Does file exist? =="
+          ls -la trading/data || true
+          test -f trading/data/kpi_snapshots_daily.json && echo "File exists ✅" || (echo "File missing ❌" && exit 1)
+
+          echo "== Is it ignored? =="
+          git check-ignore -v trading/data/kpi_snapshots_daily.json || echo "Not ignored ✅"
+
+          echo "== Show file hash =="
+          sha256sum trading/data/kpi_snapshots_daily.json || true
+
+          echo "== Git diff (name-only) =="
+          git diff --name-only
+
+          echo "== Untracked files =="
+          git ls-files --others --exclude-standard | head -n 50
+
+          if git diff --quiet && git status --porcelain=v1 | grep -q '^??'; then
+            echo "There are untracked files but diff is clean."
+          fi
+
+          if git diff --quiet && git status --porcelain=v1 | grep -q '^??' ; then
+            echo "Proceeding to add file explicitly..."
+          fi
+
+          git add -f trading/data/kpi_snapshots_daily.json
+
+          echo "== Git status after add =="
+          git status --porcelain=v1
+
+          if git diff --cached --quiet; then
+            echo "No staged changes. No changes."
             exit 0
           fi
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add trading/data/kpi_snapshots_daily.json
           git commit -m "chore(data): update kpi_snapshots_daily.json"
           git push
