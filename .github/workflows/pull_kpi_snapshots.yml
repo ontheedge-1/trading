@@ -1,0 +1,45 @@
+name: Pull KPI Snapshots (daily)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "15 11 * * *" # 12:15 Berlin im Winter (CET). Adjust in summer if you care.
+
+permissions:
+  contents: write
+
+jobs:
+  pull_kpi:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch KPI JSON from Apps Script
+        env:
+          KPI_EXPORT_URL: ${{ secrets.KPI_EXPORT_URL }}
+          KPI_EXPORT_KEY: ${{ secrets.KPI_EXPORT_KEY }}
+        run: |
+          set -e
+          mkdir -p trading/data
+          curl -fsSL "${KPI_EXPORT_URL}?key=${KPI_EXPORT_KEY}&format=kpi_snapshots_daily" -o trading/data/kpi_snapshots_daily.json
+          # sanity check: must be valid JSON
+          python - << 'PY'
+          import json
+          with open("trading/data/kpi_snapshots_daily.json","r",encoding="utf-8") as f:
+              json.load(f)
+          print("JSON OK")
+          PY
+
+      - name: Commit if changed
+        run: |
+          set -e
+          if git diff --quiet; then
+            echo "No changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add trading/data/kpi_snapshots_daily.json
+          git commit -m "chore(data): update kpi_snapshots_daily.json"
+          git push
