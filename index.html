@@ -1625,10 +1625,27 @@ async function fetchLLMInsight(payload){
 async function buildLLMPayload(){
   // ---- Data sources (best-effort) ----
   // Prefer in-memory GLOBAL computed objects; fall back to JSON files in /trading/data/
-  const windowLabel =
-    (GLOBAL?.rangeLabel || GLOBAL?.windowLabel || GLOBAL?.analysisWindowLabel ||
-     document.querySelector(".rangeBtn.active")?.textContent ||
-     "30d").trim();
+  // ---- Current UI filters (instrument + range + manual dates) ----
+const uiFilters = (GLOBAL && GLOBAL.filters) ? GLOBAL.filters : {};
+// preset is one of: 30D/90D/180D/YTD/ALL
+const preset =
+  (uiFilters.preset) ||
+  (document.querySelector("#filtersBar button[data-preset].active")?.getAttribute("data-preset")) ||
+  (document.querySelector("#filtersBar button[data-preset].active")?.textContent?.trim()) ||
+  "30D";
+
+// dateStart/dateEnd are ISO yyyy-mm-dd or null
+const dateStart = uiFilters.dateStart || null;
+const dateEnd = uiFilters.dateEnd || null;
+
+// instrument is symbol or "ALL"
+const instrument =
+  (uiFilters.instrument) ||
+  (document.getElementById("fInstrument")?.value) ||
+  "ALL";
+
+// Normalized label for the LLM + slicers
+const windowLabel = String(preset || "30D").toLowerCase();
 
   // Small cache so we fetch JSON at most once per session
   window.__aiDataCache = window.__aiDataCache || {};
@@ -1670,38 +1687,36 @@ async function buildLLMPayload(){
   }
 
   function sliceByWindow(rows, getDate){
-    const kind = parseDays(windowLabel);
-    const arr = Array.isArray(rows) ? rows.slice() : [];
-    // sort ascending by date (stable)
-    arr.sort((a,b) => {
-      const da = getDate(a)?.getTime() ?? 0;
-      const db = getDate(b)?.getTime() ?? 0;
-      return da - db;
-    });
-    if(arr.length === 0) return arr;
+  const arr = Array.isArray(rows) ? rows.slice() : [];
 
-    const last = getDate(arr[arr.length - 1]) || new Date();
-    if(kind === "all"){
-      // keep payload compact
-      return arr.slice(-200);
-    }
-    if(kind === "ytd"){
-      const start = new Date(last.getFullYear(), 0, 1);
-      return arr.filter(r => {
-        const d = getDate(r);
-        return d && d >= start && d <= last;
-      }).slice(-200);
-    }
-    const days = kind;
-    const start = new Date(last.getTime() - (days-1) * 24*60*60*1000);
-    // Some days missing (weekends). Filter by date range.
-    return arr.filter(r => {
-      const d = getDate(r);
-      return d && d >= start && d <= last;
-    }).slice(-200);
-  }
+  // sort ascending by date (stable)
+  arr.sort((a,b) => {
+    const da = getDate(a)?.getTime() ?? 0;
+    const db = getDate(b)?.getTime() ?? 0;
+    return da - db;
+  });
+  if(arr.length === 0) return arr;
 
-  // ---- Build compact series ----
+  // 1) Apply explicit date bounds from the UI (authoritative)
+  const startBound = dateStart ? Date.parse(dateStart + "T00:00:00") : null;
+  const endBound   = dateEnd   ? Date.parse(dateEnd   + "T00:00:00") : null;
+
+  let filtered = arr.filter(r => {
+    const t = getDate(r)?.getTime();
+    if(!Number.isFinite(t)) return false;
+    if(startBound && t < startBound) return false;
+    if(endBound && t > endBound) return false;
+    return true;
+  });
+
+  // 2) Safety caps to keep payload compact even on ALL
+  if(filtered.length > 500) filtered = filtered.slice(-500);
+
+  return filtered;
+}
+
+// ---- Build compact series ----
+
   const eqSlice = sliceByWindow(equity, dateOfRow).map(r => ({
     date: r.date,
     equity_end_$: toNum(r.equity_end_$ ?? r.cash_equity_$ ?? r.equity_$ ?? r.equity),
@@ -1752,6 +1767,12 @@ async function buildLLMPayload(){
   // ---- Meta / data quality ----
   const metaOut = {
     analysis_window_label: windowLabel,
+    filters: {
+      preset: String(preset || "").toUpperCase() || null,
+      date_start: dateStart,
+      date_end: dateEnd,
+      instrument: instrument
+    },
     counts: meta?.counts || null,
     config: meta?.config ? {
       risk_pct: meta.config.risk_pct,
@@ -1765,7 +1786,7 @@ async function buildLLMPayload(){
 
   // ---- Final payload ----
   return {
-    analysis_window: { label: windowLabel },
+    analysis_window: { label: windowLabel, date_start: dateStart, date_end: dateEnd },
     meta: metaOut,
     current,
     series: {
