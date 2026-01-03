@@ -1622,74 +1622,159 @@ async function fetchLLMInsight(payload){
   return data;
 }
 
-function buildLLMPayload(){
-  // Keep payload compact (cost + latency). No market data, no trade signals.
-  const nowISO = new Date().toISOString();
+async function buildLLMPayload(){
+  // ---- Data sources (best-effort) ----
+  // Prefer in-memory GLOBAL computed objects; fall back to JSON files in /trading/data/
+  const windowLabel =
+    (GLOBAL?.rangeLabel || GLOBAL?.windowLabel || GLOBAL?.analysisWindowLabel ||
+     document.querySelector(".rangeBtn.active")?.textContent ||
+     "30d").trim();
 
-  // Try to infer current analysis window from the UI (30d default)
-  const windowLabel = (GLOBAL?.analysisWindowLabel) || "30d";
+  // Small cache so we fetch JSON at most once per session
+  window.__aiDataCache = window.__aiDataCache || {};
+  async function fetchJSONCached(key, url){
+    if(window.__aiDataCache[key]) return window.__aiDataCache[key];
+    const res = await fetch(url, { cache: "no-store" });
+    if(!res.ok) throw new Error(`Failed to load ${url} (HTTP ${res.status})`);
+    const data = await res.json();
+    window.__aiDataCache[key] = data;
+    return data;
+  }
 
-  // Primary computed objects in this dashboard
-  const tk = GLOBAL?.tradeKPIs || {};          // computed from filtered trades
-  const sc = GLOBAL?.score || {};              // final score object
-  const st = GLOBAL?.tradeStreaks || {};       // streak stats
+  // Load files only if needed
+  const meta     = await fetchJSONCached("meta", "./data/meta.json").catch(() => ({}));
+  const kpisFull = await fetchJSONCached("kpis_full", "./data/kpis_full.json").catch(() => ({}));
+  const equity   = await fetchJSONCached("equity", "./data/equity.json").catch(() => ([]));
+  const dailyAgg = await fetchJSONCached("daily_aggregates", "./data/daily_aggregates.json").catch(() => ([]));
 
-  // Recent daily history: last ~45 days from the calendar spine + daily aggregates
-  const spine = Array.isArray(GLOBAL?.calendarSpine) ? GLOBAL.calendarSpine
-              : (Array.isArray(GLOBAL?.spine) ? GLOBAL.spine : []);
-  const daily = GLOBAL?.dailyAggMap || {}; // keyed by YYYY-MM-DD
-  const tailDays = spine.slice(-45).map(d => {
-    const row = daily?.[d] || null;
-    if(!row) return { date: d, trade_count: null, daily_R: null, daily_pnl_$: null };
-    return {
-      date: d,
-      trade_count: row.trade_count ?? null,
-      daily_R: row.daily_R ?? null,
-      daily_pnl_$: row.daily_pnl_$ ?? row.daily_pnl ?? null,
-      daily_adjustments_total_$: row.daily_adjustments_total_$ ?? null,
-      fees_$: row.fees_$ ?? null,
-      withdrawal_$: row.withdrawal_$ ?? null,
-      deposit_$: row.deposit_$ ?? null
-    };
-  });
+  const tradeKPIs = GLOBAL?.tradeKPIs || GLOBAL?.kpiTrade || {};
+  const scoreObj  = GLOBAL?.score || GLOBAL?.finalScore || {};
 
-  // Recent equity points (if available)
-  const eq = Array.isArray(GLOBAL?.equity) ? GLOBAL.equity : [];
-  const tailEq = eq.slice(-120).map(r => ({
-    date: r?.date ?? r?.d ?? null,
-    equity: r?.equity ?? r?.equity_$ ?? r?.value ?? null
-  })).filter(x => x.date && Number.isFinite(Number(x.equity)));
+  // ---- Helpers ----
+  const toNum = (v) => (Number.isFinite(+v) ? +v : null);
 
+  function parseDays(label){
+    const s = String(label || "").toLowerCase().trim();
+    if(s === "ytd") return "ytd";
+    if(s === "all") return "all";
+    const m = s.match(/(\d+)\s*d/);
+    if(m) return Math.max(1, parseInt(m[1], 10));
+    return 30;
+  }
+
+  function dateOfRow(r){
+    const d = r?.date;
+    if(!d) return null;
+    const t = Date.parse(d);
+    return Number.isFinite(t) ? new Date(t) : null;
+  }
+
+  function sliceByWindow(rows, getDate){
+    const kind = parseDays(windowLabel);
+    const arr = Array.isArray(rows) ? rows.slice() : [];
+    // sort ascending by date (stable)
+    arr.sort((a,b) => {
+      const da = getDate(a)?.getTime() ?? 0;
+      const db = getDate(b)?.getTime() ?? 0;
+      return da - db;
+    });
+    if(arr.length === 0) return arr;
+
+    const last = getDate(arr[arr.length - 1]) || new Date();
+    if(kind === "all"){
+      // keep payload compact
+      return arr.slice(-200);
+    }
+    if(kind === "ytd"){
+      const start = new Date(last.getFullYear(), 0, 1);
+      return arr.filter(r => {
+        const d = getDate(r);
+        return d && d >= start && d <= last;
+      }).slice(-200);
+    }
+    const days = kind;
+    const start = new Date(last.getTime() - (days-1) * 24*60*60*1000);
+    // Some days missing (weekends). Filter by date range.
+    return arr.filter(r => {
+      const d = getDate(r);
+      return d && d >= start && d <= last;
+    }).slice(-200);
+  }
+
+  // ---- Build compact series ----
+  const eqSlice = sliceByWindow(equity, dateOfRow).map(r => ({
+    date: r.date,
+    equity_end_$: toNum(r.equity_end_$ ?? r.cash_equity_$ ?? r.equity_$ ?? r.equity),
+    drawdown_pct: toNum(r.drawdown_pct),
+    ath_$: toNum(r.ath_$)
+  })).filter(r => r.date && r.equity_end_$ != null);
+
+  const dailySlice = sliceByWindow(dailyAgg, dateOfRow).map(r => ({
+    date: r.date,
+    daily_R: toNum(r.daily_R),
+    daily_pnl_$: toNum(r.daily_pnl_$),
+    trade_count: toNum(r.trade_count),
+    wins: toNum(r.wins),
+    losses: toNum(r.losses)
+  })).filter(r => r.date);
+
+  // ---- Current snapshot ----
+  // Prefer GLOBAL KPIs (they reflect current filters), but fall back to kpis_full.json.
+  const current = {
+    // score / tier
+    final_score: toNum(scoreObj.score ?? scoreObj.rawScore ?? scoreObj.final_score),
+    tier: scoreObj.tier ?? scoreObj.tierLabel ?? scoreObj.label ?? null,
+    score_label: scoreObj.label ?? null,
+
+    // trade KPIs
+    trade_count: toNum(tradeKPIs.tradeCount ?? kpisFull.trade_count),
+    winrate: toNum(tradeKPIs.winrate ?? kpisFull.winrate),
+    lossrate: toNum(tradeKPIs.lossrate ?? kpisFull.lossrate),
+    profit_factor: toNum(tradeKPIs.profitFactor ?? kpisFull.profit_factor),
+    expectancy_R: toNum(tradeKPIs.expectancy ?? kpisFull.expectancy_R),
+    avgR: toNum(tradeKPIs.avgR ?? kpisFull.expectancy_R),
+    avg_win_R: toNum(tradeKPIs.avgWin ?? kpisFull.avg_win_R),
+    avg_loss_R: toNum(tradeKPIs.avgLoss ?? kpisFull.avg_loss_R),
+    wins: toNum(tradeKPIs.wins ?? kpisFull.win_count),
+    losses: toNum(tradeKPIs.losses ?? kpisFull.loss_count),
+
+    // risk / stability
+    sharpe: toNum(tradeKPIs.sharpe ?? scoreObj.sharpe),
+    recovery_factor: toNum(scoreObj.recoveryFactor ?? kpisFull.recovery_factor),
+    max_drawdown_pct: toNum(kpisFull.max_drawdown_pct ?? (eqSlice.at(-1)?.drawdown_pct)),
+
+    // equity snapshot
+    starting_equity_$: toNum(kpisFull.starting_equity_$ ?? eqSlice[0]?.equity_end_$),
+    ending_equity_$: toNum(kpisFull.ending_equity_$ ?? eqSlice.at(-1)?.equity_end_$),
+    net_profit_$: toNum(kpisFull.net_profit_$)
+  };
+
+  // ---- Meta / data quality ----
+  const metaOut = {
+    analysis_window_label: windowLabel,
+    counts: meta?.counts || null,
+    config: meta?.config ? {
+      risk_pct: meta.config.risk_pct,
+      resize_step_pct: meta.config.resize_step_pct,
+      cash_equity_driver: meta.config.cash_equity_driver,
+      daily_pnl_includes_commissions: meta.config.daily_pnl_includes_commissions,
+      fees_additional_to_daily_pnl: meta.config.fees_additional_to_daily_pnl
+    } : null,
+    last_updated_utc: meta?.last_updated_utc || null
+  };
+
+  // ---- Final payload ----
   return {
-    analysis_window: { label: windowLabel, asof: nowISO },
-    current: {
-      // Score / tier
-      final_score: Number.isFinite(sc?.score) ? sc.score : (Number.isFinite(sc?.finalScore) ? sc.finalScore : null),
-      tier: sc?.tier || sc?.tierLabel || sc?.tierName || sc?.label || null,
-
-      // Activity
-      trade_count: tk?.tradeCount ?? tk?.nTrades ?? sc?.nTrades ?? null,
-      wins: tk?.wins ?? null,
-      losses: tk?.losses ?? null,
-      win_rate: tk?.winRate ?? tk?.win_rate ?? null,
-
-      // Performance / risk (R-based)
-      profit_factor: tk?.profitFactor ?? tk?.pf ?? null,
-      avg_r_per_trade: tk?.avgRPerTrade ?? tk?.avg_r_per_trade ?? null,
-      avg_r_per_day: tk?.avgRPerDay ?? tk?.avg_r_per_day ?? null,
-      max_dd_r: tk?.maxDD_R ?? tk?.max_dd_r ?? null,
-
-      // Streaks
-      streak_best_win: st?.bestWin ?? st?.maxWin ?? null,
-      streak_best_loss: st?.bestLoss ?? st?.maxLoss ?? null,
-
-      // Context for the LLM (helps wording, not trading advice)
-      instrument: GLOBAL?.instrument || GLOBAL?.activeInstrument || null,
-      range: windowLabel
+    analysis_window: { label: windowLabel },
+    meta: metaOut,
+    current,
+    series: {
+      equity: eqSlice,
+      daily: dailySlice
     },
+    // Backward compatibility with older worker prompts
     history: {
-      recent_days: tailDays,
-      recent_equity: tailEq
+      personal_baselines: GLOBAL?.personal_baselines || {}
     }
   };
 }
@@ -1760,7 +1845,7 @@ async function ensureAIInsightLoaded({ force=false } = {}){
   showAIError("");
 
   try{
-    const payload = buildLLMPayload();
+    const payload = await buildLLMPayload();
     const out = await fetchLLMInsight(payload);
     __aiCache = out;
     renderAIResult(out);
