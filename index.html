@@ -1420,6 +1420,14 @@ background: var(--cardGrad);
 .aiTopBar .aiBtn:hover{background:rgba(255,255,255,.06)}
 .aiTopBar .aiBtn:disabled{opacity:.5;cursor:not-allowed}
 .aiContextLine{width:100%;margin:2px 0 10px 0;padding:8px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.02);font-size:12px;color:rgba(220,235,255,.82)}
+
+/* AI panel overflow fix */
+#aiPanel{overflow-x:hidden}
+.aiTopBar{flex-wrap:wrap}
+.aiTopBar .aiRight{flex-wrap:wrap;gap:10px}
+.aiGrid{min-width:0}
+.aiCard{min-width:0}
+
 </style>
  </head>
 <body>
@@ -1671,8 +1679,8 @@ const preset =
   "30D";
 
 // dateStart/dateEnd are ISO yyyy-mm-dd or null
-const dateStart = uiFilters.dateStart || null;
-const dateEnd = uiFilters.dateEnd || null;
+const dateStart = uiFilters.dateStart || (document.querySelector("#btnFrom .dateVal")?.textContent?.trim() || null) || null;
+const dateEnd = uiFilters.dateEnd || (document.querySelector("#btnTo .dateVal")?.textContent?.trim() || null) || null;
 
 // instrument is symbol or "ALL"
 const instrument =
