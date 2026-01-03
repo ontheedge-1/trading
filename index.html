@@ -1646,7 +1646,7 @@ async function loadBenchmarksOnce(){
   return window.__benchmarks_managed_futures;
 }
 
-function buildLLMPayload(){
+async function buildLLMPayload(){
   // ---- Data sources (best-effort) ----
   // Prefer in-memory GLOBAL computed objects; fall back to JSON files in /trading/data/
   // ---- Current UI filters (instrument + range + manual dates) ----
@@ -1836,6 +1836,24 @@ function updateAIContextLine(payload){
   el.textContent = `Zeitraum: ${start} bis ${end} · Instrument: ${inst}`;
 }
 
+
+function buildLLMContextSync(){
+  // Build minimal context without async loads (filters only)
+  try{
+    const rangeLabel = (typeof getActiveRangeLabel === "function") ? getActiveRangeLabel() : "30d";
+    // best-effort read date inputs if present
+    const start = document.querySelector('input[type="date"][id*="from"], input[type="date"][name*="from"]')?.value || null;
+    const end = document.querySelector('input[type="date"][id*="to"], input[type="date"][name*="to"]')?.value || null;
+    // best-effort instrument selector
+    const instSel = document.querySelector('select[id*="instrument"], select[name*="instrument"]');
+    const instrument = instSel?.value || "ALL";
+    return { analysis_window: { label: rangeLabel, date_start: start, date_end: end }, scope: { instrument } };
+  }catch(e){
+    return { analysis_window: { label: "30d", date_start: null, date_end: null }, scope: { instrument: "ALL" } };
+  }
+}
+
+
 function renderAIResult(out){
   
   try{ updateAIContextLine(__aiLastPayload); }catch(e){}
@@ -1925,7 +1943,7 @@ const panel = $("aiPanel");
   const canvas = $("curveCanvas");
   const cal = $("calendarWrap");
   if(panel) panel.style.display = "block";
-  try{ updateAIContextLine(buildLLMPayload()); }catch(e){}
+  try{ updateAIContextLine(buildLLMContextSync()); }catch(e){}
   if(canvas) canvas.style.display = "none";
   if(cal) cal.style.display = "none";
 
