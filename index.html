@@ -1408,7 +1408,7 @@ background: var(--cardGrad);
 }
 @media (max-width: 980px){ .aiGrid{ grid-template-columns:1fr; } }
 
-.aiContextLine{margin:0 0 10px 0;font-size:12px;opacity:.78}
+.aiContextLine{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.10);background:rgba(8,12,18,.35);font-size:12px;line-height:1;color:rgba(230,240,255,.82);margin:10px 0 10px 0;backdrop-filter: blur(6px);}
 
 /* ---- AI Coach: Meta bar + context line polish ---- */
 .aiTopBar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px}
@@ -1667,7 +1667,9 @@ async function loadBenchmarksOnce(){
 }
 
 async function buildLLMPayload(){
-  // ---- Data sources (best-effort) ----
+  
+  const topRange = readDateRangeFromTopBar();
+// ---- Data sources (best-effort) ----
   // Prefer in-memory GLOBAL computed objects; fall back to JSON files in /trading/data/
   // ---- Current UI filters (instrument + range + manual dates) ----
 const uiFilters = (GLOBAL && GLOBAL.filters) ? GLOBAL.filters : {};
@@ -1845,13 +1847,29 @@ const windowLabel = String(preset || "30D").toLowerCase();
   };
 }
 
+function readDateRangeFromTopBar(){
+  const fromEl = document.querySelector("#btnFrom .dateVal");
+  const toEl   = document.querySelector("#btnTo .dateVal");
+  const from = (fromEl?.textContent || "").trim();
+  const to   = (toEl?.textContent || "").trim();
+  const iso = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
+  return { dateStart: iso(from), dateEnd: iso(to) };
+}
+
 function updateAIContextLine(payload){
   const el = document.getElementById("aiContextLine");
   if(!el) return;
 
   const aw = payload?.analysis_window || {};
-  const start = aw?.date_start || "—";
-  const end = aw?.date_end || "—";
+  let start = aw?.date_start || null;
+  let end = aw?.date_end || null;
+  if(!start || !end){
+    const r = readDateRangeFromTopBar();
+    start = start || r.dateStart;
+    end = end || r.dateEnd;
+  }
+  start = start || "—";
+  end = end || "—";
 
   const instRaw = payload?.scope?.instrument || payload?.meta?.filters?.instrument || "ALL";
   const inst = (String(instRaw).toUpperCase() === "ALL") ? "All" : String(instRaw);
@@ -1865,8 +1883,9 @@ function buildLLMContextSync(){
   try{
     const rangeLabel = (typeof getActiveRangeLabel === "function") ? getActiveRangeLabel() : "30d";
     // best-effort read date inputs if present
-    const start = document.querySelector('input[type="date"][id*="from"], input[type="date"][name*="from"]')?.value || null;
-    const end = document.querySelector('input[type="date"][id*="to"], input[type="date"][name*="to"]')?.value || null;
+    const r = readDateRangeFromTopBar();
+    const start = r.dateStart;
+    const end = r.dateEnd;
     // best-effort instrument selector
     const instSel = document.querySelector('select[id*="instrument"], select[name*="instrument"]');
     const instrument = instSel?.value || "ALL";
@@ -2254,9 +2273,9 @@ function hideAIPanel(){
   if(last === "L"){ sumL += curL; cntL += 1; }
 
   return {
-    longestWin: maxW,
+    longestWindow: maxW,
     longestLoss: maxL,
-    avgWin: cntW ? (sumW / cntW) : 0,
+    avgWindow: cntW ? (sumW / cntW) : 0,
     avgLoss: cntL ? (sumL / cntL) : 0
   };
 }
@@ -2867,7 +2886,7 @@ function computeScore(filteredTrades, tradeKPIs){
           const cls = tradeQualityClass(k.avgR);
           return `<span class="kpiMain ${cls}">${fmtR1(k.avgR)}</span>`;
         })(),
-        sub1: `Ø Win: ${fmtR1(k.avgWin)}`,
+        sub1: `Ø Window: ${fmtR1(k.avgWin)}`,
         sub2: `Ø Loss: ${fmtR1(k.avgLoss)}`,
         cls: ""
       },
@@ -4051,7 +4070,7 @@ if(type === "tradeQuality"){
       tip.innerHTML = `
         <div style="font-weight:800;">Streak length: ${len}</div>
         <div style="margin-top:4px;">
-          Win: ${winCount} &nbsp;|&nbsp; Loss: ${lossCount}
+          Window: ${winCount} &nbsp;|&nbsp; Loss: ${lossCount}
         </div>
       `;
     });
