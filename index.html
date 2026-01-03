@@ -265,6 +265,20 @@ background: var(--cardGrad);
     .kpiSeg{ padding: 3px; }
     .kpiSeg button{ padding: 6px 10px; font-size: 12px; }
 
+    .kpiTierBadge{
+      display:inline-flex;
+      align-items:center;
+      padding:3px 8px;
+      border-radius: 999px;
+      font-weight: 900;
+      font-size: 11px;
+      letter-spacing: .6px;
+      color: rgba(9,14,24,.95);
+      box-shadow: 0 10px 22px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.25);
+      border: 1px solid rgba(255,255,255,.18);
+      text-transform: uppercase;
+    }
+
     /* Phase 3 – Chart header polish (no logic changes) */
     .chartPanel .chartHead{
       display:flex; align-items:flex-end; justify-content:space-between; gap:14px;
@@ -3847,15 +3861,24 @@ if(type === "tradeQuality"){
         const x0 = xFor(i-1), y0 = yFor(v0);
         const x1 = xFor(i),   y1 = yFor(v1);
 
-        const vMid = (v0 + v1) / 2;
-        const c = colorForValue(vMid);
+        const segC = (typeof opts.segmentColorFn === "function")
+          ? opts.segmentColorFn({ metaA: opts.meta?.[i-1], metaB: opts.meta?.[i], i0:i-1, i1:i })
+          : null;
 
-        if(c){
-          ctx.strokeStyle = rgbStr(c);
-          if(glow) ctx.shadowColor = rgbaStr(c, 0.75);
+        if(segC){
+          ctx.strokeStyle = segC;
+          if(glow) ctx.shadowColor = segC;
         } else {
-          ctx.strokeStyle = iceGrad;
-          if(glow) ctx.shadowColor = "rgba(41,182,255,.65)";
+          const vMid = (v0 + v1) / 2;
+          const c = colorForValue(vMid);
+
+          if(c){
+            ctx.strokeStyle = rgbStr(c);
+            if(glow) ctx.shadowColor = rgbaStr(c, 0.75);
+          } else {
+            ctx.strokeStyle = iceGrad;
+            if(glow) ctx.shadowColor = "rgba(41,182,255,.65)";
+          }
         }
 
         ctx.beginPath();
@@ -4161,19 +4184,7 @@ if(type === "tradeQuality"){
   const chartWrap = $("chartWrap");
   const calWrap = $("calendarWrap");
 
-  // Always keep header in sync with the currently shown view
-  setCurveHeader(GLOBAL.mode);
-
-  
-  // AI Coach tab (on-demand, cached per session)
-  if(GLOBAL.mode === "ai"){
-    showAIPanel();
-    // On-demand: do NOT auto-call the LLM when entering the tab.
-    // Use the "Analyse starten" button.
-return;
-
-  // KPI snapshots tab
-  if(GLOBAL.mode === "kpi"){
+  // Always kif(GLOBAL.mode === "kpi"){
     if($("aiPanel") && $("aiPanel").style.display !== "none") hideAIPanel();
     if($("calendarWrap")) $("calendarWrap").style.display = "none";
     if($("kpiControls")) $("kpiControls").style.display = "flex";
@@ -4181,52 +4192,76 @@ return;
     $("curveCanvas").style.display = "block";
     $("tooltip").style.display = "none";
 
-    const snaps = Array.isArray(GLOBAL.kpiSnaps) ? GLOBAL.kpiSnaps : [];
+    const snapsRaw = Array.isArray(GLOBAL.kpiSnaps) ? GLOBAL.kpiSnaps : [];
     const win = Number(GLOBAL.kpiState?.win || 30);
     const metric = String(GLOBAL.kpiState?.metric || "final_score");
 
-    const metricKey =
-      (metric === "final_score")     ? `final_score_${win}d` :
-      (metric === "expectancy")      ? `expectancy_R_${win}d` :
-      (metric === "profit_factor")   ? `profit_factor_R_${win}d` :
-      (metric === "recovery_factor") ? `recovery_factor_${win}d` :
-      (metric === "sharpe")          ? `sharpe$_${win}d` :
-      (metric === "winrate")         ? `winrate_${win}d` :
-      `final_score_${win}d`;
-
-    // filter by dashboard date range (if any)
+    // --- Support BOTH snapshot schemas ---
+    // A) "flat" (from Sheet rows): snapshot_date + final_score_30d + tier_*_30d booleans
+    // B) "nested" (from Web App): date + final_score:{30d:..} + tier:{30d:"STRONG"} + expectancy_R:{...}
+    const getDate = (r) => String(r?.snapshot_date || r?.date || "");
     const ds = GLOBAL.filters?.dateStart;
     const de = GLOBAL.filters?.dateEnd;
 
-    const rows = snaps
-      .filter(r => r && r.snapshot_date)
-      .filter(r => (!ds || String(r.snapshot_date) >= ds) && (!de || String(r.snapshot_date) <= de))
-      .sort((a,b)=> String(a.snapshot_date).localeCompare(String(b.snapshot_date)));
+    const rows = snapsRaw
+      .filter(r => r && getDate(r))
+      .filter(r => (!ds || getDate(r) >= ds) && (!de || getDate(r) <= de));
 
-    const spine = rows.map(r => String(r.snapshot_date));
-    const values = rows.map(r => {
-      const v = r[metricKey];
+    const winKey = `${win}d`;
+
+    // metric value getter
+    const getMetricVal = (r) => {
+      // nested schema
+      if(r && typeof r === "object"){
+        if(metric === "final_score" && r.final_score && r.final_score[winKey] != null) return r.final_score[winKey];
+        if(metric === "expectancy" && r.expectancy_R && r.expectancy_R[winKey] != null) return r.expectancy_R[winKey];
+        if(metric === "profit_factor" && r.profit_factor_R && r.profit_factor_R[winKey] != null) return r.profit_factor_R[winKey];
+        if(metric === "recovery_factor" && r.recovery_factor_R && r.recovery_factor_R[winKey] != null) return r.recovery_factor_R[winKey];
+        if(metric === "sharpe" && r.sharpe && r.sharpe[winKey] != null) return r.sharpe[winKey];
+        if(metric === "winrate" && r.winrate && r.winrate[winKey] != null) return r.winrate[winKey];
+      }
+
+      // flat schema
+      const k =
+        (metric === "expectancy")      ? `expectancy_R_${winKey}` :
+        (metric === "profit_factor")   ? `profit_factor_R_${winKey}` :
+        (metric === "recovery_factor") ? `recovery_factor_${winKey}` :
+        (metric === "sharpe")          ? `sharpe$_${winKey}` :
+        (metric === "winrate")         ? `winrate_${winKey}` :
+        `final_score_${winKey}`;
+
+      return r ? r[k] : null;
+    };
+
+    const toNum = (v) => {
       if(v === null || v === undefined || v === "") return null;
-      // winrate in JSON likely as fraction (0..1)
-      const num = (typeof v === "string") ? Number(String(v).replace("%","")) : Number(v);
-      return Number.isFinite(num) ? num : null;
-    });
+      let num = (typeof v === "string") ? Number(String(v).replace("%","")) : Number(v);
+      if(!Number.isFinite(num)) return null;
+      // winrate: accept either 0..1 fraction or 0..100 percent
+      if(metric === "winrate"){
+        if(num <= 1.0000001) num = num * 100;
+      }
+      return num;
+    };
 
     const tierForRow = (r) => {
-      const suf = `${win}d`;
-      const getB = (k)=> (String(r[k]||"").toUpperCase()==="TRUE") || (r[k]===true);
-      if(getB(`tier_blessed_${suf}`)) return "BLESSED";
-      if(getB(`tier_ultra_${suf}`))   return "ULTRA";
-      if(getB(`tier_strong_${suf}`))  return "STRONG";
-      if(getB(`tier_good_${suf}`))    return "GOOD";
-      if(getB(`tier_ok_${suf}`))      return "OK";
-      if(getB(`tier_weak_${suf}`))    return "WEAK";
+      // nested tier
+      if(r && r.tier && typeof r.tier === "object" && r.tier[winKey]) return String(r.tier[winKey]).toUpperCase();
+      if(r && typeof r.tier === "string") return String(r.tier).toUpperCase();
+
+      // flat boolean flags
+      const getB = (k)=> (String(r?.[k]||"").toUpperCase()==="TRUE") || (r?.[k]===true);
+      if(getB(`tier_blessed_${winKey}`)) return "BLESSED";
+      if(getB(`tier_ultra_${winKey}`))   return "ULTRA";
+      if(getB(`tier_strong_${winKey}`))  return "STRONG";
+      if(getB(`tier_good_${winKey}`))    return "GOOD";
+      if(getB(`tier_ok_${winKey}`))      return "OK";
+      if(getB(`tier_weak_${winKey}`))    return "WEAK";
       return null;
     };
 
-    const meta = rows.map(r => ({ tier: tierForRow(r), row:r }));
-
     const tierColor = (tier) => {
+      // matches hero score vibes (approx)
       if(tier === "BLESSED") return "rgba(255,77,209,.95)";
       if(tier === "ULTRA")   return "rgba(120,170,255,.95)";
       if(tier === "STRONG")  return "rgba(53,208,127,.95)";
@@ -4236,31 +4271,56 @@ return;
       return "rgba(207,232,255,.98)";
     };
 
+    // Build arrays for chart
+    const spine = rows.map(r => getDate(r));
+    const values = rows.map(r => toNum(getMetricVal(r)));
+    const meta = rows.map(r => ({ tier: tierForRow(r), row: r }));
+
     const metricLabel =
-      (metric === "final_score")     ? "Final Score" :
-      (metric === "expectancy")      ? "Expectancy (R)" :
-      (metric === "profit_factor")   ? "Profit Factor" :
-      (metric === "recovery_factor") ? "Recovery Factor" :
-      (metric === "sharpe")          ? "Sharpe" :
-      (metric === "winrate")         ? "Win Rate" :
-      "Final Score";
+      (metric === "final_score") ? `Final Score (${win}d)` :
+      (metric === "expectancy") ? `Expectancy R (${win}d)` :
+      (metric === "profit_factor") ? `Profit Factor (${win}d)` :
+      (metric === "recovery_factor") ? `Recovery Factor (${win}d)` :
+      (metric === "sharpe") ? `Sharpe (${win}d)` :
+      (metric === "winrate") ? `Win Rate (${win}d)` :
+      `Metric (${win}d)`;
 
-    const vFmt = (v) => {
-      if(v === null || v === undefined || !Number.isFinite(Number(v))) return "—";
-      if(metric === "winrate") return (Number(v) * 100).toFixed(2) + "%";
-      return Number(v).toFixed(2);
-    };
+    const yFmt =
+      (metric === "winrate") ? (v)=> `${fmt2(v)}%` :
+      (metric === "expectancy") ? (v)=> `${fmt2(v)}R` :
+      (metric === "final_score") ? (v)=> `${fmt2(v)}` :
+      (v)=> `${fmt2(v)}`;
 
-    drawLineChart($("curveCanvas"), spine, values, {
-      mode: "kpi",
-      title: `${metricLabel} · ${win}d`,
-      vFmt,
+    // Clear canvas even if values are empty (so we don't "inherit" the last chart)
+    const canvas = $("curveCanvas");
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    drawLineChart(canvas, spine, values, {
+      yFormatter: yFmt,
+      title: metricLabel,
+      // neutral base; segments/points are tier-colored
+      color: "rgba(207,232,255,.75)",
       meta,
-      tooltipHTML: ({vv, dateLabel, meta}) => {
-        const tier = meta?.tier;
-        const badge = tier ? `<span style="display:inline-block; padding:2px 8px; border-radius:999px; font-weight:900; font-size:11px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); color:${tierColor(tier)};">${tier}</span>` : "";
+      tooltipFormatter: ({value, meta, dateLabel}) => {
+        const tier = meta?.tier || "";
+        const badge = tier ? `<span class="kpiTierBadge" style="background:${tierColor(tier)}">${tier}</span>` : "";
         return `
-          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="font-weight:800">${fmt2(value)}${metric==="winrate"?"%":(metric==="expectancy"?"R":"")}</div>
+            ${badge}
+          </div>
+          <div class="muted">${dateLabel}</div>
+        `;
+      },
+      pointColorFn: ({meta}) => tierColor(meta?.tier),
+      segmentColorFn: ({metaA, metaB}) => tierColor(metaB?.tier || metaA?.tier),
+    });
+
+    return;
+  } else {
+    if($("kpiControls")) $("kpiControls").style.display = "none";
+  } <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
             <div><b>${metricLabel}</b>: ${vFmt(vv)}</div>
             ${badge}
           </div>
