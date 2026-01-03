@@ -4184,7 +4184,7 @@ if(type === "tradeQuality"){
   const chartWrap = $("chartWrap");
   const calWrap = $("calendarWrap");
 
-  // Always kif(GLOBAL.mode === "kpi"){
+  if(GLOBAL.mode === "kpi"){
     if($("aiPanel") && $("aiPanel").style.display !== "none") hideAIPanel();
     if($("calendarWrap")) $("calendarWrap").style.display = "none";
     if($("kpiControls")) $("kpiControls").style.display = "flex";
@@ -4292,7 +4292,7 @@ if(type === "tradeQuality"){
       (v)=> `${fmt2(v)}`;
 
     // Clear canvas even if values are empty (so we don't "inherit" the last chart)
-    const canvas = $("curveCanvas");
+    // reuse canvas from the start of renderCurve()
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
@@ -4320,25 +4320,8 @@ if(type === "tradeQuality"){
     return;
   } else {
     if($("kpiControls")) $("kpiControls").style.display = "none";
-  } <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
-            <div><b>${metricLabel}</b>: ${vFmt(vv)}</div>
-            ${badge}
-          </div>
-          <div class="muted">${dateLabel}</div>
-        `;
-      },
-      pointColorFn: ({meta}) => tierColor(meta?.tier),
-    });
-
-    return;
-  } else {
-    if($("kpiControls")) $("kpiControls").style.display = "none";
   }
 
-  } else {
-    // If we leave AI mode, restore normal chart UI. (Calendar mode will handle its own visibility.)
-    if($("aiPanel") && $("aiPanel").style.display !== "none") hideAIPanel();
-}
 
 // small delta badge (Equity / Cum R only)
   const deltaBadge = $("chartDelta");
