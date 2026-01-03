@@ -252,6 +252,19 @@ background: var(--cardGrad);
       display:flex; align-items:center; justify-content:space-between; gap:12px;
       margin-bottom:10px;
     }
+    /* KPI chart controls (Chart tab: KPI) */
+    .kpiControls{
+      margin-top: 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .kpiControls .selectWrap{ min-width: 220px; }
+    .kpiSeg{ padding: 3px; }
+    .kpiSeg button{ padding: 6px 10px; font-size: 12px; }
+
     /* Phase 3 – Chart header polish (no logic changes) */
     .chartPanel .chartHead{
       display:flex; align-items:flex-end; justify-content:space-between; gap:14px;
@@ -1477,11 +1490,30 @@ background: var(--cardGrad);
           <button id="btnR" type="button">Cum R</button>
           <button id="btnDD" type="button">DD (R)</button>
           <button id="btnStreaks" type="button">Streaks</button>
+          <button id="btnKPI" type="button">KPI</button>
           <button id="btnCal" type="button" title="Calendar">📅</button>
           <button id="btnAI" type="button" title="🤖 Coach">🤖</button>
         </div>
 
 
+      </div>
+
+      <div id="kpiControls" class="kpiControls" style="display:none;">
+        <div class="selectWrap">
+          <select id="kpiMetric" class="select" title="KPI Metric">
+            <option value="final_score">Final Score</option>
+            <option value="expectancy">Expectancy (R)</option>
+            <option value="profit_factor">Profit Factor</option>
+            <option value="recovery_factor">Recovery Factor</option>
+            <option value="sharpe">Sharpe</option>
+            <option value="winrate">Win Rate</option>
+          </select>
+        </div>
+        <div class="seg kpiSeg" aria-label="KPI Window">
+          <button id="btnKpi30" type="button" class="active">30d</button>
+          <button id="btnKpi90" type="button">90d</button>
+          <button id="btnKpi180" type="button">180d</button>
+        </div>
       </div>
 
       <div class="chartWrap" id="chartWrap">
@@ -3896,11 +3928,18 @@ if(type === "tradeQuality"){
         }
       }
 
-      tooltip.innerHTML = `
-        <div><b>${opts.title}</b>: ${opts.vFmt(vv)}</div>
-        ${deltaHtml}
-        <div class="muted">${dateLabel}</div>
-      `;
+      {
+      const metaAt = (opts.meta && hoverIndex != null) ? opts.meta[hoverIndex] : null;
+      if(typeof opts.tooltipHTML === "function"){
+        tooltip.innerHTML = opts.tooltipHTML({ vv, dateLabel, idx: hoverIndex, meta: metaAt, opts, deltaHtml });
+      } else {
+        tooltip.innerHTML = `
+          <div><b>${opts.title}</b>: ${opts.vFmt(vv)}</div>
+          ${deltaHtml}
+          <div class="muted">${dateLabel}</div>
+        `;
+      }
+    }
 
       // position: below when point is in upper half of plot, otherwise above
       const midY = padT + (H/2);
@@ -3968,7 +4007,7 @@ if(type === "tradeQuality"){
 
       ctx.beginPath();
       ctx.arc(c.vx, c.vy, 3.5, 0, Math.PI*2);
-      ctx.fillStyle = "rgba(207,232,255,.98)";
+      ctx.fillStyle = (typeof opts.pointColorFn === "function") ? opts.pointColorFn({meta:(opts.meta && c.idx!=null)?opts.meta[c.idx]:null, vv: values[c.idx], dateLabel: spine[c.idx], idx:c.idx}) : "rgba(207,232,255,.98)";
       ctx.fill();
     }
 
@@ -3987,6 +4026,9 @@ if(type === "tradeQuality"){
     dailyAgg:null,
     kpis:null,
     score: null,
+
+    kpiSnaps:null,
+    kpiState:{ metric:"final_score", win:30 },
 
     trades:null,          // raw trades_enriched.json
     filteredTrades:[],    // OUTPUT des filterEngine
@@ -4093,6 +4135,7 @@ if(type === "tradeQuality"){
       (mode === "streaks")   ? "Streaks" :
       (mode === "calendar")  ? "Kalender" :
       (mode === "ai")        ? "🤖 Coach" :
+      (mode === "kpi")       ? "KPI · Snapshot Chart" :
       "";
 
     s.textContent =
@@ -4128,6 +4171,110 @@ if(type === "tradeQuality"){
     // On-demand: do NOT auto-call the LLM when entering the tab.
     // Use the "Analyse starten" button.
 return;
+
+  // KPI snapshots tab
+  if(GLOBAL.mode === "kpi"){
+    if($("aiPanel") && $("aiPanel").style.display !== "none") hideAIPanel();
+    if($("calendarWrap")) $("calendarWrap").style.display = "none";
+    if($("kpiControls")) $("kpiControls").style.display = "flex";
+    // ensure canvas visible
+    $("curveCanvas").style.display = "block";
+    $("tooltip").style.display = "none";
+
+    const snaps = Array.isArray(GLOBAL.kpiSnaps) ? GLOBAL.kpiSnaps : [];
+    const win = Number(GLOBAL.kpiState?.win || 30);
+    const metric = String(GLOBAL.kpiState?.metric || "final_score");
+
+    const metricKey =
+      (metric === "final_score")     ? `final_score_${win}d` :
+      (metric === "expectancy")      ? `expectancy_R_${win}d` :
+      (metric === "profit_factor")   ? `profit_factor_R_${win}d` :
+      (metric === "recovery_factor") ? `recovery_factor_${win}d` :
+      (metric === "sharpe")          ? `sharpe$_${win}d` :
+      (metric === "winrate")         ? `winrate_${win}d` :
+      `final_score_${win}d`;
+
+    // filter by dashboard date range (if any)
+    const ds = GLOBAL.filters?.dateStart;
+    const de = GLOBAL.filters?.dateEnd;
+
+    const rows = snaps
+      .filter(r => r && r.snapshot_date)
+      .filter(r => (!ds || String(r.snapshot_date) >= ds) && (!de || String(r.snapshot_date) <= de))
+      .sort((a,b)=> String(a.snapshot_date).localeCompare(String(b.snapshot_date)));
+
+    const spine = rows.map(r => String(r.snapshot_date));
+    const values = rows.map(r => {
+      const v = r[metricKey];
+      if(v === null || v === undefined || v === "") return null;
+      // winrate in JSON likely as fraction (0..1)
+      const num = (typeof v === "string") ? Number(String(v).replace("%","")) : Number(v);
+      return Number.isFinite(num) ? num : null;
+    });
+
+    const tierForRow = (r) => {
+      const suf = `${win}d`;
+      const getB = (k)=> (String(r[k]||"").toUpperCase()==="TRUE") || (r[k]===true);
+      if(getB(`tier_blessed_${suf}`)) return "BLESSED";
+      if(getB(`tier_ultra_${suf}`))   return "ULTRA";
+      if(getB(`tier_strong_${suf}`))  return "STRONG";
+      if(getB(`tier_good_${suf}`))    return "GOOD";
+      if(getB(`tier_ok_${suf}`))      return "OK";
+      if(getB(`tier_weak_${suf}`))    return "WEAK";
+      return null;
+    };
+
+    const meta = rows.map(r => ({ tier: tierForRow(r), row:r }));
+
+    const tierColor = (tier) => {
+      if(tier === "BLESSED") return "rgba(255,77,209,.95)";
+      if(tier === "ULTRA")   return "rgba(120,170,255,.95)";
+      if(tier === "STRONG")  return "rgba(53,208,127,.95)";
+      if(tier === "GOOD")    return "rgba(235,242,255,.92)";
+      if(tier === "OK")      return "rgba(255,200,80,.95)";
+      if(tier === "WEAK")    return "rgba(255,77,109,.95)";
+      return "rgba(207,232,255,.98)";
+    };
+
+    const metricLabel =
+      (metric === "final_score")     ? "Final Score" :
+      (metric === "expectancy")      ? "Expectancy (R)" :
+      (metric === "profit_factor")   ? "Profit Factor" :
+      (metric === "recovery_factor") ? "Recovery Factor" :
+      (metric === "sharpe")          ? "Sharpe" :
+      (metric === "winrate")         ? "Win Rate" :
+      "Final Score";
+
+    const vFmt = (v) => {
+      if(v === null || v === undefined || !Number.isFinite(Number(v))) return "—";
+      if(metric === "winrate") return (Number(v) * 100).toFixed(2) + "%";
+      return Number(v).toFixed(2);
+    };
+
+    drawLineChart($("curveCanvas"), spine, values, {
+      mode: "kpi",
+      title: `${metricLabel} · ${win}d`,
+      vFmt,
+      meta,
+      tooltipHTML: ({vv, dateLabel, meta}) => {
+        const tier = meta?.tier;
+        const badge = tier ? `<span style="display:inline-block; padding:2px 8px; border-radius:999px; font-weight:900; font-size:11px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); color:${tierColor(tier)};">${tier}</span>` : "";
+        return `
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+            <div><b>${metricLabel}</b>: ${vFmt(vv)}</div>
+            ${badge}
+          </div>
+          <div class="muted">${dateLabel}</div>
+        `;
+      },
+      pointColorFn: ({meta}) => tierColor(meta?.tier),
+    });
+
+    return;
+  } else {
+    if($("kpiControls")) $("kpiControls").style.display = "none";
+  }
+
   } else {
     // If we leave AI mode, restore normal chart UI. (Calendar mode will handle its own visibility.)
     if($("aiPanel") && $("aiPanel").style.display !== "none") hideAIPanel();
@@ -4268,12 +4415,13 @@ return;
 
   async function main(){
     try{
-      const [meta, equity, dailyAgg, kpis, trades] = await Promise.all([
+      const [meta, equity, dailyAgg, kpis, trades, kpiSnaps] = await Promise.all([
         loadJSON("data/meta.json"),
         loadJSON("data/equity.json"),
         loadJSON("data/daily_aggregates.json"),
         loadJSON("data/kpis_full.json"),
         loadJSON("data/trades_enriched.json"),
+        loadJSON("data/kpi_snapshots_daily.json"),
       ]);
 
       // Stand tooltip on DATA: OK (Europe/Berlin)
@@ -4343,6 +4491,7 @@ GLOBAL.meta = meta;
       GLOBAL.equity = equity;
       GLOBAL.dailyAgg = dailyAgg;
       GLOBAL.kpis = kpis;
+      GLOBAL.kpiSnaps = Array.isArray(kpiSnaps) ? kpiSnaps : (kpiSnaps?.rows || []);
       GLOBAL.trades = Array.isArray(trades) ? trades : [];
       // recomputeAnalysis();  // <-- NICHT hier (spine noch leer)
 
@@ -4691,6 +4840,7 @@ if(dpApply && !dpApply._bound){
       $("btnDD").classList.remove("active");
       $("btnStreaks").classList.remove("active");
       $("btnCal").classList.remove("active");
+    $("btnKPI").classList.remove("active");
     $("btnAI").classList.remove("active");
       renderCurve();
     }
@@ -4704,6 +4854,7 @@ if(dpApply && !dpApply._bound){
     $("btnDD").classList.remove("active");
     $("btnStreaks").classList.remove("active");
     $("btnCal").classList.remove("active");
+    $("btnKPI").classList.remove("active");
     $("btnAI").classList.remove("active");
 renderCurve();
   });
@@ -4714,6 +4865,7 @@ renderCurve();
     $("btnDD").classList.remove("active");
     $("btnStreaks").classList.remove("active");
     $("btnCal").classList.remove("active");
+    $("btnKPI").classList.remove("active");
     $("btnAI").classList.remove("active");
 renderCurve();
   });
@@ -4724,6 +4876,7 @@ renderCurve();
     $("btnR").classList.remove("active");
     $("btnStreaks").classList.remove("active");
     $("btnCal").classList.remove("active");
+    $("btnKPI").classList.remove("active");
     $("btnAI").classList.remove("active");
 renderCurve();
   });
@@ -4734,8 +4887,22 @@ renderCurve();
     $("btnR").classList.remove("active");
     $("btnDD").classList.remove("active");
     $("btnCal").classList.remove("active");
+    $("btnKPI").classList.remove("active");
     $("btnAI").classList.remove("active");
 renderCurve();
+  });
+
+  $("btnKPI").addEventListener("click", () => {
+    GLOBAL.mode = "kpi";
+    $("btnKPI").classList.add("active");
+    $("btnEquity").classList.remove("active");
+    $("btnR").classList.remove("active");
+    $("btnDD").classList.remove("active");
+    $("btnStreaks").classList.remove("active");
+    $("btnCal").classList.remove("active");
+    $("btnKPI").classList.remove("active");
+    $("btnAI").classList.remove("active");
+    renderCurve();
   });
 
   $("btnCal").addEventListener("click", () => {
@@ -4760,6 +4927,24 @@ $("btnAI").addEventListener("click", () => {
   renderCurve();
   // On-demand: request is only made when you actively open the AI tab (or press Refresh).
 });
+
+  // KPI tab controls
+  const kpiMetricSel = $("kpiMetric");
+  const setKpiWin = (win) => {
+    GLOBAL.kpiState.win = win;
+    $("btnKpi30").classList.toggle("active", win === 30);
+    $("btnKpi90").classList.toggle("active", win === 90);
+    $("btnKpi180").classList.toggle("active", win === 180);
+    if(GLOBAL.mode === "kpi") renderCurve();
+  };
+  $("btnKpi30").addEventListener("click", ()=> setKpiWin(30));
+  $("btnKpi90").addEventListener("click", ()=> setKpiWin(90));
+  $("btnKpi180").addEventListener("click", ()=> setKpiWin(180));
+  kpiMetricSel.addEventListener("change", ()=> {
+    GLOBAL.kpiState.metric = String(kpiMetricSel.value || "final_score");
+    if(GLOBAL.mode === "kpi") renderCurve();
+  });
+
 
 
 $("btnAIRun").addEventListener("click", () => {
