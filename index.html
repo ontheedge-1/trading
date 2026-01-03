@@ -1043,7 +1043,7 @@ background: var(--cardGrad);
     0 0 0 1px rgba(0,0,0,.18) inset,
     inset 0 1px 0 rgba(255,255,255,.10);
   padding: 16px 18px 14px 18px;
-}
+  }
 
 .kpiGrid .card.kpi-premium:before{
   content:"";
@@ -1303,6 +1303,110 @@ background: var(--cardGrad);
       box-shadow: inset 0 0 0 1px rgba(160,200,255,.14);
     }
 
+
+
+/* ===== AI Coach Panel ===== */
+.aiPanel{
+  display:none;
+  width:100%;
+  padding:14px;
+  box-sizing:border-box;
+  overflow:auto;
+}
+.aiTop{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:12px;
+}
+.aiTopLeft{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.aiMeta{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.aiMeta .aiBadge{
+  display:inline-flex;
+  align-items:center;
+  padding:5px 10px;
+  border-radius:999px;
+  border:1px solid rgba(120,160,255,.20);
+  background: rgba(10,16,32,.40);
+  font-weight:900;
+  font-size:12px;
+  letter-spacing:.2px;
+  color:#cfe3ff;
+  white-space:nowrap;
+}
+.aiMeta .aiChip{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:5px 10px;
+  border-radius:999px;
+  border:1px solid rgba(120,160,255,.14);
+  background: rgba(255,255,255,.02);
+  font-weight:800;
+  font-size:12px;
+  color: rgba(198,218,255,.82);
+  white-space:nowrap;
+}
+.aiBtn{
+  appearance:none;
+  border:1px solid rgba(120,160,255,.22);
+  background: rgba(255,255,255,.03);
+  color:#e7f0ff;
+  height:34px;
+  padding:0 12px;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:900;
+  letter-spacing:.2px;
+}
+.aiBtn:hover{ background: rgba(255,255,255,.05); }
+.aiBtn:disabled{ opacity:.45; cursor:default; }
+
+.aiGrid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.aiCard{
+  border: 1px solid rgba(120,160,255,.16);
+  border-radius: 14px;
+  padding: 12px;
+  background: rgba(255,255,255,.03);
+  box-shadow: 0 12px 28px rgba(0,0,0,.22);
+  overflow:hidden;
+}
+.aiCardTitle{ font-weight:900; margin-bottom:6px; opacity:.95; letter-spacing:.2px; }
+.aiHeadline{ font-size:14px; font-weight:900; margin:6px 0; color: rgba(236,246,255,.96); }
+.aiText{ font-size:13px; line-height:1.38; color: rgba(226,240,255,.88); }
+.aiList{ margin:8px 0 0 18px; font-size:13px; line-height:1.35; color: rgba(226,240,255,.86); }
+.aiSubTitle{ margin-top:10px; font-weight:900; font-size:12px; opacity:.75; letter-spacing:.08em; text-transform:uppercase; }
+.aiError{
+  margin-top:10px;
+  padding:10px;
+  border-radius:12px;
+  border:1px solid rgba(255,80,80,.35);
+  background:rgba(255,80,80,.08);
+  color: rgba(255,215,223,.92);
+  font-size:13px;
+  line-height:1.35;
+  display:none;
+  white-space:pre-wrap;
+}
+.aiLoading{
+  display:none;
+  margin-left:6px;
+  font-size:12px;
+  color: rgba(170,200,255,.82);
+  font-weight:800;
+}
+@media (max-width: 980px){ .aiGrid{ grid-template-columns:1fr; } }
 </style>
  </head>
 <body>
@@ -1353,6 +1457,7 @@ background: var(--cardGrad);
           <button id="btnDD" type="button">DD (R)</button>
           <button id="btnStreaks" type="button">Streaks</button>
           <button id="btnCal" type="button" title="Calendar">📅</button>
+          <button id="btnAI" type="button" title="🤖 Coach">🤖</button>
         </div>
 
 
@@ -1364,6 +1469,50 @@ background: var(--cardGrad);
         <div id="chartDelta" class="chartDelta" style="display:none;"></div>
         <div class="tooltip" id="kpiTooltip" style="display:none;"></div>
         <div class="tooltip" id="dataTooltip" style="display:none;"></div>
+
+
+<div id="aiPanel" class="aiPanel" aria-live="polite">
+  <div class="aiTop">
+    <div class="aiTopLeft">
+      <div class="aiMeta">
+        <div id="aiSystemBadge" class="aiBadge">READY</div>
+        <div id="aiPrimaryDriver" class="aiChip" style="display:none;"></div>
+        <div id="aiWindowLabel" class="aiChip" style="display:none;"></div>
+      </div>
+      <div id="aiLoading" class="aiLoading">Analyzing…</div>
+    </div>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <button id="btnAIRefresh" class="aiBtn" type="button" title="Run analysis again">Refresh</button>
+    </div>
+  </div>
+
+  <div class="aiGrid">
+    <div class="aiCard">
+      <div class="aiCardTitle">🤖 System Check</div>
+      <div id="aiSystemHeadline" class="aiHeadline"></div>
+      <div id="aiSystemSummary" class="aiText"></div>
+      <div class="aiSubTitle">Evidence</div>
+      <ul id="aiSystemEvidence" class="aiList"></ul>
+      <div class="aiSubTitle">What changed vs you</div>
+      <ul id="aiSystemChanged" class="aiList"></ul>
+    </div>
+
+    <div class="aiCard">
+      <div class="aiCardTitle">🤖 Coach Mode</div>
+      <div class="aiSubTitle" style="margin-top:0;">Reframe</div>
+      <div id="aiCoachReframe" class="aiText"></div>
+      <div class="aiSubTitle">Focus</div>
+      <ul id="aiCoachFocus" class="aiList"></ul>
+      <div class="aiSubTitle">Pitfall</div>
+      <div id="aiCoachPitfall" class="aiText"></div>
+      <div class="aiSubTitle">Micro ritual</div>
+      <div id="aiCoachRitual" class="aiText"></div>
+    </div>
+  </div>
+
+  <div id="aiError" class="aiError"></div>
+</div>
+
       </div>
 
       <div class="calendarWrap" id="calendarWrap">
@@ -1400,6 +1549,220 @@ background: var(--cardGrad);
   // Calendar cell badge mode (default)
   let calendarBadgeMode = "pnl"; // pnl | tr
 const $ = (id) => document.getElementById(id);
+
+// ===== AI Coach (LLM Insight) =====
+const LLM_API = "https://llm-insight-worker.ricokunzedd.workers.dev/api/llm-insight";
+// Optional shared token (recommended): set in your HTML (not in repo) or via injection.
+// If empty, request will be sent without Authorization header.
+const LLM_SHARED_TOKEN = ""; // e.g. "your-long-random-token"
+
+let __aiCache = null;
+let __aiLoading = false;
+let __aiLastError = null;
+
+function setAIStatus({ state_badge="READY", confidence="", primary_driver="", window_label="" } = {}){
+  const badge = $("aiSystemBadge");
+  const driver = $("aiPrimaryDriver");
+  const win = $("aiWindowLabel");
+  if(badge) badge.textContent = confidence ? `${state_badge} · ${confidence}` : String(state_badge || "READY");
+
+  if(driver){
+    const txt = (primary_driver || "").trim();
+    driver.style.display = txt ? "" : "none";
+    driver.textContent = txt ? `Driver: ${txt}` : "";
+  }
+  if(win){
+    const txt = (window_label || "").trim();
+    win.style.display = txt ? "" : "none";
+    win.textContent = txt ? `Window: ${txt}` : "";
+  }
+
+  // subtle state styling
+  if(badge){
+    const v = String(state_badge||"").toUpperCase();
+    const isBad = (v === "STRESSED");
+    const isMid = (v === "MIXED");
+    const isLow = (v === "LOW_SAMPLE");
+    badge.style.borderColor = isBad ? "rgba(255,90,120,.35)" : isMid ? "rgba(255,190,80,.30)" : isLow ? "rgba(170,170,255,.22)" : "rgba(120,160,255,.20)";
+    badge.style.background = isBad ? "rgba(255,80,80,.10)" : isMid ? "rgba(255,190,80,.10)" : isLow ? "rgba(120,160,255,.06)" : "rgba(10,16,32,.40)";
+  }
+}
+
+function setAILoading(isLoading){
+  const el = $("aiLoading");
+  const btn = $("btnAIRefresh");
+  if(el) el.style.display = isLoading ? "" : "none";
+  if(btn) btn.disabled = !!isLoading;
+}
+
+function showAIError(msg){
+  const e = $("aiError");
+  if(!e) return;
+  e.style.display = msg ? "" : "none";
+  e.textContent = msg ? String(msg) : "";
+}
+
+async function fetchLLMInsight(payload){
+  const headers = { "Content-Type": "application/json" };
+  if(LLM_SHARED_TOKEN) headers["Authorization"] = `Bearer ${LLM_SHARED_TOKEN}`;
+
+  const res = await fetch(LLM_API, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(payload),
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if(!res.ok){
+    throw new Error(data?.error || data?.message || `LLM request failed (HTTP ${res.status})`);
+  }
+  return data;
+}
+
+function buildLLMPayload(){
+  // Keep payload compact (cost + latency). No market data, no trade signals.
+  const nowISO = new Date().toISOString();
+
+  // Try to infer current analysis window from the UI (30d default)
+  const windowLabel = (GLOBAL?.analysisWindowLabel) || "30d";
+
+  // Pull current KPIs from the already computed dashboard state (best-effort)
+  const k = GLOBAL?.kpis || {};
+  const latest = GLOBAL?.latest || {};
+
+  // Recent daily history (best-effort): last ~45 days of spine w/ aggregates
+  const spine = Array.isArray(GLOBAL?.calendarSpine) ? GLOBAL.calendarSpine : (Array.isArray(GLOBAL?.spine) ? GLOBAL.spine : []);
+  const daily = GLOBAL?.dailyAggMap || {}; // keyed by YYYY-MM-DD in this dashboard
+  const tail = spine.slice(-45).map(d => {
+    const row = daily?.[d] || null;
+    return row ? {
+      date: d,
+      trade_count: row.trade_count ?? null,
+      daily_R: row.daily_R ?? null,
+      daily_pnl_$: row.daily_pnl_$ ?? null,
+      daily_adjustments_total_$: row.daily_adjustments_total_$ ?? null,
+      wins: row.wins ?? null,
+      losses: row.losses ?? null
+    } : { date: d };
+  });
+
+  return {
+    analysis_window: { label: windowLabel, asof: nowISO },
+    current: {
+      final_score: k.final_score ?? k.score ?? latest.final_score ?? null,
+      tier: k.tier ?? latest.tier ?? null,
+      trade_count: k.trade_count ?? latest.trade_count ?? null,
+      win_rate: k.win_rate ?? null,
+      avg_r_per_trade: k.avg_r_per_trade ?? null,
+      avg_r_per_day: k.avg_r_per_day ?? null,
+      max_dd_r: k.max_dd_r ?? null,
+      streak_best_win: k.streak_best_win ?? null,
+      streak_best_loss: k.streak_best_loss ?? null
+    },
+    history: {
+      recent_days: tail
+    }
+  };
+}
+
+function renderAIResult(out){
+  showAIError("");
+
+  setAIStatus({
+    state_badge: out?.meta?.state_badge || "READY",
+    confidence: out?.meta?.confidence || "",
+    primary_driver: out?.meta?.primary_driver || "",
+    window_label: out?.meta?.analysis_window_label || ""
+  });
+
+  const safeLines = (arr) => Array.isArray(arr) ? arr.filter(Boolean).slice(0, 8) : [];
+
+  $("aiSystemHeadline").textContent = out?.system_check?.headline || "";
+  $("aiSystemSummary").textContent = out?.system_check?.summary || "";
+
+  const ev = $("aiSystemEvidence");
+  if(ev){
+    ev.innerHTML = "";
+    safeLines(out?.system_check?.evidence).forEach(line => {
+      const li = document.createElement("li");
+      li.textContent = String(line);
+      ev.appendChild(li);
+    });
+  }
+
+  const ch = $("aiSystemChanged");
+  if(ch){
+    ch.innerHTML = "";
+    safeLines(out?.system_check?.what_changed_vs_you).forEach(line => {
+      const li = document.createElement("li");
+      li.textContent = String(line);
+      ch.appendChild(li);
+    });
+  }
+
+  $("aiCoachReframe").textContent = out?.coach_mode?.reframe || "";
+
+  const f = $("aiCoachFocus");
+  if(f){
+    f.innerHTML = "";
+    (Array.isArray(out?.coach_mode?.focus) ? out.coach_mode.focus : []).slice(0, 6).forEach(item => {
+      const li = document.createElement("li");
+      const title = (item?.title || "").trim();
+      const why = (item?.why || "").trim();
+      li.textContent = title && why ? `${title}: ${why}` : (title || why);
+      f.appendChild(li);
+    });
+  }
+
+  $("aiCoachPitfall").textContent = out?.coach_mode?.pitfall_to_avoid || "";
+  $("aiCoachRitual").textContent = out?.coach_mode?.micro_ritual || "";
+}
+
+async function ensureAIInsightLoaded({ force=false } = {}){
+  if(__aiLoading) return;
+  if(__aiCache && !force){
+    renderAIResult(__aiCache);
+    return;
+  }
+  __aiLoading = true;
+  __aiLastError = null;
+  setAILoading(true);
+  setAIStatus({ state_badge: "ANALYZING", confidence: "" });
+  showAIError("");
+
+  try{
+    const payload = buildLLMPayload();
+    const out = await fetchLLMInsight(payload);
+    __aiCache = out;
+    renderAIResult(out);
+  } catch(e){
+    __aiLastError = String(e?.message || e);
+    setAIStatus({ state_badge: "ERROR" });
+    showAIError(__aiLastError);
+  } finally {
+    __aiLoading = false;
+    setAILoading(false);
+  }
+}
+
+function showAIPanel(){
+  const panel = $("aiPanel");
+  const canvas = $("curveCanvas");
+  const cal = $("calendarWrap");
+  if(panel) panel.style.display = "";
+  if(canvas) canvas.style.display = "none";
+  if(cal) cal.style.display = "none";
+}
+
+function hideAIPanel(){
+  const panel = $("aiPanel");
+  const canvas = $("curveCanvas");
+  // calendarWrap display is managed elsewhere by the mode switch; here we just hide AI panel
+  if(panel) panel.style.display = "none";
+  if(canvas) canvas.style.display = "";
+  showAIError("");
+}
+
 
   const fmtUSD = (n) => {
     if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
@@ -3469,6 +3832,7 @@ if(type === "tradeQuality"){
       (mode === "dd")        ? "Drawdown (R)" :
       (mode === "streaks")   ? "Streaks" :
       (mode === "calendar")  ? "Kalender" :
+      (mode === "ai")        ? "🤖 Coach" :
       "";
 
     s.textContent =
@@ -3482,6 +3846,8 @@ if(type === "tradeQuality"){
               ? "Winning and losing streaks"
               : (mode === "calendar")
                 ? "Daily Trading Performance · Mo–Fr"
+              : (mode === "ai")
+                ? "System Check + Coach Mode · on-demand"
                 : "";
   }
 
@@ -3495,7 +3861,19 @@ if(type === "tradeQuality"){
   // Always keep header in sync with the currently shown view
   setCurveHeader(GLOBAL.mode);
 
-  // small delta badge (Equity / Cum R only)
+  
+  // AI Coach tab (on-demand, cached per session)
+  if(GLOBAL.mode === "ai"){
+    showAIPanel();
+    // The backend must not provide trade signals; this UI only displays interpretation/coaching.
+    ensureAIInsightLoaded().catch(()=>{});
+    return;
+  } else {
+    // If we leave AI mode, restore normal chart UI. (Calendar mode will handle its own visibility.)
+    if($("aiPanel") && $("aiPanel").style.display !== "none") hideAIPanel();
+}
+
+// small delta badge (Equity / Cum R only)
   const deltaBadge = $("chartDelta");
   if(deltaBadge){
     if(GLOBAL.mode === "equity" || GLOBAL.mode === "r"){
@@ -4053,6 +4431,7 @@ if(dpApply && !dpApply._bound){
       $("btnDD").classList.remove("active");
       $("btnStreaks").classList.remove("active");
       $("btnCal").classList.remove("active");
+    $("btnAI").classList.remove("active");
       renderCurve();
     }
   }
@@ -4065,6 +4444,7 @@ if(dpApply && !dpApply._bound){
     $("btnDD").classList.remove("active");
     $("btnStreaks").classList.remove("active");
     $("btnCal").classList.remove("active");
+    $("btnAI").classList.remove("active");
 renderCurve();
   });
   $("btnR").addEventListener("click", () => {
@@ -4074,6 +4454,7 @@ renderCurve();
     $("btnDD").classList.remove("active");
     $("btnStreaks").classList.remove("active");
     $("btnCal").classList.remove("active");
+    $("btnAI").classList.remove("active");
 renderCurve();
   });
   $("btnDD").addEventListener("click", () => {
@@ -4083,6 +4464,7 @@ renderCurve();
     $("btnR").classList.remove("active");
     $("btnStreaks").classList.remove("active");
     $("btnCal").classList.remove("active");
+    $("btnAI").classList.remove("active");
 renderCurve();
   });
   $("btnStreaks").addEventListener("click", () => {
@@ -4092,6 +4474,7 @@ renderCurve();
     $("btnR").classList.remove("active");
     $("btnDD").classList.remove("active");
     $("btnCal").classList.remove("active");
+    $("btnAI").classList.remove("active");
 renderCurve();
   });
 
@@ -4104,6 +4487,26 @@ renderCurve();
     $("btnStreaks").classList.remove("active");
     renderCurve();
   });
+
+
+$("btnAI").addEventListener("click", () => {
+  GLOBAL.mode = "ai";
+  $("btnAI").classList.add("active");
+  $("btnEquity").classList.remove("active");
+  $("btnR").classList.remove("active");
+  $("btnDD").classList.remove("active");
+  $("btnStreaks").classList.remove("active");
+  $("btnCal").classList.remove("active");
+  renderCurve();
+  // On-demand: request is only made when you actively open the AI tab (or press Refresh).
+  ensureAIInsightLoaded().catch(()=>{});
+});
+
+$("btnAIRefresh").addEventListener("click", () => {
+  // Manual refresh is opt-in (cost control)
+  __aiCache = null;
+  ensureAIInsightLoaded({ force:true }).catch(()=>{});
+});
 
 
   // Redraw on resize (debounced)
