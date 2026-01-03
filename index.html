@@ -1407,6 +1407,8 @@ background: var(--cardGrad);
   font-weight:800;
 }
 @media (max-width: 980px){ .aiGrid{ grid-template-columns:1fr; } }
+
+.aiContextLine{margin:0 0 10px 0;font-size:12px;opacity:.78}
 </style>
  </head>
 <body>
@@ -1558,6 +1560,7 @@ const LLM_API = "https://llm-insight-worker.ricokunzedd.workers.dev/api/llm-insi
 const LLM_SHARED_TOKEN = ""; // e.g. "your-long-random-token"
 
 let __aiCache = null;
+let __aiLastPayload = null;
 let __aiLoading = false;
 let __aiLastError = null;
 
@@ -1622,7 +1625,28 @@ async function fetchLLMInsight(payload){
   return data;
 }
 
-async function buildLLMPayload(){
+async // ---- External benchmarks (Managed Futures / Trend Following) ----
+// Expects file at: trading/data/benchmarks_managed_futures.json (GitHub Pages)
+window.__benchmarks_managed_futures = null;
+let __benchmarksLoading = false;
+
+async function loadBenchmarksOnce(){
+  if(window.__benchmarks_managed_futures || __benchmarksLoading) return window.__benchmarks_managed_futures;
+  __benchmarksLoading = true;
+  try{
+    const res = await fetch("trading/data/benchmarks_managed_futures.json", { cache: "no-store" });
+    if(!res.ok) throw new Error(`benchmarks load failed (HTTP ${res.status})`);
+    window.__benchmarks_managed_futures = await res.json();
+  } catch(e){
+    console.warn("[benchmarks] failed to load:", e);
+    window.__benchmarks_managed_futures = null;
+  } finally {
+    __benchmarksLoading = false;
+  }
+  return window.__benchmarks_managed_futures;
+}
+
+function buildLLMPayload(){
   // ---- Data sources (best-effort) ----
   // Prefer in-memory GLOBAL computed objects; fall back to JSON files in /trading/data/
   // ---- Current UI filters (instrument + range + manual dates) ----
@@ -1786,6 +1810,7 @@ const windowLabel = String(preset || "30D").toLowerCase();
 
   // ---- Final payload ----
   return {
+      external_benchmarks: window.__benchmarks_managed_futures || null,
     analysis_window: { label: windowLabel, date_start: dateStart, date_end: dateEnd },
     meta: metaOut,
     current,
@@ -1800,8 +1825,21 @@ const windowLabel = String(preset || "30D").toLowerCase();
   };
 }
 
+function updateAIContextLine(payload){
+  const el = document.getElementById("aiContextLine");
+  if(!el) return;
+  const aw = payload?.analysis_window || {};
+  const start = aw?.date_start || "—";
+  const end = aw?.date_end || "—";
+  const instRaw = payload?.scope?.instrument || payload?.meta?.filters?.instrument || "ALL";
+  const inst = (String(instRaw).toUpperCase() === "ALL") ? "All" : String(instRaw);
+  el.textContent = `Zeitraum: ${start} bis ${end} · Instrument: ${inst}`;
+}
+
 function renderAIResult(out){
-  showAIError("");
+  
+  try{ updateAIContextLine(__aiLastPayload); }catch(e){}
+showAIError("");
 
   setAIStatus({
     state_badge: out?.meta?.state_badge || "READY",
@@ -1885,6 +1923,7 @@ function showAIPanel(){
   const canvas = $("curveCanvas");
   const cal = $("calendarWrap");
   if(panel) panel.style.display = "block";
+  try{ updateAIContextLine(buildLLMPayload()); }catch(e){}
   if(canvas) canvas.style.display = "none";
   if(cal) cal.style.display = "none";
 
