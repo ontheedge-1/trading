@@ -21,10 +21,28 @@ jobs:
           KPI_EXPORT_KEY: ${{ secrets.KPI_EXPORT_KEY }}
         run: |
           set -e
-          mkdir -p data
-          curl -fsSL "${KPI_EXPORT_URL}?key=${KPI_EXPORT_KEY}&format=kpi_snapshots_daily" -o trading/data/kpi_snapshots_daily.json
 
-          # sanity check: must be valid JSON
+          echo "PWD:"
+          pwd
+          echo "Repo root:"
+          ls -la
+
+          echo "Ensure target dir exists:"
+          mkdir -p trading/data
+          ls -la trading || true
+          ls -la trading/data || true
+
+          echo "Download JSON..."
+          curl -fsSL "${KPI_EXPORT_URL}?key=${KPI_EXPORT_KEY}&format=kpi_snapshots_daily" \
+            -o trading/data/kpi_snapshots_daily.json
+
+          echo "Downloaded file info:"
+          ls -la trading/data
+          wc -c trading/data/kpi_snapshots_daily.json
+          head -c 120 trading/data/kpi_snapshots_daily.json || true
+          echo ""
+
+          echo "JSON validation..."
           python - << 'PY'
           import json
           with open("trading/data/kpi_snapshots_daily.json","r",encoding="utf-8") as f:
