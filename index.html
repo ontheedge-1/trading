@@ -1629,41 +1629,67 @@ function buildLLMPayload(){
   // Try to infer current analysis window from the UI (30d default)
   const windowLabel = (GLOBAL?.analysisWindowLabel) || "30d";
 
-  // Pull current KPIs from the already computed dashboard state (best-effort)
-  const k = GLOBAL?.kpis || {};
-  const latest = GLOBAL?.latest || {};
+  // Primary computed objects in this dashboard
+  const tk = GLOBAL?.tradeKPIs || {};          // computed from filtered trades
+  const sc = GLOBAL?.score || {};              // final score object
+  const st = GLOBAL?.tradeStreaks || {};       // streak stats
 
-  // Recent daily history (best-effort): last ~45 days of spine w/ aggregates
-  const spine = Array.isArray(GLOBAL?.calendarSpine) ? GLOBAL.calendarSpine : (Array.isArray(GLOBAL?.spine) ? GLOBAL.spine : []);
-  const daily = GLOBAL?.dailyAggMap || {}; // keyed by YYYY-MM-DD in this dashboard
-  const tail = spine.slice(-45).map(d => {
+  // Recent daily history: last ~45 days from the calendar spine + daily aggregates
+  const spine = Array.isArray(GLOBAL?.calendarSpine) ? GLOBAL.calendarSpine
+              : (Array.isArray(GLOBAL?.spine) ? GLOBAL.spine : []);
+  const daily = GLOBAL?.dailyAggMap || {}; // keyed by YYYY-MM-DD
+  const tailDays = spine.slice(-45).map(d => {
     const row = daily?.[d] || null;
-    return row ? {
+    if(!row) return { date: d, trade_count: null, daily_R: null, daily_pnl_$: null };
+    return {
       date: d,
       trade_count: row.trade_count ?? null,
       daily_R: row.daily_R ?? null,
-      daily_pnl_$: row.daily_pnl_$ ?? null,
+      daily_pnl_$: row.daily_pnl_$ ?? row.daily_pnl ?? null,
       daily_adjustments_total_$: row.daily_adjustments_total_$ ?? null,
-      wins: row.wins ?? null,
-      losses: row.losses ?? null
-    } : { date: d };
+      fees_$: row.fees_$ ?? null,
+      withdrawal_$: row.withdrawal_$ ?? null,
+      deposit_$: row.deposit_$ ?? null
+    };
   });
+
+  // Recent equity points (if available)
+  const eq = Array.isArray(GLOBAL?.equity) ? GLOBAL.equity : [];
+  const tailEq = eq.slice(-120).map(r => ({
+    date: r?.date ?? r?.d ?? null,
+    equity: r?.equity ?? r?.equity_$ ?? r?.value ?? null
+  })).filter(x => x.date && Number.isFinite(Number(x.equity)));
 
   return {
     analysis_window: { label: windowLabel, asof: nowISO },
     current: {
-      final_score: k.final_score ?? k.score ?? latest.final_score ?? null,
-      tier: k.tier ?? latest.tier ?? null,
-      trade_count: k.trade_count ?? latest.trade_count ?? null,
-      win_rate: k.win_rate ?? null,
-      avg_r_per_trade: k.avg_r_per_trade ?? null,
-      avg_r_per_day: k.avg_r_per_day ?? null,
-      max_dd_r: k.max_dd_r ?? null,
-      streak_best_win: k.streak_best_win ?? null,
-      streak_best_loss: k.streak_best_loss ?? null
+      // Score / tier
+      final_score: Number.isFinite(sc?.score) ? sc.score : (Number.isFinite(sc?.finalScore) ? sc.finalScore : null),
+      tier: sc?.tier || sc?.tierLabel || sc?.tierName || sc?.label || null,
+
+      // Activity
+      trade_count: tk?.tradeCount ?? tk?.nTrades ?? sc?.nTrades ?? null,
+      wins: tk?.wins ?? null,
+      losses: tk?.losses ?? null,
+      win_rate: tk?.winRate ?? tk?.win_rate ?? null,
+
+      // Performance / risk (R-based)
+      profit_factor: tk?.profitFactor ?? tk?.pf ?? null,
+      avg_r_per_trade: tk?.avgRPerTrade ?? tk?.avg_r_per_trade ?? null,
+      avg_r_per_day: tk?.avgRPerDay ?? tk?.avg_r_per_day ?? null,
+      max_dd_r: tk?.maxDD_R ?? tk?.max_dd_r ?? null,
+
+      // Streaks
+      streak_best_win: st?.bestWin ?? st?.maxWin ?? null,
+      streak_best_loss: st?.bestLoss ?? st?.maxLoss ?? null,
+
+      // Context for the LLM (helps wording, not trading advice)
+      instrument: GLOBAL?.instrument || GLOBAL?.activeInstrument || null,
+      range: windowLabel
     },
     history: {
-      recent_days: tail
+      recent_days: tailDays,
+      recent_equity: tailEq
     }
   };
 }
