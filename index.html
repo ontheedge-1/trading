@@ -1752,9 +1752,18 @@ function showAIPanel(){
   const panel = $("aiPanel");
   const canvas = $("curveCanvas");
   const cal = $("calendarWrap");
-  if(panel) panel.style.display = "";
+  if(panel) panel.style.display = "block";
   if(canvas) canvas.style.display = "none";
   if(cal) cal.style.display = "none";
+
+  const delta = $("chartDelta");
+  if(delta) delta.style.display = "none";
+  const tip = $("tooltip");
+  if(tip) tip.style.display = "none";
+  const kpiTip = $("kpiTooltip");
+  if(kpiTip) kpiTip.style.display = "none";
+  const dataTip = $("dataTooltip");
+  if(dataTip) dataTip.style.display = "none";
 
 
 // If nothing loaded yet, show a helpful placeholder
