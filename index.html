@@ -4285,11 +4285,21 @@ if(type === "tradeQuality"){
       (metric === "winrate") ? `Win Rate (${win}d)` :
       `Metric (${win}d)`;
 
+    // KPI-specific formatters (do not rely on other scopes)
+    const kpiFmt2 = (x) => {
+      const n = Number(x);
+      if (n === Infinity) return "∞";
+      return Number.isFinite(n) ? n.toFixed(2) : "—";
+    };
+
     const yFmt =
-      (metric === "winrate") ? (v)=> `${fmt2(v)}%` :
-      (metric === "expectancy") ? (v)=> `${fmt2(v)}R` :
-      (metric === "final_score") ? (v)=> `${fmt2(v)}` :
-      (v)=> `${fmt2(v)}`;
+      (metric === "winrate")      ? (v) => `${kpiFmt2(Number(v) * 100)}%` :
+      (metric === "expectancy")   ? (v) => `${kpiFmt2(v)}R` :
+      (metric === "final_score")  ? (v) => (Number.isFinite(Number(v)) ? String(Math.round(Number(v))) : "—") :
+      (metric === "profit_factor")? (v) => `${kpiFmt2(v)}` :
+      (metric === "recovery_factor") ? (v) => `${kpiFmt2(v)}` :
+      (metric === "sharpe")       ? (v) => `${kpiFmt2(v)}` :
+                                   (v) => `${kpiFmt2(v)}`;
 
     // Clear canvas even if values are empty (so we don't "inherit" the last chart)
     // reuse canvas from the start of renderCurve()
