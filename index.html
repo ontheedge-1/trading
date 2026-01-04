@@ -1405,7 +1405,7 @@ background: var(--cardGrad);
   display:none !important;
 }
 
-#btnAIRun{ font-weight:600; }
+#btnAIRun{ font-weight:400; }
 
 
 .aiGrid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
@@ -1561,20 +1561,30 @@ background: var(--cardGrad);
       <div class="aiCardTitle">🤖 System Check</div>
       <div id="aiSystemHeadline" class="aiHeadline"></div>
       <div id="aiSystemSummary" class="aiText"></div>
-      <div class="aiSubTitle">Evidence</div>
-      <ul id="aiSystemEvidence" class="aiList"></ul>
-      <div class="aiSubTitle">What changed vs you</div>
-      <ul id="aiSystemChanged" class="aiList"></ul>
+      <div id="aiSysEvidenceBlock" style="display:none">
+        <div class="aiSubTitle">Evidence</div>
+        <ul id="aiSystemEvidence" class="aiList"></ul>
+      </div>
+      <div id="aiSysChangedBlock" style="display:none">
+        <div class="aiSubTitle">What changed vs you</div>
+        <ul id="aiSystemChanged" class="aiList"></ul>
+      </div>
     </div>
 
     <div class="aiCard">
       <div class="aiCardTitle">🤖 Coach Mode</div>
-      <div class="aiSubTitle" style="margin-top:0;">Reframe</div>
-      <div id="aiCoachReframe" class="aiText"></div>
-      <div class="aiSubTitle">Focus</div>
-      <ul id="aiCoachFocus" class="aiList"></ul>
-      <div class="aiSubTitle">Pitfall</div>
-      <div id="aiCoachPitfall" class="aiText"></div>    </div>
+      <div id="aiCoachReframeBlock" style="display:none">
+        <div class="aiSubTitle" style="margin-top:0;">Reframe</div>
+        <div id="aiCoachReframe" class="aiText"></div>
+      </div>
+      <div id="aiCoachFocusBlock" style="display:none">
+        <div class="aiSubTitle">Focus</div>
+        <ul id="aiCoachFocus" class="aiList"></ul>
+      </div>
+      <div id="aiCoachPitfallBlock" style="display:none">
+        <div class="aiSubTitle">Pitfall</div>
+        <div id="aiCoachPitfall" class="aiText"></div>
+      </div>    </div>
   </div>
 
   <div id="aiError" class="aiError" style="display:none;"></div>
@@ -2177,8 +2187,23 @@ showAIError("");
     });
   }
 
-  $("aiCoachPitfall").textContent = out?.coach_mode?.pitfall_to_avoid || "";
-  $("aiCoachRitual").textContent = out?.coach_mode?.micro_ritual || "";
+  const _pf2 = $("aiCoachPitfall"); if(_pf2) _pf2.textContent = out?.coach_mode?.pitfall_to_avoid || "";
+  const _mr2 = $("aiCoachRitual"); if(_mr2) _mr2.textContent = out?.coach_mode?.micro_ritual || "";
+
+  // Toggle subsection visibility (only show if content exists)
+  try{
+    const evArr = Array.isArray(out?.system_check?.evidence) ? out.system_check.evidence.filter(Boolean) : [];
+    const chArr = Array.isArray(out?.system_check?.what_changed_vs_you) ? out.system_check.what_changed_vs_you.filter(Boolean) : [];
+    const rfTxt = (out?.coach_mode?.reframe || "").trim();
+    const fcArr = Array.isArray(out?.coach_mode?.focus) ? out.coach_mode.focus.filter(Boolean) : [];
+    const pfTxt = (out?.coach_mode?.pitfall_to_avoid || "").trim();
+
+    const evB = $("aiSysEvidenceBlock"); if(evB) evB.style.display = evArr.length ? "" : "none";
+    const chB = $("aiSysChangedBlock"); if(chB) chB.style.display = chArr.length ? "" : "none";
+    const rfB = $("aiCoachReframeBlock"); if(rfB) rfB.style.display = rfTxt ? "" : "none";
+    const fcB = $("aiCoachFocusBlock"); if(fcB) fcB.style.display = fcArr.length ? "" : "none";
+    const pfB = $("aiCoachPitfallBlock"); if(pfB) pfB.style.display = pfTxt ? "" : "none";
+  }catch(e){}
 }
 
 async function ensureAIInsightLoaded({ force=false } = {}){
@@ -2235,8 +2260,13 @@ if(!__aiCache && !__aiLoading){
   setAIStatus({ state_badge: "READY" });
   const p = $("aiPanel");
   if(p) p.classList.remove("hasResult");
-  $("aiSystemHeadline").textContent = "On-demand Coach";
-  $("aiSystemSummary").textContent = "Klicke „🤖 Analyse starten“, um System Check + Coach Mode zu laden.";
+  $("aiSystemHeadline").textContent = "";
+  $("aiSystemSummary").textContent = "Click “🤖 Analyse now” to load System Check + Coach Mode.";
+  const _b1 = $("aiSysEvidenceBlock"); if(_b1) _b1.style.display = "none";
+  const _b2 = $("aiSysChangedBlock"); if(_b2) _b2.style.display = "none";
+  const _b3 = $("aiCoachReframeBlock"); if(_b3) _b3.style.display = "none";
+  const _b4 = $("aiCoachFocusBlock"); if(_b4) _b4.style.display = "none";
+  const _b5 = $("aiCoachPitfallBlock"); if(_b5) _b5.style.display = "none";
   $("aiSystemEvidence").innerHTML = "";
   $("aiSystemChanged").innerHTML = "";
   $("aiCoachReframe").textContent = "";
@@ -4384,7 +4414,7 @@ function setChartHeaderByModeSafe(mode){
   if(m === "ai"){
     const t = $("curveTitle"); const s = $("curveSub"); if(!t||!s) return;
     t.textContent = "🤖 Coach";
-    s.textContent = "System Check + Coach Mode · on-demand";
+    s.textContent = "";
     return;
   }
   setChartHeaderByMode(m);
@@ -5249,7 +5279,7 @@ $("btnAI").addEventListener("click", () => {
 
 $("btnAIRun").addEventListener("click", () => {
   // Manual run (cost control)
-  ensureAIInsightLoaded().catch(()=>{});
+  ensureAIInsightLoaded({ force:true }).catch(()=>{});
 });
 
 
