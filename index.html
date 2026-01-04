@@ -1765,6 +1765,16 @@ async function loadKpi90WeeklyOnce(){
 
 const __DAY_MS = 24 * 60 * 60 * 1000;
 
+function __lastDateFromSeries(arr){
+  if(!Array.isArray(arr) || !arr.length) return null;
+  for(let i=arr.length-1; i>=0; i--){
+    const d = arr[i] && arr[i].date;
+    if(typeof d === "string" && d) return d;
+  }
+  return null;
+}
+
+
 function __tsYMD(ymd){
   if(!ymd || typeof ymd !== "string") return NaN;
   const ts = Date.parse(ymd + "T00:00:00Z");
@@ -2045,12 +2055,16 @@ const windowLabel = String(preset || "30D").toLowerCase();
   if(instrumentIsAll){
     const weekly = await loadKpi90WeeklyOnce();
     const weeklyPts = weekly?.points || [];
-    const sampled = sampleKpi90EndAnchored(weeklyPts, dateStart, dateEnd, 26);
+    const effectiveEnd = dateEnd || __lastDateFromSeries(eqSlice) || __lastDateFromSeries(dailySlice) || weekly?.max_date || null;
+    const effectiveStart = dateStart || null;
+    const sampled = sampleKpi90EndAnchored(weeklyPts, effectiveStart, effectiveEnd, 26);
     if(sampled && sampled.length){
       const summary = buildKpi90Summary(sampled);
       if(summary){
         summary.meta = summary.meta || {};
         summary.meta.source_generated_at = weekly?.generated_at || null;
+        summary.meta.sampling_end_date = effectiveEnd || null;
+        summary.meta.sampling_start_bound = effectiveStart || null;
       }
       historyObj.kpi_90d_weekly_points = sampled;
       if(summary) historyObj.kpi_90d_summary = summary;
