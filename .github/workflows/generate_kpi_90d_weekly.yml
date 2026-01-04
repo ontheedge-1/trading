@@ -1,0 +1,43 @@
+name: Generate kpi_90d_weekly.json
+
+on:
+  push:
+    paths:
+      - "data/kpi_snapshots_daily.json"
+      - "tools/generate_kpi_90d_weekly.mjs"
+      - ".github/workflows/generate_kpi_90d_weekly.yml"
+  schedule:
+    - cron: "17 3 * * *"  # daily 03:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Generate file
+        run: node tools/generate_kpi_90d_weekly.mjs
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/kpi_90d_weekly.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "chore(data): update kpi_90d_weekly.json"
+          git push
