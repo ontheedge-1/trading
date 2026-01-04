@@ -1,6 +1,6 @@
 {
   "schema_version": "kpi90_weekly_v1",
-  "generated_at": "2026-01-04T09:53:20.614Z",
+  "generated_at": "2026-01-04T11:47:00.529Z",
   "source": "kpi_snapshots_daily.json (90d only)",
   "min_date": "2025-10-01",
   "max_date": "2025-12-31",
@@ -11,6 +11,7 @@
       "expectancy_R": 1.3,
       "profit_factor_R": 11.1,
       "recovery_factor_R": 10.1,
+      "winrate": 0.8,
       "tier": "BLESSED"
     },
     {
@@ -19,12 +20,14 @@
       "expectancy_R": 1,
       "profit_factor_R": 10,
       "recovery_factor_R": 16.3,
+      "winrate": 0.6,
       "tier": "BLESSED",
       "delta_vs_prev": {
         "final_score": -24.2,
         "expectancy_R": -0.3,
         "profit_factor_R": -1.1,
-        "recovery_factor_R": 6.2
+        "recovery_factor_R": 6.2,
+        "winrate": -0.2
       }
     },
     {
@@ -33,12 +36,14 @@
       "expectancy_R": 1,
       "profit_factor_R": 10,
       "recovery_factor_R": 16.3,
+      "winrate": 0.6,
       "tier": "BLESSED",
       "delta_vs_prev": {
         "final_score": 0,
         "expectancy_R": 0,
         "profit_factor_R": 0,
-        "recovery_factor_R": 0
+        "recovery_factor_R": 0,
+        "winrate": 0
       }
     },
     {
@@ -47,12 +52,14 @@
       "expectancy_R": 0.4,
       "profit_factor_R": 2.2,
       "recovery_factor_R": 2.4,
+      "winrate": 0.4,
       "tier": "STRONG",
       "delta_vs_prev": {
         "final_score": -66.6,
         "expectancy_R": -0.6,
         "profit_factor_R": -7.8,
-        "recovery_factor_R": -13.9
+        "recovery_factor_R": -13.9,
+        "winrate": -0.2
       },
       "tier_changed": true
     },
@@ -62,12 +69,14 @@
       "expectancy_R": 0.4,
       "profit_factor_R": 1.9,
       "recovery_factor_R": 2.1,
+      "winrate": 0.4,
       "tier": "STRONG",
       "delta_vs_prev": {
         "final_score": 0,
         "expectancy_R": 0,
         "profit_factor_R": -0.3,
-        "recovery_factor_R": -0.3
+        "recovery_factor_R": -0.3,
+        "winrate": 0
       }
     },
     {
@@ -77,12 +86,14 @@
       "profit_factor_R": 1.9,
       "recovery_factor_R": 3.1,
       "sharpe": 5.2,
+      "winrate": 0.4,
       "tier": "STRONG",
       "delta_vs_prev": {
         "final_score": 10,
         "expectancy_R": 0,
         "profit_factor_R": 0,
-        "recovery_factor_R": 1
+        "recovery_factor_R": 1,
+        "winrate": 0
       }
     },
     {
@@ -92,13 +103,15 @@
       "profit_factor_R": 1.6,
       "recovery_factor_R": 1.9,
       "sharpe": 3.4,
+      "winrate": 0.4,
       "tier": "STRONG",
       "delta_vs_prev": {
         "final_score": -19.9,
         "expectancy_R": -0.1,
         "profit_factor_R": -0.3,
         "recovery_factor_R": -1.2,
-        "sharpe": -1.8
+        "sharpe": -1.8,
+        "winrate": 0
       }
     },
     {
@@ -108,13 +121,15 @@
       "profit_factor_R": 1.6,
       "recovery_factor_R": 1.9,
       "sharpe": 3.4,
+      "winrate": 0.4,
       "tier": "STRONG",
       "delta_vs_prev": {
         "final_score": 0,
         "expectancy_R": 0,
         "profit_factor_R": 0,
         "recovery_factor_R": 0,
-        "sharpe": 0
+        "sharpe": 0,
+        "winrate": 0
       }
     },
     {
@@ -124,13 +139,15 @@
       "profit_factor_R": 1.5,
       "recovery_factor_R": 1.9,
       "sharpe": 3.6,
+      "winrate": 0.4,
       "tier": "GOOD",
       "delta_vs_prev": {
         "final_score": -6.9,
         "expectancy_R": 0,
         "profit_factor_R": -0.1,
         "recovery_factor_R": 0,
-        "sharpe": 0.2
+        "sharpe": 0.2,
+        "winrate": 0
       },
       "tier_changed": true
     },
@@ -141,13 +158,15 @@
       "profit_factor_R": 1.7,
       "recovery_factor_R": 2.5,
       "sharpe": 4.5,
+      "winrate": 0.4,
       "tier": "STRONG",
       "delta_vs_prev": {
         "final_score": 18.8,
         "expectancy_R": 0,
         "profit_factor_R": 0.2,
         "recovery_factor_R": 0.6,
-        "sharpe": 0.9
+        "sharpe": 0.9,
+        "winrate": 0
       },
       "tier_changed": true
     },
@@ -158,13 +177,15 @@
       "profit_factor_R": 1.9,
       "recovery_factor_R": 3.4,
       "sharpe": 5.8,
+      "winrate": 0.4,
       "tier": "STRONG",
       "delta_vs_prev": {
         "final_score": 8,
         "expectancy_R": 0.1,
         "profit_factor_R": 0.2,
         "recovery_factor_R": 0.9,
-        "sharpe": 1.3
+        "sharpe": 1.3,
+        "winrate": 0
       }
     },
     {
@@ -174,13 +195,15 @@
       "profit_factor_R": 2.2,
       "recovery_factor_R": 4.6,
       "sharpe": 6.4,
+      "winrate": 0.5,
       "tier": "ULTRA",
       "delta_vs_prev": {
         "final_score": 16.6,
         "expectancy_R": 0.1,
         "profit_factor_R": 0.3,
         "recovery_factor_R": 1.2,
-        "sharpe": 0.6
+        "sharpe": 0.6,
+        "winrate": 0.1
       },
       "tier_changed": true
     },
@@ -191,13 +214,15 @@
       "profit_factor_R": 2.2,
       "recovery_factor_R": 4.6,
       "sharpe": 6.4,
+      "winrate": 0.5,
       "tier": "ULTRA",
       "delta_vs_prev": {
         "final_score": 0,
         "expectancy_R": 0,
         "profit_factor_R": 0,
         "recovery_factor_R": 0,
-        "sharpe": 0
+        "sharpe": 0,
+        "winrate": 0
       }
     },
     {
@@ -207,13 +232,15 @@
       "profit_factor_R": 2,
       "recovery_factor_R": 3.6,
       "sharpe": 5.8,
+      "winrate": 0.4,
       "tier": "STRONG",
       "delta_vs_prev": {
         "final_score": -16.6,
         "expectancy_R": 0,
         "profit_factor_R": -0.2,
         "recovery_factor_R": -1,
-        "sharpe": -0.6
+        "sharpe": -0.6,
+        "winrate": -0.1
       },
       "tier_changed": true
     }
