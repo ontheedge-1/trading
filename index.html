@@ -1399,6 +1399,14 @@ background: var(--cardGrad);
 }
 .aiBtn:hover{ background: rgba(255,255,255,.05); }
 .aiBtn:disabled{ opacity:.45; cursor:default; }
+/* Hide AI sub-sections until first LLM result is rendered */
+.aiPanel:not(.hasResult) .aiSubTitle,
+.aiPanel:not(.hasResult) .aiList{
+  display:none !important;
+}
+
+#btnAIRun{ font-weight:600; }
+
 
 .aiGrid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
 .aiCard{
@@ -1543,19 +1551,12 @@ background: var(--cardGrad);
     <div class="aiTopLeft">
       <div class="aiMeta">
         <div id="aiSystemBadge" class="aiBadge">READY</div>
-        <div id="aiPrimaryDriver" class="aiChip" style="display:none;"></div>
-        <div id="aiWindowLabel" class="aiChip" style="display:none;"></div>
-      </div>
+        <div id="aiPrimaryDriver" class="aiChip" style="display:none;"></div>      </div>
       <div id="aiLoading" class="aiLoading">Analyzing…</div>
     </div>
     <div style="display:flex; gap:8px; align-items:center;">
-      <button id="btnAIRun" class="aiBtn" type="button" title="Run analysis (costs tokens)">🤖 Analyse starten</button>
-      <button id="btnAIRefresh" class="aiBtn" type="button" title="Run analysis again">↻ Refresh</button>
-    </div>
-  </div>
-
-  <div id="aiContextLine" class="aiContextLine"></div>
-  <div class="aiGrid">
+      <button id="btnAIRun" class="aiBtn" type="button" title="Run analysis (costs tokens)">🤖 Analyse now</button>    </div>
+  </div>  <div class="aiGrid">
     <div class="aiCard">
       <div class="aiCardTitle">🤖 System Check</div>
       <div id="aiSystemHeadline" class="aiHeadline"></div>
@@ -1573,10 +1574,7 @@ background: var(--cardGrad);
       <div class="aiSubTitle">Focus</div>
       <ul id="aiCoachFocus" class="aiList"></ul>
       <div class="aiSubTitle">Pitfall</div>
-      <div id="aiCoachPitfall" class="aiText"></div>
-      <div class="aiSubTitle">Micro ritual</div>
-      <div id="aiCoachRitual" class="aiText"></div>
-    </div>
+      <div id="aiCoachPitfall" class="aiText"></div>    </div>
   </div>
 
   <div id="aiError" class="aiError" style="display:none;"></div>
@@ -1645,39 +1643,31 @@ let __aiLastError = null;
 
 function setAIStatus({ state_badge="READY", confidence="", primary_driver="", window_label="" } = {}){
   const badge = $("aiSystemBadge");
-  const driver = $("aiPrimaryDriver");
-  const win = $("aiWindowLabel");
-  if(badge) badge.textContent = confidence ? `${state_badge} · ${confidence}` : String(state_badge || "READY");
+  const driver = $("aiPrimaryDriver");  if(badge) badge.textContent = confidence ? `${state_badge} · ${confidence}` : String(state_badge || "READY");
 
   if(driver){
     const txt = (primary_driver || "").trim();
     driver.style.display = txt ? "" : "none";
     driver.textContent = txt ? `Driver: ${txt}` : "";
   }
-  if(win){
-    const txt = (window_label || "").trim();
-    win.style.display = txt ? "" : "none";
-    win.textContent = txt ? `Window: ${txt}` : "";
-  }
-
   // subtle state styling
   if(badge){
     const v = String(state_badge||"").toUpperCase();
-    const isBad = (v === "STRESSED");
+    const isBad = (v === "STRESSED" || v === "MISALIGNED" || v === "OFFTRACK");
     const isMid = (v === "MIXED");
+    const isGood = (v === "ALIGNED");
     const isLow = (v === "LOW_SAMPLE");
-    badge.style.borderColor = isBad ? "rgba(255,90,120,.35)" : isMid ? "rgba(255,190,80,.30)" : isLow ? "rgba(170,170,255,.22)" : "rgba(120,160,255,.20)";
-    badge.style.background = isBad ? "rgba(255,80,80,.10)" : isMid ? "rgba(255,190,80,.10)" : isLow ? "rgba(120,160,255,.06)" : "rgba(10,16,32,.40)";
+    badge.style.borderColor = isBad ? "rgba(255,90,120,.35)" : isMid ? "rgba(255,190,80,.30)" : isGood ? "rgba(90,240,170,.28)" : isLow ? "rgba(170,170,255,.22)" : "rgba(120,160,255,.20)"
+    badge.style.background = isBad ? "rgba(255,80,80,.10)" : isMid ? "rgba(255,190,80,.10)" : isGood ? "rgba(90,240,170,.10)" : isLow ? "rgba(120,160,255,.06)" : "rgba(10,16,32,.40)"
   }
 }
 
 function setAILoading(isLoading){
   const el = $("aiLoading");
-  const btn = $("btnAIRefresh");
+  const btn = null; // refresh removed
   const run = $("btnAIRun");
   if(el) el.style.display = isLoading ? "" : "none";
-  if(btn) btn.disabled = !!isLoading;
-  if(run) run.disabled = !!isLoading;
+    if(run) run.disabled = !!isLoading;
 }
 
 function showAIError(msg){
@@ -2135,6 +2125,8 @@ function buildLLMContextSync(){
 
 
 function renderAIResult(out){
+  const p = $("aiPanel");
+  if(p) p.classList.add("hasResult");
   
   try{ updateAIContextLine(__aiLastPayload); }catch(e){}
 showAIError("");
@@ -2241,6 +2233,8 @@ const panel = $("aiPanel");
 // If nothing loaded yet, show a helpful placeholder
 if(!__aiCache && !__aiLoading){
   setAIStatus({ state_badge: "READY" });
+  const p = $("aiPanel");
+  if(p) p.classList.remove("hasResult");
   $("aiSystemHeadline").textContent = "On-demand Coach";
   $("aiSystemSummary").textContent = "Klicke „🤖 Analyse starten“, um System Check + Coach Mode zu laden.";
   $("aiSystemEvidence").innerHTML = "";
@@ -4338,36 +4332,69 @@ if(type === "tradeQuality"){
   }
 
 
-  function setCurveHeader(mode){
-    const t = $("curveTitle");
-    const s = $("curveSub");
-    if(!t || !s) return;
+  /* Header helper (single source of truth) */
+function setChartHeaderByMode(mode){
+  const titleEl = $("curveTitle");
+  const subEl   = $("curveSub");
+  if(!titleEl || !subEl) return;
 
-    t.textContent =
-      (mode === "equity")    ? "Equity Curve" :
-      (mode === "r")         ? "Cumulative R" :
-      (mode === "dd")        ? "Drawdown (R)" :
-      (mode === "streaks")   ? "Streaks" :
-      (mode === "calendar")  ? "Kalender" :
-      (mode === "ai")        ? "🤖 Coach" :
-      (mode === "kpi")       ? "KPI · Snapshot Chart" :
-      "";
+  switch(mode){
+    case "equity":
+      titleEl.textContent = "Equity Curve";
+      subEl.textContent =
+        "Daily (Calendar spine, carry-forward) · Source: Daily_Adjustments";
+      break;
 
-    s.textContent =
-      (mode === "equity")
-        ? "Daily (Calendar spine, carry-forward) · Source: Daily_Adjustments"
-        : (mode === "r")
-          ? "Daily cumulative R · Source: daily_aggregates.json"
-          : (mode === "dd")
-            ? "Peak-to-trough drawdown in R"
-            : (mode === "streaks")
-              ? "Winning and losing streaks"
-              : (mode === "calendar")
-                ? "Daily Trading Performance · Mo–Fr"
-              : (mode === "ai")
-                ? "System Check + Coach Mode · on-demand"
-                : "";
+    case "r":
+      titleEl.textContent = "Cumulative R";
+      subEl.textContent = "Per trade · Accumulated R-multiples";
+      break;
+
+    case "dd":
+      titleEl.textContent = "Drawdown (R)";
+      subEl.textContent = "Peak-to-trough drawdown in R";
+      break;
+
+    case "streak":
+      titleEl.textContent = "Streaks";
+      subEl.textContent = "Win / Loss streak distribution";
+      break;
+
+    case "kpi":
+      titleEl.textContent = "KPI · Snapshot Chart";
+      subEl.textContent =
+        "Daily snapshots · 30 / 90 / 180 calendar days";
+      break;
+
+    default:
+      titleEl.textContent = "Chart";
+      subEl.textContent = "";
   }
+}
+
+// Accept legacy mode keys used by this dashboard
+function setChartHeaderByModeSafe(mode){
+  const m = (mode === "streaks") ? "streak" : mode;
+  if(m === "calendar"){
+    const t = $("curveTitle"); const s = $("curveSub"); if(!t||!s) return;
+    t.textContent = "Kalender";
+    s.textContent = "Daily Trading Performance · Mo–Fr";
+    return;
+  }
+  if(m === "ai"){
+    const t = $("curveTitle"); const s = $("curveSub"); if(!t||!s) return;
+    t.textContent = "🤖 Coach";
+    s.textContent = "System Check + Coach Mode · on-demand";
+    return;
+  }
+  setChartHeaderByMode(m);
+}
+
+
+function setCurveHeader(mode){
+  // backwards-compatible wrapper
+  return setChartHeaderByModeSafe(mode);
+}
 
 
   
@@ -4535,6 +4562,9 @@ function renderCurve(withCrosshair=false){
     drawLineChart._lastCrosshair = null;
   }
   GLOBAL._lastMode = GLOBAL.mode;
+
+  // Update chart header for the active mode
+  try{ setChartHeaderByModeSafe(GLOBAL.mode); }catch(e){}
 
   // Calendar mode: show calendar, hide chart area
   if(GLOBAL.mode === "calendar"){
@@ -5222,11 +5252,6 @@ $("btnAIRun").addEventListener("click", () => {
   ensureAIInsightLoaded().catch(()=>{});
 });
 
-$("btnAIRefresh").addEventListener("click", () => {
-  // Manual refresh is opt-in (cost control)
-  __aiCache = null;
-  ensureAIInsightLoaded({ force:true }).catch(()=>{});
-});
 
 
   // Redraw on resize (debounced)
