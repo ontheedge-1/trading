@@ -1747,6 +1747,109 @@ async function loadKPI90WeeklyOnce(){
 }
 
 
+// ---------- KPI 90D Weekly History helpers (frontend sampling + summary) ----------
+const __KPI90_KEYS_NUM = ["final_score","expectancy_R","profit_factor_R","recovery_factor_R","sharpe","winrate"];
+const __KPI90_MAX_POINTS = 26;
+const __DAY_MS = 24*60*60*1000;
+
+function __ymdToTs(ymd){
+  const ts = Date.parse(String(ymd||"") + "T00:00:00Z");
+  return Number.isFinite(ts) ? ts : NaN;
+}
+
+function __lastIndexLE_byDate(points, targetTs){
+  // points must be sorted ascending by date
+  let lo = 0, hi = points.length - 1, ans = -1;
+  while(lo <= hi){
+    const mid = (lo + hi) >> 1;
+    const ts = __ymdToTs(points[mid]?.date);
+    if(ts <= targetTs){ ans = mid; lo = mid + 1; }
+    else hi = mid - 1;
+  }
+  return ans;
+}
+
+function __sampleWeeklyPointsRelative(points, dateStart, dateEnd){
+  if(!Array.isArray(points) || !points.length) return [];
+  const startTs = __ymdToTs(dateStart);
+  const endTs   = __ymdToTs(dateEnd);
+  if(!Number.isFinite(startTs) || !Number.isFinite(endTs)) return [];
+
+  const out = [];
+  let t = startTs;
+  let lastDate = null;
+
+  while(t <= endTs && out.length < __KPI90_MAX_POINTS){
+    const idx = __lastIndexLE_byDate(points, t);
+    if(idx >= 0){
+      const p = points[idx];
+      if(p?.date && p.date !== lastDate){
+        out.push(p);
+        lastDate = p.date;
+      }
+    }
+    t += 7 * __DAY_MS;
+  }
+  return out;
+}
+
+function __buildKpi90Summary(sampledPoints, generatedAt){
+  if(!Array.isArray(sampledPoints) || !sampledPoints.length) return null;
+
+  const latest = sampledPoints[sampledPoints.length - 1];
+  const prev7  = sampledPoints.length >= 2 ? sampledPoints[sampledPoints.length - 2] : null;
+  const prev30 = sampledPoints.length >= 5 ? sampledPoints[sampledPoints.length - 5] : null;
+
+  // tier switches inside sampled window (do not rely on generator tier_changed)
+  let tierSwitches = 0;
+  let lastTier = null;
+  for(const p of sampledPoints){
+    const t = (typeof p?.tier === "string" && p.tier.trim()) ? p.tier.trim() : null;
+    if(lastTier && t && t !== lastTier) tierSwitches++;
+    if(t) lastTier = t;
+  }
+
+  const meta = {
+    points_used: sampledPoints.length,
+    latest_date: latest?.date || null
+  };
+  if(prev7?.date) meta.prev7_date = prev7.date;
+  if(prev30?.date) meta.prev30_date = prev30.date;
+  if(tierSwitches) meta.tier_switches = tierSwitches;
+  if(generatedAt) meta.source_generated_at = generatedAt;
+
+  const kpis = {};
+
+  for(const k of __KPI90_KEYS_NUM){
+    const a = latest?.[k];
+    const b = prev7?.[k];
+    const c = prev30?.[k];
+
+    const o = {};
+    if(Number.isFinite(a)) o.latest = a;
+    if(Number.isFinite(b)) o.prev_7d = b;
+    if(Number.isFinite(c)) o.prev_30d = c;
+
+    // delta: allow 0 (stability signal), but only if both exist
+    if(Number.isFinite(a) && Number.isFinite(b)) o.delta_abs_vs_prev7d = (a - b);
+
+    if(Object.prototype.hasOwnProperty.call(o, "latest")) kpis[k] = o;
+  }
+
+  // tier summary
+  if(typeof latest?.tier === "string" && latest.tier.trim()){
+    const t = { latest: latest.tier.trim() };
+    if(typeof prev7?.tier === "string" && prev7.tier.trim()) t.prev_7d = prev7.tier.trim();
+    if(typeof prev30?.tier === "string" && prev30.tier.trim()) t.prev_30d = prev30.tier.trim();
+    kpis.tier = t;
+  }
+
+  if(!Object.keys(kpis).length) return null;
+  return { meta, kpis };
+}
+// ---------- end KPI 90D helpers ----------
+
+
 async function buildLLMPayload(){
   
   const topRange = readDateRangeFromTopBar();
@@ -1932,9 +2035,18 @@ const windowLabel = String(preset || "30D").toLowerCase();
     // Backward compatibility with older worker prompts
     history: (function(){
       const out = { personal_baselines: GLOBAL?.personal_baselines || {} };
+
       if(instrumentIsAll && kpi90Weekly && Array.isArray(kpi90Weekly.points) && kpi90Weekly.points.length){
-        out.kpi_90d_weekly = kpi90Weekly;
+        const sampled = __sampleWeeklyPointsRelative(kpi90Weekly.points, dateStart, dateEnd);
+
+        if(sampled && sampled.length){
+          out.kpi_90d_weekly_points = sampled;
+
+          const summary = __buildKpi90Summary(sampled, kpi90Weekly.generated_at);
+          if(summary) out.kpi_90d_summary = summary;
+        }
       }
+
       return out;
     })()};
 }
