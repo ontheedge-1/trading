@@ -1619,6 +1619,19 @@ background: var(--cardGrad);
   let calendarBadgeMode = "pnl"; // pnl | tr
 const $ = (id) => document.getElementById(id);
 
+// Ensures the chart area is visible and the canvas is drawable (fixes Calendar -> chart blank issues)
+function ensureChartAreaReady(){
+  const chartWrap = $("chartWrap");
+  const calWrap = $("calendarWrap");
+  const canvas = $("curveCanvas");
+
+  if(calWrap) calWrap.style.display = "none";
+  if(chartWrap) chartWrap.style.display = "block";
+  if(canvas) canvas.style.display = "block";
+
+  return { chartWrap, calWrap, canvas };
+}
+
 // ===== AI Coach (LLM Insight) =====
 const LLM_API = "https://llm-insight-worker.ricokunzedd.workers.dev/api/llm-insight";
 // Optional shared token (recommended): set in your HTML (not in repo) or via injection.
@@ -4184,6 +4197,9 @@ if(type === "tradeQuality"){
     const win = Number(GLOBAL.kpiState?.win || 30);
     const metric = String(GLOBAL.kpiState?.metric || "final_score");
 
+    // Ensure chart area is visible (Calendar/AI can hide it)
+    if(typeof ensureChartAreaReady === "function") ensureChartAreaReady();
+
     // Support BOTH snapshot schemas:
     // A) "flat" (from Sheet rows): snapshot_date + final_score_30d + tier_*_30d booleans
     // B) "nested" (from Web App): date + final_score:{30d:..} + tier:{30d:"STRONG"} + expectancy_R:{...}
@@ -4259,7 +4275,10 @@ if(type === "tradeQuality"){
     };
 
     const spine = rows.map(r => getDate(r));
-    const values = rows.map(r => toNum(getMetricVal(r)));
+    const values = rows.map(r => {
+      const v = toNum(getMetricVal(r));
+      return (v === null || v === undefined) ? NaN : v;
+    });
     const meta = rows.map(r => ({ tier: tierForRow(r), row: r }));
 
     const metricLabel =
@@ -4314,7 +4333,6 @@ if(type === "tradeQuality"){
         `;
       },
       pointColorFn: ({meta}) => tierColor(meta?.tier),
-      segmentColorFn: ({metaA, metaB}) => tierColor(metaB?.tier || metaA?.tier),
       onRequestRender: (keepCrosshair=false) => {
         drawLineChart(canvas, spine, values, opts);
         if(keepCrosshair && drawLineChart._overlay) drawLineChart._overlay.drawCrosshair();
@@ -4331,7 +4349,7 @@ function renderCurve(withCrosshair=false){
   const chartWrap = $("chartWrap");
   const calWrap = $("calendarWrap");
 
-  // Reset transient hover/tooltip state when switching modes (prevents "sticky blank" after Calendar/AI/KPI)
+  // Reset transient hover/tooltip state when switching modes (prevents sticky crosshair/tooltip after Calendar/AI/KPI)
   if(GLOBAL._lastMode && GLOBAL._lastMode !== GLOBAL.mode){
     if($("tooltip")) $("tooltip").style.display = "none";
     if($("kpiTooltip")) $("kpiTooltip").style.display = "none";
@@ -4339,10 +4357,23 @@ function renderCurve(withCrosshair=false){
   }
   GLOBAL._lastMode = GLOBAL.mode;
 
-  // Ensure AI panel is shown/hidden strictly by mode
+  // Calendar mode: show calendar, hide chart area
+  if(GLOBAL.mode === "calendar"){
+    if(chartWrap) chartWrap.style.display = "none";
+    if(calWrap) calWrap.style.display = "flex";
+    if($("kpiControls")) $("kpiControls").style.display = "none";
+    if($("tooltip")) $("tooltip").style.display = "none";
+    if($("kpiTooltip")) $("kpiTooltip").style.display = "none";
+    if($("aiPanel") && $("aiPanel").style.display !== "none") hideAIPanel();
+    renderCalendar();
+    return;
+  }
+
+  // For all non-calendar modes, ensure chart area is visible
+  if(typeof ensureChartAreaReady === "function") ensureChartAreaReady();
+
+  // AI panel strictly by mode
   if(GLOBAL.mode === "ai"){
-    if(chartWrap) chartWrap.style.display = "block";
-    if(calWrap) calWrap.style.display = "none";
     if($("kpiControls")) $("kpiControls").style.display = "none";
     showAIPanel();
     return;
@@ -4350,15 +4381,9 @@ function renderCurve(withCrosshair=false){
     if($("aiPanel") && $("aiPanel").style.display !== "none") hideAIPanel();
   }
 
-
-    // ---- KPI mode (renderer only; keep pipeline state consistent) ----
+  // KPI controls
   if(GLOBAL.mode === "kpi"){
-    // leave AI/Calendar cleanly
-    if($("aiPanel") && $("aiPanel").style.display !== "none") hideAIPanel();
-    if($("calendarWrap")) $("calendarWrap").style.display = "none";
-
     if($("kpiControls")) $("kpiControls").style.display = "flex";
-    if(canvas) canvas.style.display = "block";
     if($("tooltip")) $("tooltip").style.display = "none";
     const deltaBadge = $("chartDelta");
     if(deltaBadge) deltaBadge.style.display = "none";
@@ -4369,9 +4394,7 @@ function renderCurve(withCrosshair=false){
     if($("kpiControls")) $("kpiControls").style.display = "none";
   }
 
-
-
-// small delta badge (Equity / Cum R only)
+  // small delta badge (Equity / Cum R only)
   const deltaBadge = $("chartDelta");
   if(deltaBadge){
     if(GLOBAL.mode === "equity" || GLOBAL.mode === "r"){
@@ -4379,21 +4402,10 @@ function renderCurve(withCrosshair=false){
       if(Array.isArray(vals) && vals.length >= 2 && Number.isFinite(Number(vals[0])) && Number.isFinite(Number(vals[vals.length-1]))){
         const firstV = Number(vals[0]);
         const lastV  = Number(vals[vals.length-1]);
-        const ch = lastV - firstV;
-
-        const isPos = ch > 0;
-        const isNeg = ch < 0;
-        deltaBadge.classList.remove("pos","neg","neu");
-        deltaBadge.classList.add(isPos ? "pos" : (isNeg ? "neg" : "neu"));
-
-        if(GLOBAL.mode === "equity"){
-          const sign = isPos ? "+ " : (isNeg ? "− " : "");
-          deltaBadge.textContent = `${sign}${fmtUSD(Math.abs(ch))}`;
-        } else {
-          const sign = isPos ? "+ " : (isNeg ? "− " : "");
-          deltaBadge.textContent = `${sign}${Math.abs(ch).toFixed(1)} R`;
-        }
-        deltaBadge.style.display = "block";
+        const delta = lastV - firstV;
+        const sign = delta > 0 ? "+" : "";
+        deltaBadge.textContent = `${sign}${delta.toFixed(2)}${GLOBAL.mode === "equity" ? "€" : "R"}`;
+        deltaBadge.style.display = "inline-flex";
       } else {
         deltaBadge.style.display = "none";
       }
@@ -4402,21 +4414,7 @@ function renderCurve(withCrosshair=false){
     }
   }
 
-
-  if(GLOBAL.mode === "calendar"){
-    if(chartWrap) chartWrap.style.display = "none";
-    if(calWrap) calWrap.style.display = "flex";
-    if($("tooltip")) $("tooltip").style.display = "none";
-    renderCalendar();
-    return;
-  } else {
-    if(chartWrap) chartWrap.style.display = "block";
-    if(calWrap) calWrap.style.display = "none";
-    if(canvas) canvas.style.display = "block";
-  }
-
-
-  const spine = (GLOBAL._chartSpine && GLOBAL._chartSpine.length)
+const spine = (GLOBAL._chartSpine && GLOBAL._chartSpine.length)
     ? GLOBAL._chartSpine
     : GLOBAL.spine;
 
@@ -4503,7 +4501,8 @@ function renderCurve(withCrosshair=false){
   drawLineChart(canvas, spine, values, opts);
   if(withCrosshair && drawLineChart._overlay) drawLineChart._overlay.drawCrosshair();
 
-  }
+  
+}
 
   async function main(){
     try{
