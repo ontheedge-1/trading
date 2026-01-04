@@ -29,6 +29,7 @@ const KPI_NUM_KEYS = [
   "profit_factor_R",
   "recovery_factor_R",
   "sharpe",
+  "winrate",
 ];
 
 function isFiniteNumber(v) {
