@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - "data/kpi_snapshots_daily.json"
-      - "tools/generate_kpi_90d_weekly.mjs"
+      - "scripts/generate_kpi_90d_weekly.mjs"
       - ".github/workflows/generate_kpi_90d_weekly.yml"
   schedule:
     - cron: "17 3 * * *"  # daily 03:17 UTC
