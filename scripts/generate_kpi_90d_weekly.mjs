@@ -40,6 +40,11 @@ function isValidKpiValue(v) {
   return isFiniteNumber(v) && v !== 0;
 }
 
+function round1(v) {
+  return Math.round(v * 10) / 10;
+}
+
+
 function parseYMDToTs(ymd) {
   const ts = Date.parse(`${ymd}T00:00:00Z`);
   return Number.isFinite(ts) ? ts : NaN;
@@ -117,8 +122,9 @@ function buildWeeklyPoints(rows) {
     const vals = {};
     for (const k of KPI_NUM_KEYS) {
       const v = get90(snap, k);
-      if (isValidKpiValue(v)) vals[k] = v;
+      if (isValidKpiValue(v)) vals[k] = round1(v);
     }
+
 
     // Skip point if it has no numeric KPI at all
     if (Object.keys(vals).length === 0) continue;
@@ -132,7 +138,7 @@ function buildWeeklyPoints(rows) {
       for (const k of KPI_NUM_KEYS) {
         if (Object.prototype.hasOwnProperty.call(point, k) && Object.prototype.hasOwnProperty.call(prevPoint, k)) {
           // Both exist => include delta (may be 0)
-          delta[k] = point[k] - prevPoint[k];
+          delta[k] = round1(point[k] - prevPoint[k]);
         }
       }
       if (Object.keys(delta).length) point.delta_vs_prev = delta;
