@@ -4178,25 +4178,13 @@ if(type === "tradeQuality"){
   }
 
 
-  function renderCurve(withCrosshair=false){
-  syncEquityTabVisibility();
-  const canvas = $("curveCanvas");
-  const chartWrap = $("chartWrap");
-  const calWrap = $("calendarWrap");
-
-  if(GLOBAL.mode === "kpi"){
-    if($("aiPanel") && $("aiPanel").style.display !== "none") hideAIPanel();
-    if($("calendarWrap")) $("calendarWrap").style.display = "none";
-    if($("kpiControls")) $("kpiControls").style.display = "flex";
-    // ensure canvas visible
-    $("curveCanvas").style.display = "block";
-    $("tooltip").style.display = "none";
-
+  
+  function renderKpiCurve(canvas, withCrosshair=false){
     const snapsRaw = Array.isArray(GLOBAL.kpiSnaps) ? GLOBAL.kpiSnaps : [];
     const win = Number(GLOBAL.kpiState?.win || 30);
     const metric = String(GLOBAL.kpiState?.metric || "final_score");
 
-    // --- Support BOTH snapshot schemas ---
+    // Support BOTH snapshot schemas:
     // A) "flat" (from Sheet rows): snapshot_date + final_score_30d + tier_*_30d booleans
     // B) "nested" (from Web App): date + final_score:{30d:..} + tier:{30d:"STRONG"} + expectancy_R:{...}
     const getDate = (r) => String(r?.snapshot_date || r?.date || "");
@@ -4209,7 +4197,17 @@ if(type === "tradeQuality"){
 
     const winKey = `${win}d`;
 
-    // metric value getter
+    const toNum = (v) => {
+      if(v === null || v === undefined || v === "") return null;
+      let num = (typeof v === "string") ? Number(String(v).replace("%","")) : Number(v);
+      if(!Number.isFinite(num)) return null;
+      // winrate: accept either 0..1 fraction or 0..100 percent
+      if(metric === "winrate"){
+        if(num <= 1.0000001) num = num * 100;
+      }
+      return num;
+    };
+
     const getMetricVal = (r) => {
       // nested schema
       if(r && typeof r === "object"){
@@ -4221,27 +4219,16 @@ if(type === "tradeQuality"){
         if(metric === "winrate" && r.winrate && r.winrate[winKey] != null) return r.winrate[winKey];
       }
 
-      // flat schema
+      // flat schema (sheet columns)
       const k =
-        (metric === "expectancy")      ? `expectancy_R_${winKey}` :
-        (metric === "profit_factor")   ? `profit_factor_R_${winKey}` :
-        (metric === "recovery_factor") ? `recovery_factor_${winKey}` :
-        (metric === "sharpe")          ? `sharpe$_${winKey}` :
-        (metric === "winrate")         ? `winrate_${winKey}` :
-        `final_score_${winKey}`;
+        (metric === "expectancy")        ? `expectancy_R_${winKey}` :
+        (metric === "profit_factor")     ? `profit_factor_R_${winKey}` :
+        (metric === "recovery_factor")   ? `recovery_factor_R_${winKey}` :
+        (metric === "sharpe")            ? `sharpe$_${winKey}` :
+        (metric === "winrate")           ? `winrate_${winKey}` :
+                                           `final_score_${winKey}`;
 
       return r ? r[k] : null;
-    };
-
-    const toNum = (v) => {
-      if(v === null || v === undefined || v === "") return null;
-      let num = (typeof v === "string") ? Number(String(v).replace("%","")) : Number(v);
-      if(!Number.isFinite(num)) return null;
-      // winrate: accept either 0..1 fraction or 0..100 percent
-      if(metric === "winrate"){
-        if(num <= 1.0000001) num = num * 100;
-      }
-      return num;
     };
 
     const tierForRow = (r) => {
@@ -4271,7 +4258,6 @@ if(type === "tradeQuality"){
       return "rgba(207,232,255,.98)";
     };
 
-    // Build arrays for chart
     const spine = rows.map(r => getDate(r));
     const values = rows.map(r => toNum(getMetricVal(r)));
     const meta = rows.map(r => ({ tier: tierForRow(r), row: r }));
@@ -4285,7 +4271,7 @@ if(type === "tradeQuality"){
       (metric === "winrate") ? `Win Rate (${win}d)` :
       `Metric (${win}d)`;
 
-    // KPI-specific formatters (do not rely on other scopes)
+    // KPI-specific formatters (local + safe)
     const kpiFmt2 = (x) => {
       const n = Number(x);
       if (n === Infinity) return "∞";
@@ -4293,31 +4279,35 @@ if(type === "tradeQuality"){
     };
 
     const yFmt =
-      (metric === "winrate")      ? (v) => `${kpiFmt2(Number(v) * 100)}%` :
-      (metric === "expectancy")   ? (v) => `${kpiFmt2(v)}R` :
-      (metric === "final_score")  ? (v) => (Number.isFinite(Number(v)) ? String(Math.round(Number(v))) : "—") :
-      (metric === "profit_factor")? (v) => `${kpiFmt2(v)}` :
-      (metric === "recovery_factor") ? (v) => `${kpiFmt2(v)}` :
-      (metric === "sharpe")       ? (v) => `${kpiFmt2(v)}` :
-                                   (v) => `${kpiFmt2(v)}`;
+      (metric === "winrate")        ? (v) => `${kpiFmt2(v)}%` :
+      (metric === "expectancy")     ? (v) => `${kpiFmt2(v)}R` :
+      (metric === "final_score")    ? (v) => (Number.isFinite(Number(v)) ? String(Math.round(Number(v))) : "—") :
+      (metric === "profit_factor")  ? (v) => `${kpiFmt2(v)}` :
+      (metric === "recovery_factor")? (v) => `${kpiFmt2(v)}` :
+      (metric === "sharpe")         ? (v) => `${kpiFmt2(v)}` :
+                                      (v) => `${kpiFmt2(v)}`;
 
-    // Clear canvas even if values are empty (so we don't "inherit" the last chart)
-    // reuse canvas from the start of renderCurve()
+    // Clear canvas even if empty (prevents "stale" charts)
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
-    drawLineChart(canvas, spine, values, {
-      yFmt: yFmt,
+    if(!spine.length){
+      return;
+    }
+
+    const opts = {
+      mode: "kpi",
       title: metricLabel,
-      // neutral base; segments/points are tier-colored
-      color: "rgba(207,232,255,.75)",
+      yFmt: yFmt,
+      vFmt: yFmt,
+      colorMode: "ice",
       meta,
-      tooltipFormatter: ({value, meta, dateLabel}) => {
+      tooltipHTML: ({ vv, dateLabel, meta }) => {
         const tier = meta?.tier || "";
         const badge = tier ? `<span class="kpiTierBadge" style="background:${tierColor(tier)}">${tier}</span>` : "";
         return `
           <div style="display:flex;align-items:center;gap:8px;">
-            <div style="font-weight:800">${fmt2(value)}${metric==="winrate"?"%":(metric==="expectancy"?"R":"")}</div>
+            <div style="font-weight:800">${yFmt(vv)}</div>
             ${badge}
           </div>
           <div class="muted">${dateLabel}</div>
@@ -4325,12 +4315,60 @@ if(type === "tradeQuality"){
       },
       pointColorFn: ({meta}) => tierColor(meta?.tier),
       segmentColorFn: ({metaA, metaB}) => tierColor(metaB?.tier || metaA?.tier),
-    });
+      onRequestRender: (keepCrosshair=false) => {
+        drawLineChart(canvas, spine, values, opts);
+        if(keepCrosshair && drawLineChart._overlay) drawLineChart._overlay.drawCrosshair();
+      }
+    };
 
+    drawLineChart(canvas, spine, values, opts);
+    if(withCrosshair && drawLineChart._overlay) drawLineChart._overlay.drawCrosshair();
+  }
+
+function renderCurve(withCrosshair=false){
+  syncEquityTabVisibility();
+  const canvas = $("curveCanvas");
+  const chartWrap = $("chartWrap");
+  const calWrap = $("calendarWrap");
+
+  // Reset transient hover/tooltip state when switching modes (prevents "sticky blank" after Calendar/AI/KPI)
+  if(GLOBAL._lastMode && GLOBAL._lastMode !== GLOBAL.mode){
+    if($("tooltip")) $("tooltip").style.display = "none";
+    if($("kpiTooltip")) $("kpiTooltip").style.display = "none";
+    drawLineChart._lastCrosshair = null;
+  }
+  GLOBAL._lastMode = GLOBAL.mode;
+
+  // Ensure AI panel is shown/hidden strictly by mode
+  if(GLOBAL.mode === "ai"){
+    if(chartWrap) chartWrap.style.display = "block";
+    if(calWrap) calWrap.style.display = "none";
+    if($("kpiControls")) $("kpiControls").style.display = "none";
+    showAIPanel();
+    return;
+  } else {
+    if($("aiPanel") && $("aiPanel").style.display !== "none") hideAIPanel();
+  }
+
+
+    // ---- KPI mode (renderer only; keep pipeline state consistent) ----
+  if(GLOBAL.mode === "kpi"){
+    // leave AI/Calendar cleanly
+    if($("aiPanel") && $("aiPanel").style.display !== "none") hideAIPanel();
+    if($("calendarWrap")) $("calendarWrap").style.display = "none";
+
+    if($("kpiControls")) $("kpiControls").style.display = "flex";
+    if(canvas) canvas.style.display = "block";
+    if($("tooltip")) $("tooltip").style.display = "none";
+    const deltaBadge = $("chartDelta");
+    if(deltaBadge) deltaBadge.style.display = "none";
+
+    renderKpiCurve(canvas, withCrosshair);
     return;
   } else {
     if($("kpiControls")) $("kpiControls").style.display = "none";
   }
+
 
 
 // small delta badge (Equity / Cum R only)
@@ -4374,6 +4412,7 @@ if(type === "tradeQuality"){
   } else {
     if(chartWrap) chartWrap.style.display = "block";
     if(calWrap) calWrap.style.display = "none";
+    if(canvas) canvas.style.display = "block";
   }
 
 
