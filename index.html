@@ -1725,6 +1725,28 @@ async function loadBenchmarksOnce(){
   return window.__benchmarks_managed_futures;
 }
 
+// ===== KPI 90D Weekly History (Baseline Context) =====
+// Expects file at: trading/data/kpi_90d_weekly.json
+window.__kpi_90d_weekly = null;
+let __kpi90WeeklyLoading = false;
+
+async function loadKPI90WeeklyOnce(){
+  if(window.__kpi_90d_weekly || __kpi90WeeklyLoading) return window.__kpi_90d_weekly;
+  __kpi90WeeklyLoading = true;
+  try{
+    const res = await fetch("data/kpi_90d_weekly.json", { cache: "no-store" });
+    if(!res.ok) throw new Error(`kpi_90d_weekly load failed (HTTP ${res.status})`);
+    window.__kpi_90d_weekly = await res.json();
+  } catch(e){
+    console.warn("[kpi_90d_weekly] failed to load:", e);
+    window.__kpi_90d_weekly = null;
+  } finally {
+    __kpi90WeeklyLoading = false;
+  }
+  return window.__kpi_90d_weekly;
+}
+
+
 async function buildLLMPayload(){
   
   const topRange = readDateRangeFromTopBar();
@@ -1890,6 +1912,14 @@ const windowLabel = String(preset || "30D").toLowerCase();
   };
 
   // ---- Final payload ----
+  
+  // ---- Optional baseline context: 90D weekly KPI history (instrument === "ALL" only) ----
+  const instrumentIsAll = String(instrument || "").toUpperCase() === "ALL";
+  let kpi90Weekly = null;
+  if(instrumentIsAll){
+    kpi90Weekly = await loadKPI90WeeklyOnce();
+  }
+
   return {
       external_benchmarks: window.__benchmarks_managed_futures || null,
     analysis_window: { label: windowLabel, date_start: dateStart, date_end: dateEnd },
@@ -1900,10 +1930,13 @@ const windowLabel = String(preset || "30D").toLowerCase();
       daily: dailySlice
     },
     // Backward compatibility with older worker prompts
-    history: {
-      personal_baselines: GLOBAL?.personal_baselines || {}
-    }
-  };
+    history: (function(){
+      const out = { personal_baselines: GLOBAL?.personal_baselines || {} };
+      if(instrumentIsAll && kpi90Weekly && Array.isArray(kpi90Weekly.points) && kpi90Weekly.points.length){
+        out.kpi_90d_weekly = kpi90Weekly;
+      }
+      return out;
+    })()};
 }
 
 function readDateRangeFromTopBar(){
@@ -4190,44 +4223,6 @@ if(type === "tradeQuality"){
                 : "";
   }
 
-  function setChartHeaderByMode(mode){
-    const titleEl = $("curveTitle");
-    const subEl   = $("curveSub");
-    if(!titleEl || !subEl) return;
-
-    switch(mode){
-      case "equity":
-        titleEl.textContent = "Equity Curve";
-        subEl.textContent =
-          "Daily (Calendar spine, carry-forward) · Source: Daily_Adjustments";
-        break;
-
-      case "r":
-        titleEl.textContent = "Cumulative R";
-        subEl.textContent = "Per trade · Accumulated R-multiples";
-        break;
-
-      case "dd":
-        titleEl.textContent = "Drawdown (R)";
-        subEl.textContent = "Peak-to-trough drawdown in R";
-        break;
-
-      case "streak":
-        titleEl.textContent = "Streaks";
-        subEl.textContent = "Win / Loss streak distribution";
-        break;
-
-      case "kpi":
-        titleEl.textContent = "KPI · Snapshot Chart";
-        subEl.textContent =
-          "Daily snapshots · 30 / 90 / 180 calendar days";
-        break;
-
-      default:
-        titleEl.textContent = "Chart";
-        subEl.textContent = "";
-    }
-  }
 
   
   function renderKpiCurve(canvas, withCrosshair=false){
@@ -4383,7 +4378,6 @@ if(type === "tradeQuality"){
 
 function renderCurve(withCrosshair=false){
   syncEquityTabVisibility();
-  setChartHeaderByMode(GLOBAL.mode);
   const canvas = $("curveCanvas");
   const chartWrap = $("chartWrap");
   const calWrap = $("calendarWrap");
