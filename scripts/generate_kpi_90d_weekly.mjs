@@ -41,9 +41,10 @@ function isValidKpiValue(v) {
   return isFiniteNumber(v) && v !== 0;
 }
 
-function round1(v) {
+function round2(v) {
   return Math.round(v * 100) / 100;
 }
+
 
 
 function parseYMDToTs(ymd) {
@@ -123,7 +124,7 @@ function buildWeeklyPoints(rows) {
     const vals = {};
     for (const k of KPI_NUM_KEYS) {
       const v = get90(snap, k);
-      if (isValidKpiValue(v)) vals[k] = round1(v);
+      if (isValidKpiValue(v)) vals[k] = round2(v);
     }
 
 
