@@ -42,7 +42,7 @@ function isValidKpiValue(v) {
 }
 
 function round1(v) {
-  return Math.round(v * 10) / 10;
+  return Math.round(v * 100) / 100;
 }
 
 
@@ -139,7 +139,7 @@ function buildWeeklyPoints(rows) {
       for (const k of KPI_NUM_KEYS) {
         if (Object.prototype.hasOwnProperty.call(point, k) && Object.prototype.hasOwnProperty.call(prevPoint, k)) {
           // Both exist => include delta (may be 0)
-          delta[k] = round1(point[k] - prevPoint[k]);
+          delta[k] = round2(point[k] - prevPoint[k]);
         }
       }
       if (Object.keys(delta).length) point.delta_vs_prev = delta;
