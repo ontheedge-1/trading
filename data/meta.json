@@ -1,5 +1,5 @@
 {
-  "last_updated_utc": "2026-01-07T14:52:51+00:00",
+  "last_updated_utc": "2026-01-07T15:50:35+00:00",
   "sources": {
     "trades_csv": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTr-eyyO0CYH8WG3JWNa7nnaRWFRbT5k0Z6xCzJ-s9616fqOfsUZ9pQZDyAPVZMHjHMtLS3auB9Lws/pub?gid=1403228163&single=true&output=csv",
     "adjustments_csv": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTr-eyyO0CYH8WG3JWNa7nnaRWFRbT5k0Z6xCzJ-s9616fqOfsUZ9pQZDyAPVZMHjHMtLS3auB9Lws/pub?gid=1741852264&single=true&output=csv",
@@ -21,7 +21,7 @@
   },
   "counts": {
     "trades_rows_included": 43,
-    "adjustment_rows_included": 23,
+    "adjustment_rows_included": 24,
     "unique_dates": 24
   }
 }
