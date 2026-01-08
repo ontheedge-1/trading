@@ -529,6 +529,217 @@ background: var(--cardGrad);
       display:flex;
       flex-direction:column;
     }
+    /* ===== MONTE CARLO VIEW ===== */
+    .mcWrap{
+      display:none;
+      border-radius:9px;
+      overflow:hidden;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+      flex: 1 1 auto;
+      min-height: 420px;
+      display:flex;
+      flex-direction:column;
+      gap:0;
+    }
+    .mcHead .mcView,
+    .mcHead .mcMetric{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      padding:2px;
+      border-radius:14px;
+      border: 1px solid rgba(120,160,255,.18);
+      background: rgba(255,255,255,.02);
+    }
+    .mcHead .mcView button,
+    .mcHead .mcMetric button{
+      appearance:none;
+      border:0;
+      background: transparent;
+      color:#bcd2ff;
+      padding:7px 10px;
+      border-radius:12px;
+      font-size:12px;
+      font-weight:900;
+      cursor:pointer;
+      line-height:1;
+      letter-spacing:.1px;
+    }
+    .mcHead .mcView button.active,
+    .mcHead .mcMetric button.active{
+      background: rgba(45,107,255,.22);
+      color:#e7f0ff;
+      box-shadow: inset 0 0 0 1px rgba(45,107,255,.28);
+    }
+    .chip.mcRunBtn{
+      background: rgba(255, 215, 64, .16);
+      border-color: rgba(255, 215, 64, .34);
+      color: rgba(255, 233, 186, .98);
+      padding:7px 10px;
+      min-width: 44px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+    }
+    .chip.mcRunBtn.running{
+      opacity:.75;
+      cursor:default;
+    }
+    .chip.mcRunBtn.running::after{
+      content:"";
+      width:12px;
+      height:12px;
+      border-radius:50%;
+      border:2px solid rgba(255,233,186,.35);
+      border-top-color: rgba(255,233,186,.95);
+      display:inline-block;
+      animation: mcspin .8s linear infinite;
+    }
+    @keyframes mcspin{ to { transform: rotate(360deg); } }
+
+    .mcInfoRow{
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      padding:8px 12px;
+      border-bottom: 1px solid rgba(120,160,255,.10);
+      background: rgba(10,16,32,.20);
+      position: relative;
+    }
+    .mcInfo{
+      font-size:12px;
+      font-weight:800;
+      color: rgba(231,240,255,.86);
+      cursor: help;
+      user-select:none;
+      -webkit-user-select:none;
+    }
+    #mcInfoTip{
+      position: fixed;
+      transform: none;
+      z-index: 9999;
+      white-space: normal;
+      max-width: 380px;
+    }
+
+    .mcBody{
+      flex: 1 1 auto;
+      min-height: 0;
+      display:flex;
+      flex-direction:column;
+    }
+    .mcChartArea{
+      flex: 1 1 auto;
+      min-height: 0;
+      position: relative;
+    }
+    #mcCanvas{
+      width:100%;
+      height:100%;
+      display:block;
+    }
+    #mcTooltip{
+      position:absolute;
+      pointer-events:none;
+      display:none;
+      background: rgba(10,16,32,.92);
+      border: 1px solid rgba(120,160,255,.25);
+      border-radius: 12px;
+      padding:10px 12px;
+      color:#e7f0ff;
+      font-size:12px;
+      line-height:1.25;
+      box-shadow: 0 12px 24px rgba(0,0,0,.35);
+      z-index: 20;
+      max-width: 320px;
+      white-space: nowrap;
+    }
+    .mcStatsArea{
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow:auto;
+      padding: 10px 12px 12px 12px;
+    }
+    .mcProb{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      margin: 0 0 10px 0;
+      padding:8px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(120,160,255,.18);
+      background: rgba(255,255,255,.02);
+      color: rgba(231,240,255,.90);
+      font-size:12px;
+      font-weight:900;
+    }
+    .mcStatsTable{
+      width:100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      overflow:hidden;
+      border-radius: 12px;
+      border: 1px solid rgba(120,160,255,.14);
+      background: rgba(255,255,255,.01);
+      font-size:12px;
+    }
+    .mcStatsTable th,
+    .mcStatsTable td{
+      padding:10px 10px;
+      border-bottom: 1px solid rgba(120,160,255,.10);
+      border-right: 1px solid rgba(120,160,255,.08);
+      text-align:right;
+      white-space: nowrap;
+    }
+    .mcStatsTable th:first-child,
+    .mcStatsTable td:first-child{
+      text-align:left;
+      font-weight:900;
+      color: rgba(231,240,255,.85);
+      border-right: 1px solid rgba(120,160,255,.12);
+    }
+    .mcStatsTable th:last-child,
+    .mcStatsTable td:last-child{
+      border-right:none;
+    }
+    .mcStatsTable tr:last-child td{
+      border-bottom:none;
+    }
+    .mcStatsTable thead th{
+      background: rgba(10,16,32,.32);
+      color: rgba(188,210,255,.95);
+      font-weight:900;
+      text-transform:uppercase;
+      font-size:11px;
+      letter-spacing:.35px;
+    }
+    .mcStatsTable .mcMed{
+      font-weight: 1000;
+      color: rgba(255, 233, 186, .98);
+    }
+    .mcEmpty{
+      flex: 1 1 auto;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding: 18px;
+      color: rgba(188,210,255,.82);
+      text-align:center;
+    }
+    .mcEmptyTitle{
+      font-weight: 1000;
+      letter-spacing:.2px;
+      color: rgba(231,240,255,.90);
+    }
+    .mcEmptySub{
+      font-size: 12px;
+      color: rgba(188,210,255,.80);
+    }
+
     .calHead{
       display:flex;
       align-items:center;
@@ -1513,7 +1724,8 @@ background: var(--cardGrad);
           <button id="btnDD" type="button">DD (R)</button>
           <button id="btnStreaks" type="button">Streaks</button>
           <button id="btnKPI" type="button">KPI</button>
-          <button id="btnCal" type="button" title="Calendar">📅</button>
+                    <button id="btnMC" type="button" title="Monte Carlo">MC</button>
+<button id="btnCal" type="button" title="Calendar">📅</button>
           <button id="btnAI" type="button" title="🤖 Coach">🤖</button>
         </div>
 
@@ -1613,7 +1825,56 @@ background: var(--cardGrad);
         </div>
 
         <div class="calGrid" id="calGrid"></div>
+      
+      <div class="mcWrap" id="mcWrap" style="display:none;">
+        <div class="calHead mcHead">
+          <div class="calNav mcNav">
+            <div class="mcView" id="mcView" aria-label="MC View">
+              <button data-view="chart" class="active" type="button">Chart</button>
+              <button data-view="stats" type="button">Stats</button>
+            </div>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div class="mcMetric" id="mcMetric" aria-label="MC Metric">
+              <button data-metric="equity" class="active" type="button">Equity</button>
+              <button data-metric="cumr" type="button">CumR</button>
+            </div>
+            <div class="chipRow" id="mcChips" aria-label="MC Horizon">
+              <button class="chip active" data-T="100" type="button">100</button>
+              <button class="chip" data-T="500" type="button">500</button>
+              <button class="chip" data-T="1000" type="button">1.000</button>
+              <button class="chip mcRunBtn" id="mcRunBtn" type="button" title="Start / Refresh">▶</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mcInfoRow">
+          <div id="mcInfo" class="mcInfo">Simulation basiert auf historischen Trades</div>
+          <div class="tooltip" id="mcInfoTip" style="display:none;"></div>
+        </div>
+
+        <div class="mcBody">
+          <div class="mcChartArea" id="mcChartArea">
+            <canvas id="mcCanvas"></canvas>
+            <div class="tooltip" id="mcTooltip" style="display:none;"></div>
+          </div>
+
+          <div class="mcStatsArea" id="mcStatsArea" style="display:none;">
+            <div id="mcProb" class="mcProb" style="display:none;"></div>
+            <div class="mcStatsTableWrap">
+              <table class="mcStatsTable" id="mcStatsTable"></table>
+            </div>
+          </div>
+
+          <div class="mcEmpty" id="mcEmpty" style="display:none;">
+            <div class="mcEmptyTitle">Monte Carlo</div>
+            <div class="mcEmptySub">Klicke auf ▶ Start, um die Simulation zu berechnen.</div>
+          </div>
+        </div>
       </div>
+
+</div>
 
 
       <div class="hint">
@@ -1631,6 +1892,8 @@ const $ = (id) => document.getElementById(id);
 function ensureChartAreaReady(){
   const chartWrap = $("chartWrap");
   const calWrap = $("calendarWrap");
+  const mcWrap = $("mcWrap");
+  if(mcWrap && GLOBAL.mode !== "mc") mcWrap.style.display = "none";
   const canvas = $("curveCanvas");
 
   if(calWrap) calWrap.style.display = "none";
@@ -2983,6 +3246,9 @@ function computeScore(filteredTrades, tradeKPIs){
   function recomputeAnalysis(){
     GLOBAL.filteredTrades = filterEngine(GLOBAL.trades, GLOBAL.filters);
 
+    // Monte Carlo: mark dirty on scope changes (compute only on Start click)
+    if(GLOBAL.mc){ GLOBAL.mc.scopeKey = mcBuildScopeKey(); GLOBAL.mc.dirty = true; }
+
     GLOBAL.tradeKPIs = computeTradeKPIs(GLOBAL.filteredTrades);
     GLOBAL.tradeStreaks = computeTradeStreaks(GLOBAL.filteredTrades);
 
@@ -4307,6 +4573,22 @@ if(type === "tradeQuality"){
     viewCumR:[],         // cumR sliced to viewSpine, rebased to 0 (+ baseline point)
     viewDD:[],           // drawdown (R) on viewCumR (<=0), incl baseline point
 
+    mc: {
+      M: 2000,
+      active: false,
+      view: "chart",      // "chart" | "stats"
+      metric: "equity",   // "equity" | "cumr"
+      T: 500,             // 100 | 500 | 1000
+      running: false,
+      dirty: true,
+      scopeKey: "",
+      lastComputedKey: null,
+      cache: new Map(),      // key -> McResult
+      cacheOrder: []         // LRU list of keys
+    },
+
+
+
     mode:"equity",
 
     calendar: { month:null, allowedMonths: [] },
@@ -4414,6 +4696,12 @@ function setChartHeaderByModeSafe(mode){
   if(m === "ai"){
     const t = $("curveTitle"); const s = $("curveSub"); if(!t||!s) return;
     t.textContent = "🤖 Coach";
+    s.textContent = "";
+    return;
+  }
+  if(m === "mc"){
+    const t = $("curveTitle"); const s = $("curveSub"); if(!t||!s) return;
+    t.textContent = "Monte Carlo";
     s.textContent = "";
     return;
   }
@@ -4608,7 +4896,25 @@ function renderCurve(withCrosshair=false){
     return;
   }
 
-  // For all non-calendar modes, ensure chart area is visible
+  
+  // Monte Carlo mode: show MC panel, hide standard chart/calendar
+  if(GLOBAL.mode === "mc"){
+    const mcWrap = $("mcWrap");
+    const hint = document.querySelector(".hint");
+    if(chartWrap) chartWrap.style.display = "none";
+    if(calWrap) calWrap.style.display = "none";
+    if(mcWrap) mcWrap.style.display = "flex";
+    if(hint) hint.style.display = "none";
+    if($("kpiControls")) $("kpiControls").style.display = "none";
+    if($("tooltip")) $("tooltip").style.display = "none";
+    if($("kpiTooltip")) $("kpiTooltip").style.display = "none";
+    if($("dataTooltip")) $("dataTooltip").style.display = "none";
+    if($("aiPanel") && $("aiPanel").style.display !== "none") hideAIPanel();
+    renderMonteCarloView();
+    return;
+  }
+
+// For all non-calendar modes, ensure chart area is visible
   if(typeof ensureChartAreaReady === "function") ensureChartAreaReady();
 
   // AI panel strictly by mode
@@ -5135,6 +5441,8 @@ if(dpApply && !dpApply._bound){
         });
       }
 
+      bindMonteCarloUI();
+
       renderKpiPanel(latest);
       renderCurve();
       renderDebug();
@@ -5175,6 +5483,720 @@ if(dpApply && !dpApply._bound){
       renderCurve();
     }
   }
+  // ===== Monte Carlo (client-side) =====
+  function mcBuildScopeKey(){
+    const f = GLOBAL?.filters || {};
+    const parts = [
+      `inst=${String(f.instrument || "ALL")}`,
+      `preset=${String(f.preset || "ALL")}`,
+      `ds=${String(f.dateStart || "")}`,
+      `de=${String(f.dateEnd || "")}`,
+      `mf=${String(f.manualFrom || "")}`,
+      `mt=${String(f.manualTo || "")}`
+    ];
+    return parts.join("|");
+  }
+
+  function mcEnsureScope(){
+    if(!GLOBAL.mc) return;
+    const key = mcBuildScopeKey();
+    GLOBAL.mc.scopeKey = key;
+    // do not auto-compute; just mark dirty
+    GLOBAL.mc.dirty = true;
+  }
+
+  function mcLRUTouch(key){
+    const order = GLOBAL.mc.cacheOrder;
+    const i = order.indexOf(key);
+    if(i >= 0) order.splice(i, 1);
+    order.push(key);
+    // evict
+    while(order.length > 10){
+      const k = order.shift();
+      if(k != null) GLOBAL.mc.cache.delete(k);
+    }
+  }
+
+  function mcCacheGet(key){
+    if(!GLOBAL.mc) return null;
+    const v = GLOBAL.mc.cache.get(key);
+    if(v) mcLRUTouch(key);
+    return v || null;
+  }
+
+  function mcCacheSet(key, val){
+    if(!GLOBAL.mc) return;
+    GLOBAL.mc.cache.set(key, val);
+    mcLRUTouch(key);
+  }
+
+  function mcExtractRs(){
+    const arr = Array.isArray(GLOBAL.filteredTrades) ? GLOBAL.filteredTrades : [];
+    const rs = [];
+    for(const tr of arr){
+      const r = Number(tr?.result_r ?? tr?.r);
+      if(Number.isFinite(r)) rs.push(r);
+    }
+    return rs;
+  }
+
+  function mcLatestEquityRow(){
+    const eq = Array.isArray(GLOBAL.equity) ? GLOBAL.equity : [];
+    return eq.length ? eq[eq.length - 1] : null;
+  }
+
+  function mcDdTierMult(ddPct){
+    const d = Number(ddPct);
+    if(!Number.isFinite(d)) return 1.0;
+    if(d < 12) return 1.0;
+    if(d < 18) return 0.9;
+    return 0.7;
+  }
+
+  function mcFmtPct(p){
+    if(!Number.isFinite(p)) return "—";
+    return (p >= 0 ? "+" : "") + (p*100).toFixed(2) + "%";
+  }
+
+  function mcFmtPctAbs(pct){
+    if(!Number.isFinite(pct)) return "—";
+    return pct.toFixed(2) + "%";
+  }
+
+  function mcQuantileIdx(q, M){
+    if(M <= 1) return 0;
+    const idx = Math.floor(q * (M - 1));
+    return Math.max(0, Math.min(M-1, idx));
+  }
+
+  function mcBuildStatsRow(label, obj, fmtFn){
+    const cells = [
+      obj.worst, obj.p10, obj.p50, obj.p90, obj.best
+    ].map((v, i) => {
+      const cls = (i === 2) ? ' class="mcMed"' : '';
+      return `<td${cls}>${fmtFn(v)}</td>`;
+    }).join("");
+    return `<tr><td>${label}</td>${cells}</tr>`;
+  }
+
+  function mcCompute(Rs, equityRow, T, M){
+    const N = Rs.length;
+    if(!N || N < 2){
+      return { error: "Zu wenige Trades im Scope für eine Simulation." };
+    }
+
+    // --- Start state (Equity simulation) ---
+    const E0 = Number(equityRow?.cash_equity_$ ?? equityRow?.equity_end_$ ?? equityRow?.equity_start_$ ?? 0);
+    const ATH0 = Number(equityRow?.ath_$ ?? E0);
+    const baseEq0 = Number(equityRow?.base_equity_for_sizing_$ ?? E0);
+    const ddState0 = Number(equityRow?.dd_multiplier ?? 1.0);
+
+    const cumBuckets = Array.from({length:T+1}, ()=> new Float64Array(M));
+    const eqBuckets  = Array.from({length:T+1}, ()=> new Float64Array(M));
+
+    const endR = new Float64Array(M);
+    const maxDD_R = new Float64Array(M);
+
+    const endEq = new Float64Array(M);
+    const maxDD_$ = new Float64Array(M);
+    const maxDD_pct = new Float64Array(M);
+
+    let bestRIdx = 0, worstRIdx = 0;
+    let bestEqIdx = 0, worstEqIdx = 0;
+
+    let bestREnd = -Infinity, worstREnd = Infinity;
+    let bestEqEnd = -Infinity, worstEqEnd = Infinity;
+
+    const bestRPath = new Float64Array(T+1);
+    const worstRPath = new Float64Array(T+1);
+    const bestEqPath = new Float64Array(T+1);
+    const worstEqPath = new Float64Array(T+1);
+
+    // initialize t=0
+    for(let m=0; m<M; m++){
+      cumBuckets[0][m] = 0;
+      eqBuckets[0][m]  = E0;
+      maxDD_R[m] = 0;
+      maxDD_$[m] = 0;
+      maxDD_pct[m] = 0;
+    }
+    bestRPath[0]=0; worstRPath[0]=0;
+    bestEqPath[0]=E0; worstEqPath[0]=E0;
+
+    // precompute random helper
+    const randIdx = () => (Math.random() * N) | 0;
+
+    for(let m=0; m<M; m++){
+      // CumR state
+      let cumR = 0;
+      let peakR = 0;
+      let ddRmin = 0;
+
+      // Equity sizing state
+      let equity = E0;
+      let ath = ATH0;
+      let baseEq = baseEq0;
+      let ddState = (ddState0 === 0.9 || ddState0 === 0.7 || ddState0 === 1.0) ? ddState0 : 1.0;
+
+      let baseRisk = 0.01 * baseEq;
+      let effRisk = baseRisk * ddState;
+
+      let peakEq = equity;
+      let dd$min = 0;
+      let ddPctMax = 0;
+
+      // temp arrays only for best/worst capture? we avoid storing full path per m
+      for(let t=1; t<=T; t++){
+        const r = Rs[randIdx()];
+
+        // CumR update
+        cumR += r;
+        if(cumR > peakR) peakR = cumR;
+        const ddR = cumR - peakR; // <=0
+        if(ddR < ddRmin) ddRmin = ddR;
+        cumBuckets[t][m] = cumR;
+
+        // Equity update
+        const pnl = r * effRisk;
+        equity += pnl;
+
+        // ATH reset check (sticky reset)
+        if(equity > ath){
+          ath = equity;
+          ddState = 1.0;
+        } else {
+          const ddPct = ((ath - equity) / ath) * 100;
+          const tier = mcDdTierMult(ddPct);
+          // sticky: can only get worse
+          if(tier < ddState) ddState = tier;
+        }
+
+        // ladder step update (multi-step)
+        let upTh = baseEq * 1.05;
+        let dnTh = baseEq * 0.95;
+        // step up
+        while(equity >= upTh){
+          baseEq *= 1.05;
+          upTh = baseEq * 1.05;
+          dnTh = baseEq * 0.95;
+        }
+        // step down
+        while(equity <= dnTh){
+          baseEq *= 0.95;
+          upTh = baseEq * 1.05;
+          dnTh = baseEq * 0.95;
+        }
+
+        baseRisk = 0.01 * baseEq;
+        effRisk = baseRisk * ddState;
+
+        if(equity > peakEq) peakEq = equity;
+        const dd$ = equity - peakEq; // <=0
+        if(dd$ < dd$min) dd$min = dd$;
+        const ddPctFromPeak = peakEq > 0 ? ((peakEq - equity)/peakEq)*100 : 0;
+        if(ddPctFromPeak > ddPctMax) ddPctMax = ddPctFromPeak;
+
+        eqBuckets[t][m] = equity;
+      }
+
+      endR[m] = cumR;
+      maxDD_R[m] = ddRmin;
+
+      endEq[m] = equity;
+      maxDD_$[m] = dd$min;
+      maxDD_pct[m] = ddPctMax;
+
+      if(cumR > bestREnd){ bestREnd = cumR; bestRIdx = m; }
+      if(cumR < worstREnd){ worstREnd = cumR; worstRIdx = m; }
+      if(equity > bestEqEnd){ bestEqEnd = equity; bestEqIdx = m; }
+      if(equity < worstEqEnd){ worstEqEnd = equity; worstEqIdx = m; }
+    }
+
+    // capture best/worst paths (full)
+    for(let t=0; t<=T; t++){
+      bestRPath[t] = cumBuckets[t][bestRIdx];
+      worstRPath[t] = cumBuckets[t][worstRIdx];
+      bestEqPath[t] = eqBuckets[t][bestEqIdx];
+      worstEqPath[t] = eqBuckets[t][worstEqIdx];
+    }
+
+    // percentile bands per t
+    const cumP10 = new Float64Array(T+1);
+    const cumP50 = new Float64Array(T+1);
+    const cumP90 = new Float64Array(T+1);
+    const eqP10  = new Float64Array(T+1);
+    const eqP50  = new Float64Array(T+1);
+    const eqP90  = new Float64Array(T+1);
+
+    const i10 = mcQuantileIdx(0.10, M);
+    const i50 = mcQuantileIdx(0.50, M);
+    const i90 = mcQuantileIdx(0.90, M);
+
+    for(let t=0; t<=T; t++){
+      // sort in place ok
+      const a = cumBuckets[t];
+      a.sort();
+      cumP10[t] = a[i10];
+      cumP50[t] = a[i50];
+      cumP90[t] = a[i90];
+
+      const b = eqBuckets[t];
+      b.sort();
+      eqP10[t] = b[i10];
+      eqP50[t] = b[i50];
+      eqP90[t] = b[i90];
+    }
+
+    // helper: stats quantiles for arrays
+    function statsFromArr(arr){
+      const a = Float64Array.from(arr);
+      a.sort();
+      return {
+        worst: a[0],
+        p10: a[i10],
+        p50: a[i50],
+        p90: a[i90],
+        best: a[M-1]
+      };
+    }
+
+    const endRstats = statsFromArr(endR);
+    const ddRstats  = statsFromArr(maxDD_R);
+
+    const endEqStats = statsFromArr(endEq);
+    const dd$Stats   = statsFromArr(maxDD_$);
+    const ddPctStats = statsFromArr(maxDD_pct);
+
+    // Change $ / %
+    const ch$ = new Float64Array(M);
+    const chPct = new Float64Array(M);
+    for(let m=0; m<M; m++){
+      ch$[m] = endEq[m] - E0;
+      chPct[m] = (E0 !== 0) ? ((endEq[m] / E0) - 1) : 0;
+    }
+    const ch$Stats = statsFromArr(ch$);
+    const chPctStats = statsFromArr(chPct);
+
+    // Probabilities
+    let cR = 0;
+    let cEq = 0;
+    for(let m=0; m<M; m++){
+      if(endR[m] < 0) cR++;
+      if(endEq[m] < E0) cEq++;
+    }
+    const probR = cR / M;
+    const probEq = cEq / M;
+
+    return {
+      meta: {
+        M, T, N,
+        startEquity: E0
+      },
+      cumr: { p10: cumP10, p50: cumP50, p90: cumP90, best: bestRPath, worst: worstRPath },
+      equity: { p10: eqP10, p50: eqP50, p90: eqP90, best: bestEqPath, worst: worstEqPath },
+      stats: {
+        cumr: {
+          endR: endRstats,
+          maxDD_R: ddRstats
+        },
+        equity: {
+          end$: endEqStats,
+          change$: ch$Stats,
+          changePct: chPctStats,
+          maxDD_$: dd$Stats,
+          maxDD_pct: ddPctStats
+        }
+      },
+      prob: {
+        cumr_end_below_0: probR,
+        equity_end_below_start: probEq
+      }
+    };
+  }
+
+  function drawMonteCarloChart(canvas, spine, series, metric){
+    const ctx = canvas.getContext("2d");
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = Math.round(rect.width * dpr);
+    canvas.height = Math.round(rect.height * dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+
+    const W = rect.width;
+    const H = rect.height;
+    ctx.clearRect(0,0,W,H);
+
+    const padL = 46, padR = 14, padT = 14, padB = 28;
+    const plotW = W - padL - padR;
+    const plotH = H - padT - padB;
+
+    const worst = series.worst, p10=series.p10, p50=series.p50, p90=series.p90, best=series.best;
+
+    // y range across all displayed series
+    let yMin = Infinity, yMax = -Infinity;
+    const scan = (arr)=>{
+      for(let i=0;i<arr.length;i++){
+        const v = Number(arr[i]);
+        if(!Number.isFinite(v)) continue;
+        if(v<yMin) yMin=v;
+        if(v>yMax) yMax=v;
+      }
+    };
+    scan(worst); scan(p10); scan(p50); scan(p90); scan(best);
+    if(!Number.isFinite(yMin) || !Number.isFinite(yMax) || yMin===yMax){
+      yMin = (Number.isFinite(yMin)?yMin:0) - 1;
+      yMax = (Number.isFinite(yMax)?yMax:0) + 1;
+    }
+    const padY = (yMax - yMin) * 0.06;
+    yMin -= padY; yMax += padY;
+
+    const xCount = spine.length;
+    const xStep = (xCount>1) ? (plotW / (xCount-1)) : plotW;
+
+    const yToPx = (v)=> padT + (yMax - v) * (plotH / (yMax - yMin));
+    const xToPx = (i)=> padL + i * xStep;
+
+    // grid (light)
+    ctx.strokeStyle = "rgba(120,160,255,.10)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    const gridN = 4;
+    for(let g=0; g<=gridN; g++){
+      const y = padT + (plotH * g / gridN);
+      ctx.moveTo(padL, y);
+      ctx.lineTo(padL+plotW, y);
+    }
+    ctx.stroke();
+
+    // axes labels (few)
+    ctx.fillStyle = "rgba(188,210,255,.70)";
+    ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    for(let g=0; g<=gridN; g++){
+      const v = yMax - (yMax-yMin) * (g / gridN);
+      const y = padT + (plotH * g / gridN);
+      const label = (metric === "equity") ? fmtUSD(v) : fmtR(v);
+      ctx.fillText(label, padL-8, y);
+    }
+
+    // x label endpoints
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText("0", padL, padT+plotH+8);
+    ctx.textAlign = "right";
+    ctx.fillText(String(spine.length-1), padL+plotW, padT+plotH+8);
+
+    // Fill between p10 and p90 with median accent
+    // Build path for p90 then reverse with p10
+    ctx.save();
+    const grad = ctx.createLinearGradient(0, padT, 0, padT+plotH);
+    grad.addColorStop(0, "rgba(45,107,255,.18)");
+    grad.addColorStop(0.5, "rgba(255,215,64,.16)");
+    grad.addColorStop(1, "rgba(45,107,255,.12)");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    for(let i=0;i<xCount;i++){
+      const x = xToPx(i);
+      const y = yToPx(p90[i]);
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    for(let i=xCount-1;i>=0;i--){
+      const x = xToPx(i);
+      const y = yToPx(p10[i]);
+      ctx.lineTo(x,y);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    const drawLine = (arr, stroke, w)=>{
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = w;
+      ctx.lineJoin = "round";
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      for(let i=0;i<xCount;i++){
+        const x = xToPx(i);
+        const y = yToPx(arr[i]);
+        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+    };
+
+    // best/worst thin grey
+    drawLine(worst, "rgba(231,240,255,.22)", 1);
+    drawLine(best, "rgba(231,240,255,.22)", 1);
+
+    // p10/p90
+    drawLine(p10, "rgba(188,210,255,.85)", 2);
+    drawLine(p90, "rgba(188,210,255,.85)", 2);
+
+    // median bold gold
+    drawLine(p50, "rgba(255,215,64,.95)", 3);
+
+    // hover interaction (nearest x)
+    const tip = $("mcTooltip");
+    const wrap = $("mcChartArea");
+    if(!tip || !wrap) return;
+
+    const fmtV = (v)=> (metric==="equity") ? fmtUSD(v) : fmtR(v);
+
+    const showTip = (idx, clientX, clientY) => {
+      const rows = [
+        `<div><b>Trade #${idx}</b></div>`,
+        `<div style="margin-top:6px;"><span style="opacity:.7;">Median</span> <b style="color:rgba(255,215,64,.95)">${fmtV(p50[idx])}</b></div>`,
+        `<div><span style="opacity:.7;">p10</span> ${fmtV(p10[idx])} <span style="opacity:.55;">·</span> <span style="opacity:.7;">p90</span> ${fmtV(p90[idx])}</div>`,
+        `<div style="opacity:.65;"><span>worst</span> ${fmtV(worst[idx])} <span style="opacity:.55;">·</span> <span>best</span> ${fmtV(best[idx])}</div>`
+      ];
+      tip.innerHTML = rows.join("");
+      tip.style.display = "block";
+
+      const r = wrap.getBoundingClientRect();
+      const x = clientX - r.left + 12;
+      const y = clientY - r.top + 12;
+      tip.style.left = x + "px";
+      tip.style.top  = y + "px";
+    };
+
+    const hideTip = ()=> { tip.style.display = "none"; };
+
+    canvas.onmousemove = (e)=>{
+      const r = canvas.getBoundingClientRect();
+      const mx = e.clientX - r.left;
+      const idx = Math.max(0, Math.min(xCount-1, Math.round((mx - padL) / xStep)));
+      showTip(idx, e.clientX, e.clientY);
+    };
+    canvas.onmouseleave = hideTip;
+  }
+
+  function renderMonteCarloView(){
+    const mcWrap = $("mcWrap");
+    if(!mcWrap) return;
+
+    GLOBAL.mc.active = true;
+    if(!GLOBAL.mc.scopeKey) GLOBAL.mc.scopeKey = mcBuildScopeKey();
+
+    const key = `${GLOBAL.mc.scopeKey}|${GLOBAL.mc.T}`;
+    const cached = mcCacheGet(key);
+
+    const chartArea = $("mcChartArea");
+    const statsArea = $("mcStatsArea");
+    const empty = $("mcEmpty");
+
+    // info tooltip content
+    const info = $("mcInfo");
+    const infoTip = $("mcInfoTip");
+    const N = (Array.isArray(GLOBAL.filteredTrades) ? GLOBAL.filteredTrades.length : 0);
+    if(info && infoTip){
+      if(infoTip.parentElement !== document.body) document.body.appendChild(infoTip);
+      const details = [
+        `<b>Simulation basiert auf historischen Trades</b>`,
+        `<div class="muted">Instrument: ${String(GLOBAL.filters?.instrument || "ALL")}</div>`,
+        `<div class="muted">Trades im Sample: ${N}</div>`,
+        `<div class="muted">Pfade (M): ${GLOBAL.mc.M}</div>`,
+        `<div class="muted">Horizon (T): ${GLOBAL.mc.T} Trades</div>`,
+        `<div class="muted">Equity: 1% Risk · 5% Ladder · DD Multiplier (sticky)</div>`
+      ].join("");
+      const position = (e)=>{
+        const x = (e?.clientX ?? 0) + 14;
+        const y = (e?.clientY ?? 0) + 14;
+        infoTip.style.left = x + "px";
+        infoTip.style.top  = y + "px";
+      };
+      const show = (e)=>{
+        infoTip.innerHTML = details;
+        infoTip.style.display = "block";
+        position(e);
+      };
+      const hide = ()=> infoTip.style.display = "none";
+      if(!info._mcBound){
+        info._mcBound = true;
+        info.addEventListener("mouseenter", show);
+        info.addEventListener("mousemove", (e)=> { if(infoTip.style.display !== "none") position(e); });
+        info.addEventListener("mouseleave", hide);
+      }
+    }
+
+    // view toggles
+    const wantStats = (GLOBAL.mc.view === "stats");
+    if(chartArea) chartArea.style.display = wantStats ? "none" : "block";
+    if(statsArea) statsArea.style.display = wantStats ? "block" : "none";
+
+    const canvas = $("mcCanvas");
+
+    if(!cached){
+      if(empty) empty.style.display = "flex";
+      if(chartArea) chartArea.style.display = "none";
+      if(statsArea) statsArea.style.display = "none";
+      if(canvas) { canvas.onmousemove=null; canvas.onmouseleave=null; }
+      return;
+    }
+
+    if(empty) empty.style.display = "none";
+
+    // render either chart or stats
+    if(!wantStats){
+      if(chartArea) chartArea.style.display = "block";
+      const series = (GLOBAL.mc.metric === "cumr") ? cached.cumr : cached.equity;
+      const spine = Array.from({length: cached.meta.T + 1}, (_,i)=> i);
+      drawMonteCarloChart(canvas, spine, series, GLOBAL.mc.metric);
+      if($("mcStatsArea")) $("mcStatsArea").style.display = "none";
+    } else {
+      if(statsArea) statsArea.style.display = "block";
+      if(chartArea) chartArea.style.display = "none";
+      if(canvas) { canvas.onmousemove=null; canvas.onmouseleave=null; }
+
+      const tbl = $("mcStatsTable");
+      const prob = $("mcProb");
+      if(!tbl) return;
+
+      const cols = ["", "Worst", "p10", "Median", "p90", "Best"];
+      const head = `<thead><tr>${cols.map((c,i)=> `<th${i===3?' class="mcMed"':''}>${c}</th>`).join("")}</tr></thead>`;
+
+      let bodyRows = "";
+      if(GLOBAL.mc.metric === "cumr"){
+        bodyRows += mcBuildStatsRow("End CumR", cached.stats.cumr.endR, fmtR);
+        bodyRows += mcBuildStatsRow("Max Drawdown (R)", cached.stats.cumr.maxDD_R, fmtR);
+        if(prob){
+          prob.style.display = "inline-flex";
+          prob.textContent = `P(End < 0R): ${(cached.prob.cumr_end_below_0*100).toFixed(1)}%`;
+        }
+      } else {
+        bodyRows += mcBuildStatsRow("End Balance", cached.stats.equity.end$, fmtUSD);
+        bodyRows += mcBuildStatsRow("Total Change ($)", cached.stats.equity.change$, (v)=> {
+          const n = Number(v); if(!Number.isFinite(n)) return "—";
+          const s = n>0?"+":""; return s + fmtUSD(n);
+        });
+        bodyRows += mcBuildStatsRow("Total Change (%)", cached.stats.equity.changePct, (v)=> {
+          const n = Number(v); if(!Number.isFinite(n)) return "—";
+          const s = n>0?"+":""; return s + (n*100).toFixed(2) + "%";
+        });
+        bodyRows += mcBuildStatsRow("Max Drawdown ($)", cached.stats.equity.maxDD_$, (v)=> {
+          const n = Number(v); if(!Number.isFinite(n)) return "—";
+          return fmtUSD(n);
+        });
+        bodyRows += mcBuildStatsRow("Max Drawdown (%)", cached.stats.equity.maxDD_pct, (v)=> {
+          const n = Number(v); if(!Number.isFinite(n)) return "—";
+          return n.toFixed(2) + "%";
+        });
+        if(prob){
+          prob.style.display = "inline-flex";
+          prob.textContent = `P(End < Start): ${(cached.prob.equity_end_below_start*100).toFixed(1)}%`;
+        }
+      }
+
+      tbl.innerHTML = head + `<tbody>${bodyRows}</tbody>`;
+    }
+  }
+
+  function mcSetRunState(running){
+    GLOBAL.mc.running = !!running;
+    const btn = $("mcRunBtn");
+    if(btn){
+      btn.classList.toggle("running", !!running);
+      btn.disabled = !!running;
+    }
+  }
+
+  function mcRunCompute(){
+    const eqRow = mcLatestEquityRow();
+    const Rs = mcExtractRs();
+    if(!eqRow){
+      alert("Equity-Daten fehlen (equity.json).");
+      return;
+    }
+    if(Rs.length < 2){
+      alert("Zu wenige Trades im aktuellen Scope für Monte Carlo.");
+      return;
+    }
+
+    const key = `${GLOBAL.mc.scopeKey}|${GLOBAL.mc.T}`;
+    mcSetRunState(true);
+
+    // allow UI to update
+    setTimeout(()=> {
+      try{
+        const res = mcCompute(Rs, eqRow, GLOBAL.mc.T, GLOBAL.mc.M);
+        if(res && !res.error){
+          mcCacheSet(key, res);
+          GLOBAL.mc.lastComputedKey = key;
+          GLOBAL.mc.dirty = false;
+          $("mcEmpty") && ($("mcEmpty").style.display = "none");
+          renderMonteCarloView();
+        } else {
+          alert(res?.error || "Monte Carlo Fehler.");
+        }
+      } catch(e){
+        console.error(e);
+        alert("Monte Carlo Fehler: " + (e?.message || String(e)));
+      } finally {
+        mcSetRunState(false);
+      }
+    }, 30);
+  }
+
+  function bindMonteCarloUI(){
+    const mcWrap = $("mcWrap");
+    if(!mcWrap || bindMonteCarloUI._bound) return;
+    bindMonteCarloUI._bound = true;
+
+    // init scope
+    GLOBAL.mc.scopeKey = mcBuildScopeKey();
+    GLOBAL.mc.dirty = true;
+
+    // View toggle
+    const view = $("mcView");
+    if(view){
+      view.addEventListener("click", (e)=>{
+        const b = e.target && e.target.closest("button[data-view]");
+        if(!b) return;
+        const v = String(b.getAttribute("data-view") || "chart");
+        GLOBAL.mc.view = (v === "stats") ? "stats" : "chart";
+        for(const btn of view.querySelectorAll("button")) btn.classList.toggle("active", btn === b);
+        if(GLOBAL.mode === "mc") renderMonteCarloView();
+      });
+    }
+
+    // Metric toggle
+    const metric = $("mcMetric");
+    if(metric){
+      metric.addEventListener("click", (e)=>{
+        const b = e.target && e.target.closest("button[data-metric]");
+        if(!b) return;
+        const v = String(b.getAttribute("data-metric") || "equity");
+        GLOBAL.mc.metric = (v === "cumr") ? "cumr" : "equity";
+        for(const btn of metric.querySelectorAll("button")) btn.classList.toggle("active", btn === b);
+        if(GLOBAL.mode === "mc") renderMonteCarloView();
+      });
+    }
+
+    // Horizon chips
+    const chips = $("mcChips");
+    if(chips){
+      chips.addEventListener("click", (e)=>{
+        const b = e.target && e.target.closest("button[data-T]");
+        if(!b) return;
+        const t = Number(b.getAttribute("data-T"));
+        if(![100,500,1000].includes(t)) return;
+        GLOBAL.mc.T = t;
+        GLOBAL.mc.dirty = true;
+        for(const btn of chips.querySelectorAll("button[data-T]")) btn.classList.toggle("active", btn === b);
+        // show existing cached result if any, but do not auto compute
+        if(GLOBAL.mode === "mc") renderMonteCarloView();
+      });
+    }
+
+    const runBtn = $("mcRunBtn");
+    if(runBtn){
+      runBtn.addEventListener("click", ()=>{
+        // recompute always on click (force)
+        GLOBAL.mc.scopeKey = mcBuildScopeKey();
+        mcRunCompute();
+      });
+    }
+  }
+
 
 // Toggle wiring
   $("btnEquity").addEventListener("click", () => {
@@ -5186,6 +6208,7 @@ if(dpApply && !dpApply._bound){
     $("btnCal").classList.remove("active");
     $("btnKPI").classList.remove("active");
     $("btnAI").classList.remove("active");
+    $("btnMC").classList.remove("active");
 renderCurve();
   });
   $("btnR").addEventListener("click", () => {
@@ -5197,6 +6220,7 @@ renderCurve();
     $("btnCal").classList.remove("active");
     $("btnKPI").classList.remove("active");
     $("btnAI").classList.remove("active");
+    $("btnMC").classList.remove("active");
 renderCurve();
   });
   $("btnDD").addEventListener("click", () => {
@@ -5208,6 +6232,7 @@ renderCurve();
     $("btnCal").classList.remove("active");
     $("btnKPI").classList.remove("active");
     $("btnAI").classList.remove("active");
+    $("btnMC").classList.remove("active");
 renderCurve();
   });
   $("btnStreaks").addEventListener("click", () => {
@@ -5219,12 +6244,26 @@ renderCurve();
     $("btnCal").classList.remove("active");
     $("btnKPI").classList.remove("active");
     $("btnAI").classList.remove("active");
+    $("btnMC").classList.remove("active");
 renderCurve();
   });
 
   $("btnKPI").addEventListener("click", () => {
     GLOBAL.mode = "kpi";
     $("btnKPI").classList.add("active");
+    $("btnEquity").classList.remove("active");
+    $("btnR").classList.remove("active");
+    $("btnDD").classList.remove("active");
+    $("btnStreaks").classList.remove("active");
+    $("btnCal").classList.remove("active");
+    $("btnAI").classList.remove("active");
+    $("btnMC").classList.remove("active");
+    renderCurve();
+  });
+
+$("btnMC").addEventListener("click", () => {
+    GLOBAL.mode = "mc";
+    $("btnMC").classList.add("active");
     $("btnEquity").classList.remove("active");
     $("btnR").classList.remove("active");
     $("btnDD").classList.remove("active");
@@ -5242,6 +6281,9 @@ renderCurve();
     $("btnR").classList.remove("active");
     $("btnDD").classList.remove("active");
     $("btnStreaks").classList.remove("active");
+    $("btnKPI").classList.remove("active");
+    $("btnAI").classList.remove("active");
+    $("btnMC").classList.remove("active");
     renderCurve();
   });
 
@@ -5254,6 +6296,8 @@ $("btnAI").addEventListener("click", () => {
   $("btnDD").classList.remove("active");
   $("btnStreaks").classList.remove("active");
   $("btnCal").classList.remove("active");
+  $("btnKPI").classList.remove("active");
+  $("btnMC").classList.remove("active");
   renderCurve();
   // On-demand: request is only made when you actively open the AI tab (or press Refresh).
 });
