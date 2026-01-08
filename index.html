@@ -1674,6 +1674,28 @@ background: var(--cardGrad);
 .aiGrid{min-width:0}
 .aiCard{min-width:0}
 
+
+    /* MC info icon */
+    .mcInfoBtn{
+      width: 28px; height: 28px;
+      border-radius: 999px;
+      border: 1px solid rgba(120,160,255,.22);
+      background: rgba(10,16,32,.35);
+      color: rgba(231,240,255,.92);
+      font-weight: 900;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: default;
+      box-shadow: 0 8px 26px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06);
+    }
+    .mcInfoBtn:hover{ border-color: rgba(120,160,255,.35); background: rgba(10,16,32,.45); }
+
+    /* MC stats table readability */
+    .mcStatsTable th, .mcStatsTable td{ font-size: 15px; }
+    .mcStatsTable td:first-child{ font-size: 15px; }
+    .mcSep td{ padding: 10px 0; border-bottom: 1px solid rgba(120,160,255,.12); background: rgba(0,0,0,0); }
 </style>
  </head>
 <body>
@@ -1835,6 +1857,7 @@ background: var(--cardGrad);
               <button data-view="chart" class="active" type="button">Chart</button>
               <button data-view="stats" type="button">Stats</button>
             </div>
+            <button id="mcInfoBtn" class="mcInfoBtn" type="button" aria-label="Info" title="Info">i</button>
           </div>
 
           <div style="display:flex; align-items:center; gap:10px;">
@@ -1844,17 +1867,14 @@ background: var(--cardGrad);
             </div>
             <div class="chipRow" id="mcChips" aria-label="MC Horizon">
               <button class="chip active" data-T="100" type="button">100</button>
+              <button class="chip" data-T="200" type="button">200</button>
               <button class="chip" data-T="500" type="button">500</button>
               <button class="chip" data-T="1000" type="button">1.000</button>
               <button class="chip mcRunBtn" id="mcRunBtn" type="button" title="Start / Refresh">▶</button>
             </div>
           </div>
         </div>
-
-        <div class="mcInfoRow">
-          <div id="mcInfo" class="mcInfo">Simulation basiert auf historischen Trades</div>
-          <div class="tooltip" id="mcInfoTip" style="display:none;"></div>
-        </div>
+        <div class="tooltip" id="mcInfoTip" style="display:none;"></div>
 
         <div class="mcBody">
           <div class="mcChartArea" id="mcChartArea">
@@ -1876,6 +1896,7 @@ background: var(--cardGrad);
         </div>
       </div>
 
+</div>
 
 
       <div class="hint">
@@ -3248,7 +3269,7 @@ function computeScore(filteredTrades, tradeKPIs){
     GLOBAL.filteredTrades = filterEngine(GLOBAL.trades, GLOBAL.filters);
 
     // Monte Carlo: mark dirty on scope changes (compute only on Start click)
-    if(GLOBAL.mc){ GLOBAL.mc.scopeKey = mcBuildScopeKey(); GLOBAL.mc.dirty = true; GLOBAL.mc.readyKey = null; }
+    if(GLOBAL.mc){ GLOBAL.mc.scopeKey = mcBuildScopeKey(); GLOBAL.mc.dirty = true; }
 
     GLOBAL.tradeKPIs = computeTradeKPIs(GLOBAL.filteredTrades);
     GLOBAL.tradeStreaks = computeTradeStreaks(GLOBAL.filteredTrades);
@@ -4224,15 +4245,14 @@ if(type === "tradeQuality"){
     ctx.clearRect(0,0,cssW,cssH);
 
     // chart area padding
-    let padL = 56;
     const padR = 16, padT = 16, padB = 40;
+    let padL = 56;
 
     // compute min/max ignoring nulls
     const clean = values.filter(v => Number.isFinite(Number(v)));
     let minV = clean.length ? Math.min(...clean) : 0;
     let maxV = clean.length ? Math.max(...clean) : 1;
     if(minV === maxV){
-      // flat line padding
       minV -= 1;
       maxV += 1;
     } else {
@@ -4241,20 +4261,21 @@ if(type === "tradeQuality"){
       maxV += pad;
     }
 
-    // adjust left padding based on y-label width (prevents clipping)
+    // dynamic left padding based on y-label width
+    const yTicks = 4;
     ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial";
-    let _maxYLabelW = 0;
-    for(let k=0;k<=4;k++){
-      const t = k / 4;
+    let maxLabelW = 0;
+    for(let k=0;k<=yTicks;k++){
+      const t = k / yTicks;
       const val = maxV - t*(maxV-minV);
       const label = opts.yFmt(val);
-      const w = ctx.measureText(label).width;
-      if(w > _maxYLabelW) _maxYLabelW = w;
+      maxLabelW = Math.max(maxLabelW, ctx.measureText(String(label)).width);
     }
-    padL = Math.max(padL, Math.ceil(_maxYLabelW) + 18);
+    padL = Math.max(56, Math.ceil(maxLabelW) + 26);
 
     const W = cssW - padL - padR;
     const H = cssH - padT - padB;
+
 
     const xFor = (i) => padL + (i/(spine.length-1 || 1)) * W;
     const yFor = (v) => padT + (1 - ((v - minV)/(maxV - minV))) * H;
@@ -4263,7 +4284,7 @@ if(type === "tradeQuality"){
     ctx.strokeStyle = "rgba(120,160,255,.10)";
     ctx.lineWidth = 1;
 
-    const yTicks = 4;
+    // yTicks already set above
     ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial";
     ctx.fillStyle = "rgba(138,164,214,.95)";
 
@@ -4277,8 +4298,9 @@ if(type === "tradeQuality"){
 
       const val = maxV - t*(maxV-minV);
       const label = opts.yFmt(val);
-      const tw = ctx.measureText(label).width;
-      ctx.fillText(label, Math.max(10, padL - 10 - tw), y + 4);
+      ctx.textAlign = "right";
+      ctx.fillText(label, padL - 10, y + 4);
+      ctx.textAlign = "left";
     }
 
     // x ticks at 1st and 15th
@@ -4465,12 +4487,21 @@ if(type === "tradeQuality"){
       // position: below when point is in upper half of plot, otherwise above
       const midY = padT + (H/2);
       const below = (vy < midY);
+
+      // horizontal clamp rule (left/right 20% of plot)
+      const relX = (vx - padL) / (W || 1);
+      const hSide = (relX < 0.20) ? "left" : (relX > 0.80) ? "right" : "mid";
+
       tooltip.style.left = `${vx}px`;
       tooltip.style.top = `${vy}px`;
-      const xPct = (vx - padL) / (W || 1);
-      const tx = (xPct < 0.20) ? "12%" : (xPct > 0.80) ? "-112%" : "-50%";
-      const ty = below ? "12%" : "-110%";
-      tooltip.style.transform = `translate(${tx}, ${ty})`;
+
+      if(hSide === "left"){
+        tooltip.style.transform = below ? "translate(10%, 12%)" : "translate(10%, -110%)";
+      } else if(hSide === "right"){
+        tooltip.style.transform = below ? "translate(-110%, 12%)" : "translate(-110%, -110%)";
+      } else {
+        tooltip.style.transform = below ? "translate(-50%, 12%)" : "translate(-50%, -110%)";
+      }
       tooltip.style.display = "block";
 
       // redraw with crosshair
@@ -4597,11 +4628,10 @@ if(type === "tradeQuality"){
       active: false,
       view: "chart",      // "chart" | "stats"
       metric: "equity",   // "equity" | "cumr"
-      T: 100,             // 100 | 200 | 500 | 1000
+      T: 500,             // 100 | 500 | 1000
       running: false,
       dirty: true,
       scopeKey: "",
-      readyKey: null,
       lastComputedKey: null,
       cache: new Map(),      // key -> McResult
       cacheOrder: []         // LRU list of keys
@@ -5599,7 +5629,27 @@ if(dpApply && !dpApply._bound){
     return `<tr><td>${label}</td>${cells}</tr>`;
   }
 
-  function mcCompute(Rs, equityRow, T, M){
+  
+  function mcFmtUSDSp(n){
+    const s = fmtUSD(n);
+    return (s && s !== "—") ? s.replace("$", "$ ") : "—";
+  }
+  function mcFmtRSp(n){
+    const x = Number(n);
+    if(!Number.isFinite(x)) return "—";
+    const abs = Math.abs(x);
+    const decimals = abs >= 10 ? 1 : 2;
+    const val = abs.toFixed(decimals);
+    const sign = x < 0 ? "−" : "+";
+    return `${sign} ${val} R`;
+  }
+  function mcFmtPctNegSp(n){
+    const x = Number(n);
+    if(!Number.isFinite(x)) return "—";
+    const sign = x < 0 ? "−" : "";
+    return `${sign}${Math.abs(x).toFixed(2)} %`;
+  }
+function mcCompute(Rs, equityRow, T, M){
     const N = Rs.length;
     if(!N || N < 2){
       return { error: "Zu wenige Trades im Scope für eine Simulation." };
@@ -5724,7 +5774,7 @@ if(dpApply && !dpApply._bound){
 
       endEq[m] = equity;
       maxDD_$[m] = dd$min;
-      maxDD_pct[m] = ddPctMax;
+      maxDD_pct[m] = -ddPctMax;
 
       if(cumR > bestREnd){ bestREnd = cumR; bestRIdx = m; }
       if(cumR < worstREnd){ worstREnd = cumR; worstRIdx = m; }
@@ -5835,207 +5885,190 @@ if(dpApply && !dpApply._bound){
   }
 
   function drawMonteCarloChart(canvas, spine, series, metric){
-    const ctx = canvas.getContext("2d");
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = Math.round(rect.width * dpr);
-    canvas.height = Math.round(rect.height * dpr);
-    ctx.setTransform(dpr,0,0,dpr,0,0);
+  const ctx = canvas.getContext("2d");
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = Math.round(rect.width * dpr);
+  canvas.height = Math.round(rect.height * dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
 
-    const W = rect.width;
-    const H = rect.height;
-    ctx.clearRect(0,0,W,H);
+  const W = rect.width;
+  const H = rect.height;
+  ctx.clearRect(0,0,W,H);
 
-    const padL = 46, padR = 14, padT = 14, padB = 28;
-    const plotW = W - padL - padR;
-    const plotH = H - padT - padB;
+  let padL = 46, padR = 14, padT = 14, padB = 32;
 
-    const worst = series.worst, p10=series.p10, p50=series.p50, p90=series.p90, best=series.best;
+  const worst = series.worst, p10=series.p10, p50=series.p50, p90=series.p90, best=series.best;
+  const xCount = spine.length;
+  const baseLineVal = (metric === "equity") ? Number(p50?.[0] ?? 0) : 0;
 
-    // y range across all displayed series
-    let yMin = Infinity, yMax = -Infinity;
-    const scan = (arr)=>{
-      for(let i=0;i<arr.length;i++){
-        const v = Number(arr[i]);
-        if(!Number.isFinite(v)) continue;
-        if(v<yMin) yMin=v;
-        if(v>yMax) yMax=v;
-      }
-    };
-    scan(worst); scan(p10); scan(p50); scan(p90); scan(best);
-    if(!Number.isFinite(yMin) || !Number.isFinite(yMax) || yMin===yMax){
-      yMin = (Number.isFinite(yMin)?yMin:0) - 1;
-      yMax = (Number.isFinite(yMax)?yMax:0) + 1;
+  // y range based on p10/p90 (readability). Ensure baseline is visible.
+  let yMin = Infinity, yMax = -Infinity;
+  const scan = (arr)=>{
+    for(let i=0;i<arr.length;i++){
+      const v = Number(arr[i]);
+      if(!Number.isFinite(v)) continue;
+      if(v < yMin) yMin = v;
+      if(v > yMax) yMax = v;
     }
-    const padY = (yMax - yMin) * 0.06;
-    yMin -= padY; yMax += padY;
+  };
+  scan(p10); scan(p90);
+  if(Number.isFinite(baseLineVal)){
+    yMin = Math.min(yMin, baseLineVal);
+    yMax = Math.max(yMax, baseLineVal);
+  }
+  if(!Number.isFinite(yMin) || !Number.isFinite(yMax)){
+    yMin = 0; yMax = 1;
+  }
+  if(yMin === yMax){ yMin -= 1; yMax += 1; }
+  const yPad = (yMax - yMin) * 0.08;
+  yMin -= yPad; yMax += yPad;
 
-    const xCount = spine.length;
-    const xStep = (xCount>1) ? (plotW / (xCount-1)) : plotW;
+  // dynamic left padding based on y-label width
+  const yTicks = 4;
+  ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  let maxLabelW = 0;
+  for(let k=0;k<=yTicks;k++){
+    const t = k / yTicks;
+    const v = yMax - t*(yMax-yMin);
+    const lab = (metric === "equity") ? mcFmtUSDSp(v) : mcFmtRSp(v);
+    maxLabelW = Math.max(maxLabelW, ctx.measureText(String(lab)).width);
+  }
+  padL = Math.max(padL, Math.ceil(maxLabelW) + 26);
 
-    const yToPx = (v)=> padT + (yMax - v) * (plotH / (yMax - yMin));
-    const xToPx = (i)=> padL + i * xStep;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
 
-    // grid (light)
-    ctx.strokeStyle = "rgba(120,160,255,.10)";
-    ctx.lineWidth = 1;
+  const xStep = plotW / Math.max(1, (xCount - 1));
+  const xToPx = (i)=> padL + i * xStep;
+  const yToPx = (v)=> padT + (1 - ((v - yMin) / (yMax - yMin))) * plotH;
+
+  // grid
+  ctx.strokeStyle = "rgba(120,160,255,.10)";
+  ctx.lineWidth = 1;
+
+  // horizontal
+  ctx.fillStyle = "rgba(138,164,214,.95)";
+  for(let k=0;k<=yTicks;k++){
+    const t = k / yTicks;
+    const y = padT + t * plotH;
     ctx.beginPath();
-    const gridN = 4;
-    for(let g=0; g<=gridN; g++){
-      const y = padT + (plotH * g / gridN);
-      ctx.moveTo(padL, y);
-      ctx.lineTo(padL+plotW, y);
-    }
+    ctx.moveTo(padL, y);
+    ctx.lineTo(padL + plotW, y);
     ctx.stroke();
 
-    // x-grid (4 vertical intermediate lines)
-    ctx.strokeStyle = "rgba(120,160,255,.08)";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    for(let g=1; g<=4; g++){
-      const x = padL + plotW * (g/5);
-      ctx.moveTo(x, padT);
-      ctx.lineTo(x, padT+plotH);
-    }
-    ctx.stroke();
-
-    // axes labels (few)
-    ctx.fillStyle = "rgba(188,210,255,.70)";
-    ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    const v = yMax - t*(yMax-yMin);
+    const lab = (metric === "equity") ? mcFmtUSDSp(v) : mcFmtRSp(v);
     ctx.textAlign = "right";
-    ctx.textBaseline = "middle";
-    for(let g=0; g<=gridN; g++){
-      const v = yMax - (yMax-yMin) * (g / gridN);
-      const y = padT + (plotH * g / gridN);
-      const label = (metric === "equity") ? fmtUSD(v) : fmtR(v);
-      ctx.fillText(label, padL-8, y);
-    }
-
-
-    // baseline (CumR: 0R, Equity: Startbalance)
-    {
-      const baseV = (metric === "equity") ? Number(p50[0]) : 0;
-      if(Number.isFinite(baseV) && baseV >= yMin && baseV <= yMax){
-        const y0 = yToPx(baseV);
-        ctx.strokeStyle = "rgba(45,107,255,.55)";
-        ctx.lineWidth = 1.25;
-        ctx.beginPath();
-        ctx.moveTo(padL, y0);
-        ctx.lineTo(padL+plotW, y0);
-        ctx.stroke();
-      }
-    }
-
-    // x label endpoints
+    ctx.fillText(String(lab), padL - 10, y + 4);
     ctx.textAlign = "left";
-    ctx.textBaseline = "top";
-    ctx.fillText("0", padL, padT+plotH+8);
-    ctx.textAlign = "right";
-    ctx.fillText(String(spine.length-1), padL+plotW, padT+plotH+8);
+  }
 
-    // Fill between p10 and p90 with median accent
-    // Build path for p90 then reverse with p10
-    ctx.save();
-    const grad = ctx.createLinearGradient(0, padT, 0, padT+plotH);
-    grad.addColorStop(0, "rgba(45,107,255,.18)");
-    grad.addColorStop(0.5, "rgba(255,215,64,.16)");
-    grad.addColorStop(1, "rgba(45,107,255,.12)");
-    ctx.fillStyle = grad;
+  // vertical (4 intermediate gridlines)
+  const xTicks = 4;
+  for(let k=1;k<=xTicks;k++){
+    const x = padL + (k/(xTicks+1)) * plotW;
+    ctx.beginPath();
+    ctx.moveTo(x, padT);
+    ctx.lineTo(x, padT + plotH);
+    ctx.stroke();
+
+    // x-label at gridline (20/40/60/80 etc.)
+    const xVal = Math.round((k/(xTicks+1)) * (xCount - 1));
+    ctx.fillStyle = "rgba(138,164,214,.95)";
+    ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(String(xVal), x, padT + plotH + 22);
+    ctx.textAlign = "left";
+  }
+
+  // baseline (0R or start balance)
+  if(Number.isFinite(baseLineVal)){
+    const y0 = yToPx(baseLineVal);
+    ctx.strokeStyle = "rgba(45,107,255,.55)";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(padL, y0);
+    ctx.lineTo(padL + plotW, y0);
+    ctx.stroke();
+  }
+
+  // clip plot area for lines so "best" doesn't crush readability
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(padL, padT, plotW, plotH);
+  ctx.clip();
+
+  const drawLine = (arr, stroke, w)=>{
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = w;
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
     ctx.beginPath();
     for(let i=0;i<xCount;i++){
       const x = xToPx(i);
-      const y = yToPx(p90[i]);
+      const y = yToPx(Number(arr[i]));
       if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
     }
-    for(let i=xCount-1;i>=0;i--){
-      const x = xToPx(i);
-      const y = yToPx(p10[i]);
-      ctx.lineTo(x,y);
-    }
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
+    ctx.stroke();
+  };
 
-    const drawLine = (arr, stroke, w)=>{
-      ctx.strokeStyle = stroke;
-      ctx.lineWidth = w;
-      ctx.lineJoin = "round";
-      ctx.lineCap = "round";
-      ctx.beginPath();
-      for(let i=0;i<xCount;i++){
-        const x = xToPx(i);
-        const y = yToPx(arr[i]);
-        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-      }
-      ctx.stroke();
-    };
+  // best/worst thin grey
+  drawLine(worst, "rgba(231,240,255,.22)", 1);
+  drawLine(best,  "rgba(231,240,255,.22)", 1);
 
-    // best/worst thin grey
-    drawLine(worst, "rgba(231,240,255,.22)", 1);
-    drawLine(best, "rgba(231,240,255,.22)", 1);
+  // p10/p90
+  drawLine(p10, "rgba(188,210,255,.85)", 2);
+  drawLine(p90, "rgba(188,210,255,.85)", 2);
 
-    // p10/p90
-    drawLine(p10, "rgba(188,210,255,.85)", 2);
-    drawLine(p90, "rgba(188,210,255,.85)", 2);
+  // median bold gold
+  drawLine(p50, "rgba(255,215,64,.95)", 3);
 
-    // median bold gold
-    drawLine(p50, "rgba(255,215,64,.95)", 3);
+  ctx.restore();
 
-    // hover interaction (nearest x)
-    const tip = $("mcTooltip");
-    const wrap = $("mcChartArea");
-    if(!tip || !wrap) return;
+  // hover interaction (nearest x)
+  const tip = $("mcTooltip");
+  const wrap = $("mcChartArea");
+  if(!tip || !wrap) return;
 
-    const fmtV = (v)=> {
-      const n = Number(v);
-      if(!Number.isFinite(n)) return "—";
-      if(metric === "equity") return fmtUSD(n).replace("$", "$ ");
-      const abs = Math.abs(n);
-      const dec = abs >= 10 ? 1 : 2;
-      const val = abs.toFixed(dec);
-      const sign = (n < 0) ? "−" : "+";
-      return `${sign} ${val} R`;
-    };
+  const fmtV = (v)=> (metric==="equity") ? mcFmtUSDSp(v) : mcFmtRSp(v);
 
-    const showTip = (idx, clientX, clientY) => {
-      const rows = [
-        `<div><b>Trade #${idx}</b></div>`,
-        `<div style="margin-top:8px;"><span style="opacity:.7;">Median</span></div>`,
-        `<div><b style="color:rgba(255,215,64,.95)">${fmtV(p50[idx])}</b></div>`,
-        `<div style="margin-top:8px;"><span style="opacity:.7;">p10</span></div>`,
-        `<div>${fmtV(p10[idx])}</div>`,
-        `<div style="margin-top:8px;"><span style="opacity:.7;">p90</span></div>`,
-        `<div>${fmtV(p90[idx])}</div>`,
-        `<div style="margin-top:8px; opacity:.75;"><span>worst</span></div>`,
-        `<div style="opacity:.75;">${fmtV(worst[idx])}</div>`,
-        `<div style="margin-top:6px; opacity:.75;"><span>best</span></div>`,
-        `<div style="opacity:.75;">${fmtV(best[idx])}</div>`
-      ];
-      tip.innerHTML = rows.join("");
-      tip.style.display = "block";
+  const showTip = (idx, clientX, clientY) => {
+    const rows = [
+      `<div><b>Trade #${idx}</b></div>`,
+      `<div style="margin-top:8px; opacity:.65;">best: <span>${fmtV(best[idx])}</span></div>`,
+      `<div style="color:rgba(188,210,255,.95);">p90: <span>${fmtV(p90[idx])}</span></div>`,
+      `<div style="color:rgba(255,215,64,.98); font-weight:900;">median: <span>${fmtV(p50[idx])}</span></div>`,
+      `<div style="color:rgba(188,210,255,.95);">p10: <span>${fmtV(p10[idx])}</span></div>`,
+      `<div style="opacity:.65;">worst: <span>${fmtV(worst[idx])}</span></div>`
+    ];
+    tip.innerHTML = rows.join("");
+    tip.style.display = "block";
 
-      const r = wrap.getBoundingClientRect();
-      const mx = clientX - r.left;
-      const my = clientY - r.top;
-      tip.style.left = `${mx}px`;
-      tip.style.top  = `${my}px`;
-      const xPct = (mx - padL) / (plotW || 1);
-      const below = (my < (padT + plotH/2));
-      const tx = (xPct < 0.20) ? "12%" : (xPct > 0.80) ? "-112%" : "-50%";
-      const ty = below ? "14%" : "-114%";
-      tip.style.transform = `translate(${tx}, ${ty})`;
-    };
+    const r = wrap.getBoundingClientRect();
+    const mx = clientX - r.left;
+    const my = clientY - r.top;
 
-    const hideTip = ()=> { tip.style.display = "none"; };
+    // basic clamp so tooltip stays in viewport of the chart area
+    const tw = 220;
+    const th = 130;
+    const left = Math.min(r.width - tw - 8, Math.max(8, mx + 12));
+    const top  = Math.min(r.height - th - 8, Math.max(8, my + 12));
 
-    canvas.onmousemove = (e)=>{
-      const r = canvas.getBoundingClientRect();
-      const mx = e.clientX - r.left;
-      const idx = Math.max(0, Math.min(xCount-1, Math.round((mx - padL) / xStep)));
-      showTip(idx, e.clientX, e.clientY);
-    };
-    canvas.onmouseleave = hideTip;
-  }
+    tip.style.left = left + "px";
+    tip.style.top  = top + "px";
+  };
+
+  const hideTip = ()=> { tip.style.display = "none"; };
+
+  canvas.onmousemove = (e)=>{
+    const r = canvas.getBoundingClientRect();
+    const mx = e.clientX - r.left;
+    const idx = Math.max(0, Math.min(xCount-1, Math.round((mx - padL) / xStep)));
+    showTip(idx, e.clientX, e.clientY);
+  };
+  canvas.onmouseleave = hideTip;
+}
 
   function renderMonteCarloView(){
     const mcWrap = $("mcWrap");
@@ -6051,32 +6084,54 @@ if(dpApply && !dpApply._bound){
     const statsArea = $("mcStatsArea");
     const empty = $("mcEmpty");
 
-    // info tooltip content
-    const info = $("mcInfo");
+    // info tooltip content (dynamic, reflects current filter scope)
+    const info = $("mcInfoBtn");
     const infoTip = $("mcInfoTip");
     const N = (Array.isArray(GLOBAL.filteredTrades) ? GLOBAL.filteredTrades.length : 0);
+
+    function mcDisplayInstrument(){
+      return String(GLOBAL.filters?.instrument || "ALL");
+    }
+    function mcDisplayRange(){
+      const f = GLOBAL.filters || {};
+      const mf = f.manualFrom, mt = f.manualTo;
+      if(mf || mt){
+        const a = mf || "…";
+        const b = mt || "…";
+        return `${a} → ${b}`;
+      }
+      return String(f.preset || "ALL");
+    }
+
     if(info && infoTip){
       if(infoTip.parentElement !== document.body) document.body.appendChild(infoTip);
-      const details = [
-        `<b>Simulation basiert auf historischen Trades</b>`,
-        `<div class="muted">Instrument: ${String(GLOBAL.filters?.instrument || "ALL")}</div>`,
-        `<div class="muted">Trades im Sample: ${N}</div>`,
-        `<div class="muted">Pfade (M): ${GLOBAL.mc.M}</div>`,
-        `<div class="muted">Horizon (T): ${GLOBAL.mc.T} Trades</div>`,
-        `<div class="muted">Equity: 1% Risk · 5% Ladder · DD Multiplier (sticky)</div>`
-      ].join("");
+
       const position = (e)=>{
         const x = (e?.clientX ?? 0) + 14;
         const y = (e?.clientY ?? 0) + 14;
         infoTip.style.left = x + "px";
         infoTip.style.top  = y + "px";
       };
+
+      const buildDetails = ()=>{
+        return [
+          `<b>Monte Carlo · Info</b>`,
+          `<div class="muted">Instrument: ${mcDisplayInstrument()}</div>`,
+          `<div class="muted">Zeitraum: ${mcDisplayRange()}</div>`,
+          `<div class="muted">Trades im Sample: ${N}</div>`,
+          `<div class="muted">Pfade (M): ${GLOBAL.mc.M}</div>`,
+          `<div class="muted">Horizons: 100 / 200 / 500 / 1.000 Trades</div>`,
+          `<div class="muted">Equity: 1% Risk · 5% Ladder · DD Multiplier (sticky)</div>`
+        ].join("");
+      };
+
       const show = (e)=>{
-        infoTip.innerHTML = details;
+        infoTip.innerHTML = buildDetails();
         infoTip.style.display = "block";
         position(e);
       };
       const hide = ()=> infoTip.style.display = "none";
+
       if(!info._mcBound){
         info._mcBound = true;
         info.addEventListener("mouseenter", show);
@@ -6084,8 +6139,7 @@ if(dpApply && !dpApply._bound){
         info.addEventListener("mouseleave", hide);
       }
     }
-
-    // view toggles
+// view toggles
     const wantStats = (GLOBAL.mc.view === "stats");
     if(chartArea) chartArea.style.display = wantStats ? "none" : "block";
     if(statsArea) statsArea.style.display = wantStats ? "block" : "none";
@@ -6123,29 +6177,31 @@ if(dpApply && !dpApply._bound){
 
       let bodyRows = "";
       if(GLOBAL.mc.metric === "cumr"){
-        bodyRows += mcBuildStatsRow("End CumR", cached.stats.cumr.endR, fmtR);
-        bodyRows += mcBuildStatsRow("Max Drawdown (R)", cached.stats.cumr.maxDD_R, fmtR);
+        bodyRows += mcBuildStatsRow("End CumR", cached.stats.cumr.endR, mcFmtRSp);
+        bodyRows += mcBuildStatsRow("Max Drawdown (R)", cached.stats.cumr.maxDD_R, mcFmtRSp);
         if(prob){
           prob.style.display = "inline-flex";
           prob.textContent = `P(End < 0R): ${(cached.prob.cumr_end_below_0*100).toFixed(1)}%`;
         }
       } else {
-        bodyRows += mcBuildStatsRow("End Balance", cached.stats.equity.end$, fmtUSD);
+        bodyRows += mcBuildStatsRow("End Balance", cached.stats.equity.end$, mcFmtUSDSp);
+        bodyRows += `<tr class="mcSep"><td colspan="6"></td></tr>`;
         bodyRows += mcBuildStatsRow("Total Change ($)", cached.stats.equity.change$, (v)=> {
           const n = Number(v); if(!Number.isFinite(n)) return "—";
-          const s = n>0?"+":""; return s + fmtUSD(n);
+          const s = n>0?"+":""; return (s ? (s + " ") : "") + mcFmtUSDSp(n);
         });
         bodyRows += mcBuildStatsRow("Total Change (%)", cached.stats.equity.changePct, (v)=> {
           const n = Number(v); if(!Number.isFinite(n)) return "—";
-          const s = n>0?"+":""; return s + (n*100).toFixed(2) + "%";
+          const s = n>0?"+":""; return (s ? (s + " ") : "") + Math.abs(n*100).toFixed(2) + " %";
         });
+        bodyRows += `<tr class="mcSep"><td colspan="6"></td></tr>`;
         bodyRows += mcBuildStatsRow("Max Drawdown ($)", cached.stats.equity.maxDD_$, (v)=> {
           const n = Number(v); if(!Number.isFinite(n)) return "—";
-          return fmtUSD(n);
+          return mcFmtUSDSp(n);
         });
         bodyRows += mcBuildStatsRow("Max Drawdown (%)", cached.stats.equity.maxDD_pct, (v)=> {
           const n = Number(v); if(!Number.isFinite(n)) return "—";
-          return n.toFixed(2) + "%";
+          return mcFmtPctNegSp(n);
         });
         if(prob){
           prob.style.display = "inline-flex";
@@ -6169,6 +6225,10 @@ if(dpApply && !dpApply._bound){
   function mcRunCompute(){
     const eqRow = mcLatestEquityRow();
     const Rs = mcExtractRs();
+
+    // refresh scope key (reflect current filters)
+    GLOBAL.mc.scopeKey = mcBuildScopeKey();
+
     if(!eqRow){
       alert("Equity-Daten fehlen (equity.json).");
       return;
@@ -6178,27 +6238,26 @@ if(dpApply && !dpApply._bound){
       return;
     }
 
-    // Start = Bundle-Compute: alle auswählbaren Kombinationen (Metric wird aus Result gezogen)
-    const horizons = [100, 200, 500, 1000];
-    GLOBAL.mc.scopeKey = mcBuildScopeKey();
-    const scopeKey = GLOBAL.mc.scopeKey;
-
     mcSetRunState(true);
+
+    const Ts = [100, 200, 500, 1000];
+    const M = GLOBAL.mc.M;
 
     // allow UI to update
     setTimeout(()=> {
       try{
-        for(const T of horizons){
-          const key = `${scopeKey}|${T}`;
-          const res = mcCompute(Rs, eqRow, T, GLOBAL.mc.M);
+        for(const T of Ts){
+          const key = `${GLOBAL.mc.scopeKey}|${T}`;
+          const res = mcCompute(Rs, eqRow, T, M);
           if(res && !res.error){
             mcCacheSet(key, res);
-            GLOBAL.mc.lastComputedKey = key;
           } else {
-            throw new Error(res?.error || `Monte Carlo Fehler bei T=${T}.`);
+            throw new Error(res?.error || "Monte Carlo Fehler.");
           }
         }
-        GLOBAL.mc.readyKey = scopeKey;
+        // mark as computed for current T selection
+        const curKey = `${GLOBAL.mc.scopeKey}|${GLOBAL.mc.T}`;
+        GLOBAL.mc.lastComputedKey = curKey;
         GLOBAL.mc.dirty = false;
         $("mcEmpty") && ($("mcEmpty").style.display = "none");
         renderMonteCarloView();
@@ -6253,7 +6312,7 @@ if(dpApply && !dpApply._bound){
         const b = e.target && e.target.closest("button[data-T]");
         if(!b) return;
         const t = Number(b.getAttribute("data-T"));
-        if(![100,500,1000].includes(t)) return;
+        if(![100,200,500,1000].includes(t)) return;
         GLOBAL.mc.T = t;
         GLOBAL.mc.dirty = true;
         for(const btn of chips.querySelectorAll("button[data-T]")) btn.classList.toggle("active", btn === b);
