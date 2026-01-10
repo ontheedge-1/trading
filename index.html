@@ -780,12 +780,28 @@ background: var(--cardGrad);
     }
     .mcInsightCard{
       position: relative;
-      border-radius: 14px;
-      border: 1px solid rgba(120,160,255,.14);
-      background: linear-gradient(180deg, rgba(10,16,32,.28), rgba(10,16,32,.10));
-      padding: 12px 12px 11px 12px;
-      box-shadow: inset 0 0 0 1px rgba(45,107,255,.06);
-      min-height: 86px;
+      border-radius: 9px; /* 1:1 with KPI tiles */
+      padding: 16px 16px 14px;
+      border: 1px solid rgba(160,205,255,.18);
+      background:
+        radial-gradient(680px 240px at 18% 0%, rgba(120,170,255,.18), transparent 60%),
+        radial-gradient(740px 280px at 82% 120%, rgba(0,255,208,.06), transparent 62%),
+        linear-gradient(180deg, rgba(20,40,70,.72), rgba(10,18,32,.62));
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.10),
+        0 22px 60px rgba(0,0,0,.42);
+      overflow: hidden;
+      min-height: 92px;
+    }
+    /* Subtle 2px top highlight per Insights column accent */
+    .mcInsightsCol[data-accent] .mcInsightCard::before{
+      content:"";
+      position:absolute;
+      left:0; right:0; top:0;
+      height:2px;
+      background: var(--mcAccent, rgba(120,170,255,.65));
+      opacity: .95;
+      pointer-events:none;
     }
     .mcInsightCard.mcPrimary{
       border-color: rgba(45,107,255,.28);
@@ -1844,6 +1860,69 @@ background: var(--cardGrad);
   user-select:none;
 }
 
+/* Insights column accents */
+.mcInsightsCol[data-accent="goal"]{ --mcAccent: rgba(120,170,255,.85); }
+.mcInsightsCol[data-accent="risk"]{ --mcAccent: rgba(255,190,90,.85); }
+.mcInsightsCol[data-accent="endurance"]{ --mcAccent: rgba(120,220,205,.65); }
+
+/* Prominent header underline uses column accent (reuses existing header line) */
+.mcInsightsColHead{ position: relative; }
+.mcInsightsColHead::after{
+  content:"";
+  position:absolute;
+  left: 10px;
+  right: 10px;
+  bottom: -1px;
+  height: 2px;
+  background: var(--mcAccent, rgba(120,170,255,.70));
+  opacity: .75;
+  pointer-events:none;
+}
+
+/* Micro icon (click only) */
+.mcMicroIcon{
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 1px solid rgba(120,170,255,.26);
+  background: rgba(10,16,32,.55);
+  color: rgba(226,240,255,.92);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-weight: 1000;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  transform: translateY(-.5px);
+}
+.mcInsightsCol[data-accent="risk"] .mcMicroIcon{ border-color: rgba(255,190,90,.28); }
+.mcInsightsCol[data-accent="endurance"] .mcMicroIcon{ border-color: rgba(120,220,205,.26); }
+
+/* Insight typography 1:1 feel with KPI tiles */
+
+
+
+
+/* Solid click-to-toggle tooltip (no transparency) */
+.tooltip.mcSolid{
+  background: rgba(6,10,18,.98);
+  border: 1px solid rgba(120,170,255,.22);
+  box-shadow: 0 18px 60px rgba(0,0,0,.55);
+}
+.tooltip.mcHeaderTip{
+  max-width: 420px; /* ~70 chars typical */
+  padding: 10px 12px;
+}
+.tooltip .mcTipLast{
+  display:block;
+  margin-top: 8px;
+  font-size: 11px;
+  color: rgba(140,190,255,.95);
+}
+
+
+
 .mcColInfo{
   display:inline-flex;
   align-items:center;
@@ -1876,31 +1955,11 @@ background: var(--cardGrad);
   overflow:hidden;
 }
 
-.mcInsightCard .mcCardTitle{
-  font-size:12px;
-  letter-spacing:.25px;
-  text-transform: uppercase;
-  color: rgba(170,200,255,.92);
-  font-weight: 900;
-  margin-bottom: 8px;
-}
 
-.mcInsightCard .mcCardValue{
-  font-size: 24px; /* slightly smaller than before */
-  font-weight: 900;
-  letter-spacing:.01em;
-  color: rgba(160,205,255,.92);
-  text-shadow: 0 0 18px rgba(120,170,255,.18);
-  font-variant-numeric: tabular-nums;
-}
 
-.mcInsightCard .mcCardSub{
-  margin-top: 10px;
-  font-size: 12.5px;
-  color: rgba(190,212,255,.74);
-  line-height: 1.35;
-  font-variant-numeric: tabular-nums;
-}
+
+
+
 .mcInsightCard .mcCardSub b{
   color: rgba(235,245,255,.92);
   font-weight: 950;
@@ -1933,7 +1992,7 @@ background: var(--cardGrad);
   color: rgba(226,240,255,.92);
   font-size: 12px;
   line-height: 1;
-  cursor: default;
+  cursor: pointer;
 }
 </style>
  </head>
@@ -2017,6 +2076,7 @@ background: var(--cardGrad);
         <div id="chartDelta" class="chartDelta" style="display:none;"></div>
         <div class="tooltip" id="kpiTooltip" style="display:none;"></div>
         <div class="tooltip" id="dataTooltip" style="display:none;"></div>
+        <div class="tooltip mcSolid mcHeaderTip" id="mcHeaderTooltip" style="display:none;"></div>
 
 
 <div id="aiPanel" class="aiPanel" aria-live="polite">
@@ -2135,8 +2195,8 @@ background: var(--cardGrad);
 
   <div class="mcInsightsArea" id="mcInsightsArea" style="display:none;">
     <div class="mcInsightsCols">
-      <div class="mcInsightsCol">
-        <div class="mcInsightsColHead" data-mc-coltip="goal">Goal &amp; Success <span class="mcColInfo">i</span></div>
+      <div class="mcInsightsCol" data-accent="goal">
+        <div class="mcInsightsColHead" data-mc-coltip="goal">Goal &amp; Success <button type="button" class="mcMicroIcon" aria-label="Info">i</button></div>
         <div class="mcInsightsColGrid">
           <div class="mcInsightCard" id="mcIG_goal">
             <div class="mcCardTitle" id="mcIG_goal_title">Chance to reach target</div>
@@ -2151,8 +2211,8 @@ background: var(--cardGrad);
         </div>
       </div>
 
-      <div class="mcInsightsCol">
-        <div class="mcInsightsColHead" data-mc-coltip="risk">Risk <span class="mcColInfo">i</span></div>
+      <div class="mcInsightsCol" data-accent="risk">
+        <div class="mcInsightsColHead" data-mc-coltip="risk">Risk <button type="button" class="mcMicroIcon" aria-label="Info">i</button></div>
         <div class="mcInsightsColGrid">
           <div class="mcInsightCard" id="mcIR_p90dd">
             <div class="mcCardTitle">p90 Max Drawdown</div>
@@ -2166,16 +2226,18 @@ background: var(--cardGrad);
         </div>
       </div>
 
-      <div class="mcInsightsCol">
-        <div class="mcInsightsColHead" data-mc-coltip="endur">Endurance &amp; Recovery <span class="mcColInfo">i</span></div>
+      <div class="mcInsightsCol" data-accent="endurance">
+        <div class="mcInsightsColHead" data-mc-coltip="endur">Endurance &amp; Recovery <button type="button" class="mcMicroIcon" aria-label="Info">i</button></div>
         <div class="mcInsightsColGrid">
           <div class="mcInsightCard" id="mcIE_uw_med">
             <div class="mcCardTitle">Median Time Under Water</div>
             <div class="mcCardValue" id="mcIE_uw_med_val">—</div>
+            <div class="mcCardSub" id="mcIE_uw_med_sub"></div>
           </div>
           <div class="mcInsightCard" id="mcIE_uw_p90">
             <div class="mcCardTitle">p90 Time Under Water</div>
             <div class="mcCardValue" id="mcIE_uw_p90_val">—</div>
+            <div class="mcCardSub" id="mcIE_uw_p90_sub"></div>
           </div>
         </div>
       </div>
@@ -2208,6 +2270,10 @@ const $ = (id) => document.getElementById(id);
 function ensureChartAreaReady(){
   const chartWrap = $("chartWrap");
   const calWrap = $("calendarWrap");
+  const mcWrap = $("mcWrap");
+
+  // Ensure Monte Carlo area never leaks into other modes (Calendar/KPI/AI)
+  if(GLOBAL.mode !== "mc" && mcWrap) mcWrap.style.display = "none";
   const mcWrap = $("mcWrap");
   if(mcWrap && GLOBAL.mode !== "mc") mcWrap.style.display = "none";
   const canvas = $("curveCanvas");
@@ -5255,6 +5321,7 @@ function renderCurve(withCrosshair=false){
     if($("dataTooltip")) $("dataTooltip").style.display = "none";
     if($("aiPanel") && $("aiPanel").style.display !== "none") hideAIPanel();
     renderMonteCarloView();
+      mcInitHeaderTooltips();
     return;
   }
 
@@ -5931,6 +5998,111 @@ if(dpApply && !dpApply._bound){
     if(n == null || !Number.isFinite(n)) return "—";
     return String(Math.round(n));
   }
+
+  /* ===== MC: click-to-toggle header/stats tooltips (clamped) ===== */
+  const MC_COL_TIPS = {
+    goal: "Goal & Success: probability to hit the selected target and the typical time-to-target.",
+    risk: "Risk: tail outcomes and drawdown probabilities across simulated paths.",
+    endur: "Endurance & Recovery: how long you are likely to stay under water before new highs."
+  };
+
+  function mcGetTipEl(){
+    return $("mcHeaderTooltip") || $("dataTooltip") || $("kpiTooltip");
+  }
+
+  function mcHideTip(){
+    const el = mcGetTipEl();
+    if(!el) return;
+    el.style.display = "none";
+    el.dataset.anchorId = "";
+  }
+
+  function mcClamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+
+  function mcShowAnchoredTip(anchorEl, htmlContent){
+    const tip = mcGetTipEl();
+    if(!tip || !anchorEl) return;
+
+    tip.classList.add("mcSolid","mcHeaderTip");
+    tip.innerHTML = htmlContent;
+
+    // display first to measure
+    tip.style.display = "block";
+    tip.style.left = "0px";
+    tip.style.top  = "0px";
+
+    const a = anchorEl.getBoundingClientRect();
+    const t = tip.getBoundingClientRect();
+
+    let left = a.left + (a.width/2) - (t.width/2);
+    let top  = a.bottom + 10;
+
+    const pad = 10;
+    left = mcClamp(left, pad, window.innerWidth - t.width - pad);
+    top  = mcClamp(top, pad, window.innerHeight - t.height - pad);
+
+    tip.style.left = Math.round(left) + "px";
+    tip.style.top  = Math.round(top) + "px";
+    tip.dataset.anchorId = anchorEl.id || "__mc";
+  }
+
+  function mcToggleAnchoredTip(anchorEl, htmlContent){
+    const tip = mcGetTipEl();
+    if(!tip) return;
+    const anchorId = anchorEl?.id || "__mc";
+    const isOpen = (tip.style.display !== "none" && tip.dataset.anchorId === anchorId);
+    if(isOpen){ mcHideTip(); }
+    else { mcShowAnchoredTip(anchorEl, htmlContent); }
+  }
+
+  function mcInitHeaderTooltips(){
+    if(mcInitHeaderTooltips._done) return;
+    mcInitHeaderTooltips._done = true;
+
+    document.addEventListener("click", (e)=>{
+      const btn = e.target?.closest?.(".mcMicroIcon");
+      const stats = e.target?.closest?.(".mcStatsInfo");
+
+      // Header micro-icons
+      if(btn){
+        e.preventDefault();
+        e.stopPropagation();
+
+        const head = btn.closest(".mcInsightsColHead");
+        const key = head?.getAttribute("data-mc-coltip") || "";
+        const txt = MC_COL_TIPS[key] || "";
+        if(!txt) return;
+
+        mcToggleAnchoredTip(btn, `<div>${txt}</div>`);
+        return;
+      }
+
+      // Stats (i)
+      if(stats){
+        e.preventDefault();
+        e.stopPropagation();
+
+        const body = [
+          `<b>Monte Carlo · Stats</b>`,
+          `<div class="muted">Worst/p10/Median/p90/Best are computed across simulated paths.</div>`,
+          `<div class="muted">Median is the 50th percentile of outcomes.</div>`,
+          `<span class="mcTipLast">Tip: switch Horizon (T) to see how tails evolve.</span>`
+        ].join("");
+        mcToggleAnchoredTip(stats, body);
+        return;
+      }
+
+      // Click outside closes
+      const tip = mcGetTipEl();
+      if(tip && tip.style.display !== "none"){
+        mcHideTip();
+      }
+    });
+
+    window.addEventListener("resize", ()=>{ mcHideTip(); });
+    window.addEventListener("scroll", ()=>{ mcHideTip(); }, {passive:true});
+  }
+
   function renderMonteCarloInsights(cached, metric){
   const I = cached?.insights?.[metric];
   if(!I) return;
