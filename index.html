@@ -793,7 +793,28 @@ background: var(--cardGrad);
       overflow: hidden;
       min-height: 92px;
     }
-    /* Subtle 2px top highlight per Insights column accent */
+
+    /* Premium gradient border (matches KPI tiles) */
+    .mcInsightCard::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius: inherit;
+      padding:1px;
+      background: linear-gradient(135deg,
+        rgba(120,170,255,.35),
+        rgba(255,255,255,.06),
+        rgba(0,255,208,.18));
+      -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+              mask-composite: exclude;
+      pointer-events:none;
+      opacity:.75;
+    }
+
+        /* Subtle 2px top highlight per Insights column accent */
     .mcInsightsCol[data-accent] .mcInsightCard::before{
       content:"";
       position:absolute;
@@ -809,26 +830,33 @@ background: var(--cardGrad);
       background: linear-gradient(180deg, rgba(45,107,255,.14), rgba(10,16,32,.10));
     }
     .mcCardTitle{
-      font-size: 12px;
-      font-weight: 1000;
-      color: rgba(188,210,255,.95);
-      letter-spacing: .1px;
+      font-size: 11px;
+      font-weight: 900;
+      color: rgba(188,210,255,.92);
+      letter-spacing: .35px;
+      text-transform: uppercase;
     }
     .mcCardValue{
-      margin-top: 6px;
-      font-size: 26px;
-      font-weight: 1000;
-      color: rgba(231,240,255,.95);
+      margin-top: 8px;
+      font-size: 24px;
+      font-weight: 950;
+      color: rgba(150,195,255,.96);
       letter-spacing: .2px;
     }
     .mcCardSub{
-      margin-top: 6px;
+      margin-top: 10px;
+      padding-top: 7px;
+      border-top: 1px solid rgba(120,170,255,.14);
       font-size: 12px;
-      color: rgba(188,210,255,.75);
+      color: rgba(188,210,255,.78);
       line-height: 1.25;
       white-space: nowrap;
       overflow:hidden;
       text-overflow: ellipsis;
+    }
+    .mcCardSub b{
+      font-weight: 1000;
+      color: rgba(236,246,255,.96);
     }
     .mcCardBadge{
       position:absolute;
@@ -1104,7 +1132,7 @@ background: var(--cardGrad);
     .k{ font-size:12px; letter-spacing:.25px; text-transform: none; }
     .kpiGrid .card .k{ color: rgba(170,200,255,.92); }
     .kpiGrid .card .v{ font-size:26px; }
-    .kpiGrid .card{ box-shadow: 0 14px 34px rgba(0,0,0,.40); }
+    .kpiGrid .card{ position: relative; box-shadow: 0 14px 34px rgba(0,0,0,.40); }
     /* ===== Phase 1 polish: topbar + rhythm ===== */
     header{
       position: relative;
@@ -1839,10 +1867,12 @@ background: var(--cardGrad);
   content:"";
   position:absolute;
   top: 44px;
-  right: 4px;
+  /* center the divider inside the inter-column gap (gap ≈ 26px => half ≈ 13px) */
+  right: -13px;
   bottom: 10px;
-  width:1px;
-  background: rgba(120,160,255,.10);
+  width:2px;
+  background: rgba(120,160,255,.14);
+  border-radius: 2px;
 }
 
 .mcInsightsColHead{
@@ -1866,7 +1896,18 @@ background: var(--cardGrad);
 .mcInsightsCol[data-accent="endurance"]{ --mcAccent: rgba(120,220,205,.65); }
 
 /* Prominent header underline uses column accent (reuses existing header line) */
-.mcInsightsColHead{ position: relative; }
+.mcInsightsColHead{
+  position: relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 950;
+  letter-spacing: 2.6px;
+  text-transform: uppercase;
+  color: rgba(236,246,255,.92);
+}
 .mcInsightsColHead::after{
   content:"";
   position:absolute;
@@ -1874,7 +1915,7 @@ background: var(--cardGrad);
   right: 10px;
   bottom: -1px;
   height: 2px;
-  background: var(--mcAccent, rgba(120,170,255,.70));
+  background: rgba(120,170,255,.70);
   opacity: .75;
   pointer-events:none;
 }
@@ -3948,9 +3989,13 @@ if(type === "tradeQuality"){
         const n = k.tradeCount;
         const formula = `${fmtR(totalR)} / ${Number.isFinite(Number(n)) ? n : "—"}`;
         return `
-          <div><b>Trade Quality = ${formula}</b></div>
-          <div class="muted">Unabhängig von Winrate</div>
+          <div style="font-weight:900; margin-bottom:6px;">Trade Quality (Avg R / Trade)</div>
+          <div class="muted">Definition: Total R divided by number of trades in the selected window.</div>
+          <div style="margin-top:8px;"><b>Formula</b><br/>${formula}</div>
+          <div style="margin-top:8px;" class="muted">Read as: “how much R you earn per trade on average”.</div>
+          <div class="kpiTipLast">Tip: compare this with your Profit Factor and Win/Loss profile for context.</div>
         `;
+      }
       }
       if(type === "systemEdge"){
         const wr = k.winrate;
@@ -4054,27 +4099,75 @@ if(type === "tradeQuality"){
     const hide = () => { tip.style.display = "none"; };
 
     // de-duplicate binding (simple guard via attribute)
-    document.querySelectorAll(".card[data-kpi-tip]").forEach(card => {
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+    function showAnchored(htmlContent, anchorEl){
+      if(!anchorEl) return;
+      tip.innerHTML = htmlContent;
+      tip.classList.add("kpiSolid");
+      tip.style.display = "block";
+      tip.style.left = "0px";
+      tip.style.top  = "0px";
+
+      const a = anchorEl.getBoundingClientRect();
+      const t = tip.getBoundingClientRect();
+
+      let left = a.left + (a.width/2) - (t.width/2);
+      let top  = a.bottom + 10;
+
+      const pad = 10;
+      left = clamp(left, pad, window.innerWidth - t.width - pad);
+      top  = clamp(top, pad, window.innerHeight - t.height - pad);
+
+      tip.style.left = Math.round(left) + "px";
+      tip.style.top  = Math.round(top) + "px";
+      tip.dataset.anchorId = anchorEl.dataset.anchorId || "";
+    }
+
+    function toggleAnchored(htmlContent, anchorEl){
+      const id = anchorEl.dataset.anchorId || "";
+      const isOpen = (tip.style.display === "block" && tip.dataset.anchorId === id);
+      if(isOpen){ hide(); }
+      else { showAnchored(htmlContent, anchorEl); }
+    }
+
+    document.querySelectorAll(".card").forEach((card, idx) => {
+      const type = card.dataset?.kpiTip;
+      if(!type) return;
+
       if(card.dataset.tipBound === "1") return;
       card.dataset.tipBound = "1";
 
-      card.addEventListener("mouseenter", (e) => {
-        const type = card.dataset.kpiTip;
+      // Inject a small info icon in the card header (click-to-toggle)
+      let icon = card.querySelector(".kpiInfoIcon");
+      if(!icon){
+        icon = document.createElement("button");
+        icon.type = "button";
+        icon.className = "kpiInfoIcon";
+        icon.textContent = "i";
+        icon.setAttribute("aria-label", "Info");
+        card.appendChild(icon);
+      }
+      icon.dataset.anchorId = "kpi_" + type + "_" + idx;
+
+      icon.addEventListener("click", (e)=>{
+        e.preventDefault();
+        e.stopPropagation();
         const html = buildHTML(type);
         if(!html) return;
-        show(html, e.clientX, e.clientY);
+        toggleAnchored(html, icon);
       });
-
-      card.addEventListener("mousemove", (e) => {
-        if(tip.style.display !== "block") return;
-        const type = card.dataset.kpiTip;
-        const html = buildHTML(type);
-        if(!html) return;
-        show(html, e.clientX, e.clientY);
-      });
-
-      card.addEventListener("mouseleave", () => hide());
     });
+
+    // Click outside closes
+    document.addEventListener("click", (e)=>{
+      if(tip.style.display !== "block") return;
+      const inside = e.target && (e.target.closest(".kpiInfoIcon") || e.target.closest("#kpiTooltip"));
+      if(!inside) hide();
+    });
+
+    window.addEventListener("resize", ()=> hide());
+    window.addEventListener("scroll", ()=> hide(), {passive:true});
   }
 
 
@@ -5298,6 +5391,7 @@ function renderCurve(withCrosshair=false){
   if(GLOBAL.mode === "calendar"){
     if(chartWrap) chartWrap.style.display = "none";
     if(calWrap) calWrap.style.display = "flex";
+    if($("mcWrap")) $("mcWrap").style.display = "none";
     if($("kpiControls")) $("kpiControls").style.display = "none";
     if($("tooltip")) $("tooltip").style.display = "none";
     if($("kpiTooltip")) $("kpiTooltip").style.display = "none";
@@ -5309,11 +5403,11 @@ function renderCurve(withCrosshair=false){
   
   // Monte Carlo mode: show MC panel, hide standard chart/calendar
   if(GLOBAL.mode === "mc"){
-    let mcWrapDup = $("mcWrap");
+    const mcWrapEl = $("mcWrap");
     const hint = document.querySelector(".hint");
     if(chartWrap) chartWrap.style.display = "none";
     if(calWrap) calWrap.style.display = "none";
-    if(mcWrap) mcWrap.style.display = "flex";
+    if(mcWrapEl) mcWrapEl.style.display = "flex";
     if(hint) hint.style.display = "none";
     if($("kpiControls")) $("kpiControls").style.display = "none";
     if($("tooltip")) $("tooltip").style.display = "none";
@@ -6129,7 +6223,7 @@ if(dpApply && !dpApply._bound){
   const ttgSub = $("mcIG_ttg_sub");
   if(ttgSub){
     const p90 = I.time_to_goal_p90;
-    ttgSub.textContent = (p90==null) ? "" : `p90 trades to ${goalLabel}: ${mcFmtTrades(p90)} trades`;
+    ttgSub.innerHTML = (p90==null) ? "" : `p90 trades to ${goalLabel}: <b>${mcFmtTrades(p90)} trades</b>`;
   }
 
 
@@ -6139,7 +6233,7 @@ if(dpApply && !dpApply._bound){
   const goalSub = $("mcIG_goal_sub");
   if(goalSub){
     const pStretch = mcFmtProb(I.goal_hit_stretch);
-    goalSub.textContent = `Target ${goalStretchLabel} reached: ${pStretch}`;
+    goalSub.innerHTML = `Target ${goalStretchLabel} reached: <b>${pStretch}</b>`;
   }
 
     const p90dd = I.p90_max_dd;
@@ -6228,22 +6322,7 @@ function bindMcTooltips(){
       <div class="mcTipBody" style="margin-top:8px;">Values are aggregated across all 2,000 paths.</div>
     `;
   }
-
-  // Only column header tooltips (anchored under the header, not the mouse)
-  wrap.addEventListener("mouseover", (e)=>{
-    const head = e.target && e.target.closest("[data-mc-coltip]");
-    if(head){
-      const which = head.getAttribute("data-mc-coltip");
-      showAt(head, colTip(which));
-    }
-  });
-
-  wrap.addEventListener("mouseout", (e)=>{
-    const head = e.target && e.target.closest("[data-mc-coltip]");
-    if(!head) return;
-    const leavingHead = !head.contains(e.relatedTarget);
-    if(leavingHead) hide();
-  });
+  // Column header tooltips are handled via click on .mcMicroIcon (see mcInitHeaderTooltips).
 
   window.addEventListener("resize", ()=>{
     if(tip.style.display !== "none" && bindMcTooltips._lastEl) positionUnder(bindMcTooltips._lastEl);
