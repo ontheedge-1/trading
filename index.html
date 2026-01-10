@@ -4099,7 +4099,7 @@ if(type === "tradeQuality"){
     const hide = () => { tip.style.display = "none"; };
 
     // de-duplicate binding (simple guard via attribute)
-    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const clamp_mc = (v, a, b) => Math.max(a, Math.min(b, v));
 
     function showAnchored(htmlContent, anchorEl){
       if(!anchorEl) return;
@@ -6262,7 +6262,7 @@ function bindMcTooltips(){
 
   if(tip.parentElement !== document.body) document.body.appendChild(tip);
 
-  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const clamp_mc = (v, a, b) => Math.max(a, Math.min(b, v));
 
   function positionUnder(el){
     if(!el) return;
