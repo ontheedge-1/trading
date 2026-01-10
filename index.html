@@ -719,6 +719,106 @@ background: var(--cardGrad);
       font-weight: 1000;
       color: rgba(255, 233, 186, .98);
     }
+
+    /* ===== MC INSIGHTS (tiles) ===== */
+    .mcInsightsArea{
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow:auto;
+      padding: 10px 12px 14px 12px;
+      display:flex;
+      flex-direction:column;
+      gap: 14px;
+    }
+    .mcInsightsRow{
+      border: 1px solid rgba(120,160,255,.12);
+      border-radius: 14px;
+      background: rgba(255,255,255,.01);
+      overflow:hidden;
+    }
+    .mcInsightsRowHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(120,160,255,.10);
+      background: rgba(10,16,32,.24);
+    }
+    .mcInsightsRowTitle{
+      font-weight: 1000;
+      letter-spacing:.15px;
+      color: rgba(231,240,255,.92);
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+    .mcRowInfo{
+      width: 26px;
+      height: 26px;
+      border-radius: 12px;
+      border: 1px solid rgba(120,160,255,.20);
+      background: rgba(255,255,255,.02);
+      color: rgba(188,210,255,.95);
+      font-weight: 1000;
+      cursor:pointer;
+      line-height: 1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .mcInsightsGrid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      padding: 12px;
+    }
+    .mcInsightCard{
+      position: relative;
+      border-radius: 14px;
+      border: 1px solid rgba(120,160,255,.14);
+      background: linear-gradient(180deg, rgba(10,16,32,.28), rgba(10,16,32,.10));
+      padding: 12px 12px 11px 12px;
+      box-shadow: inset 0 0 0 1px rgba(45,107,255,.06);
+      min-height: 86px;
+    }
+    .mcInsightCard.mcPrimary{
+      border-color: rgba(45,107,255,.28);
+      box-shadow: inset 0 0 0 1px rgba(45,107,255,.14);
+      background: linear-gradient(180deg, rgba(45,107,255,.14), rgba(10,16,32,.10));
+    }
+    .mcCardTitle{
+      font-size: 12px;
+      font-weight: 1000;
+      color: rgba(188,210,255,.95);
+      letter-spacing: .1px;
+    }
+    .mcCardValue{
+      margin-top: 6px;
+      font-size: 26px;
+      font-weight: 1000;
+      color: rgba(231,240,255,.95);
+      letter-spacing: .2px;
+    }
+    .mcCardSub{
+      margin-top: 6px;
+      font-size: 12px;
+      color: rgba(188,210,255,.75);
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+    .mcCardBadge{
+      position:absolute;
+      top:10px;
+      right:10px;
+      font-size: 11px;
+      font-weight: 1000;
+      color: rgba(188,210,255,.95);
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(120,160,255,.18);
+      background: rgba(10,16,32,.20);
+    }
     .mcEmpty{
       flex: 1 1 auto;
       display:flex;
@@ -1856,6 +1956,7 @@ background: var(--cardGrad);
             <div class="mcView" id="mcView" aria-label="MC View">
               <button data-view="chart" class="active" type="button">Chart</button>
               <button data-view="stats" type="button">Stats</button>
+              <button data-view="insights" type="button">Insights</button>
             </div>
             <button id="mcInfoBtn" class="mcInfoBtn" type="button" aria-label="Info" title="Info">i</button>
           </div>
@@ -1875,6 +1976,10 @@ background: var(--cardGrad);
           </div>
         </div>
         <div class="tooltip" id="mcInfoTip" style="display:none;"></div>
+        <div class="tooltip" id="mcRowTip" style="display:none;"></div>
+        <div id="mcTipRow1" style="display:none;"></div>
+        <div id="mcTipRow2" style="display:none;"></div>
+        <div id="mcTipRow3" style="display:none;"></div>
 
         <div class="mcBody">
           <div class="mcChartArea" id="mcChartArea">
@@ -1889,9 +1994,86 @@ background: var(--cardGrad);
             </div>
           </div>
 
-          <div class="mcEmpty" id="mcEmpty" style="display:none;">
+          <div class="mcEmpty"
+          <div class="mcInsightsArea" id="mcInsightsArea" style="display:none;">
+            <div class="mcInsightsRow">
+              <div class="mcInsightsRowHead">
+                <div class="mcInsightsRowTitle">Ziel &amp; Erfolg</div>
+                <button class="mcRowInfo" type="button" data-rowtip="mcTipRow1" aria-label="Info">i</button>
+              </div>
+              <div class="mcInsightsGrid">
+                <div class="mcInsightCard mcPrimary" id="mcI_goal">
+                  <div class="mcCardTitle">🎯 Chance Ziel zu erreichen</div>
+                  <div class="mcCardValue" id="mcI_goal_val">—</div>
+                  <div class="mcCardSub" id="mcI_goal_sub">—</div>
+                </div>
+                <div class="mcInsightCard" id="mcI_ttg">
+                  <div class="mcCardTitle">⏱ Median Trades bis Ziel</div>
+                  <div class="mcCardBadge" id="mcI_ttg_badge">p90: —</div>
+                  <div class="mcCardValue" id="mcI_ttg_val">—</div>
+                  <div class="mcCardSub" id="mcI_ttg_sub" style="display:none;"></div>
+                </div>
+                <div class="mcInsightCard" id="mcI_pos">
+                  <div class="mcCardTitle">✅ P(End &gt; Start)</div>
+                  <div class="mcCardValue" id="mcI_pos_val">—</div>
+                  <div class="mcCardSub" id="mcI_pos_sub" style="display:none;"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mcInsightsRow">
+              <div class="mcInsightsRowHead">
+                <div class="mcInsightsRowTitle">Risiko</div>
+                <button class="mcRowInfo" type="button" data-rowtip="mcTipRow2" aria-label="Info">i</button>
+              </div>
+              <div class="mcInsightsGrid">
+                <div class="mcInsightCard" id="mcI_p90dd">
+                  <div class="mcCardTitle">⚠️ p90 Max Drawdown</div>
+                  <div class="mcCardValue" id="mcI_p90dd_val">—</div>
+                  <div class="mcCardSub" id="mcI_p90dd_sub" style="display:none;"></div>
+                </div>
+                <div class="mcInsightCard" id="mcI_dd12">
+                  <div class="mcCardTitle">📉 P(Drawdown ≤ -12)</div>
+                  <div class="mcCardValue" id="mcI_dd12_val">—</div>
+                  <div class="mcCardSub" id="mcI_dd12_sub" style="display:none;"></div>
+                </div>
+                <div class="mcInsightCard" id="mcI_dd18">
+                  <div class="mcCardTitle">🔴 P(Drawdown ≤ -18)</div>
+                  <div class="mcCardValue" id="mcI_dd18_val">—</div>
+                  <div class="mcCardSub" id="mcI_dd18_sub">Stress-Test: ≤ -25 = —</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mcInsightsRow">
+              <div class="mcInsightsRowHead">
+                <div class="mcInsightsRowTitle">Durchhalten &amp; Erholung</div>
+                <button class="mcRowInfo" type="button" data-rowtip="mcTipRow3" aria-label="Info">i</button>
+              </div>
+              <div class="mcInsightsGrid">
+                <div class="mcInsightCard" id="mcI_uw_med">
+                  <div class="mcCardTitle">🕒 Median Time Under Water</div>
+                  <div class="mcCardValue" id="mcI_uw_med_val">—</div>
+                  <div class="mcCardSub" id="mcI_uw_med_sub" style="display:none;"></div>
+                </div>
+                <div class="mcInsightCard" id="mcI_uw_p90">
+                  <div class="mcCardTitle">🧭 p90 Time Under Water</div>
+                  <div class="mcCardValue" id="mcI_uw_p90_val">—</div>
+                  <div class="mcCardSub" id="mcI_uw_p90_sub" style="display:none;"></div>
+                </div>
+                <div class="mcInsightCard" id="mcI_rec">
+                  <div class="mcCardTitle">🔁 Recovery Probability</div>
+                  <div class="mcCardValue" id="mcI_rec_val">—</div>
+                  <div class="mcCardSub" id="mcI_rec_sub">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+          <div class="mcEmpty id="mcEmpty" style="display:none;">
             <div class="mcEmptyTitle">Monte Carlo</div>
-            <div class="mcEmptySub">Klicke auf ▶ Start, um die Simulation zu berechnen.</div>
+            <div class="mcEmptySub">Click ▶ Start to compute the simulation.</div>
           </div>
         </div>
       </div>
@@ -5629,6 +5811,125 @@ if(dpApply && !dpApply._bound){
     return `<tr><td>${label}</td>${cells}</tr>`;
   }
 
+  function mcFmtProb(p){
+    if(p == null || !Number.isFinite(p)) return "—";
+    return (p*100).toFixed(1) + " %";
+  }
+  function mcFmtTrades(n){
+    if(n == null || !Number.isFinite(n)) return "—";
+    return String(Math.round(n));
+  }
+  function renderMonteCarloInsights(cached, metric){
+    const I = cached?.insights?.[metric];
+    if(!I) return;
+
+    const isEq = (metric === "equity");
+
+    // Titles for DD probability tiles (units)
+    const t12 = $("mcI_dd12")?.querySelector(".mcCardTitle");
+    const t18 = $("mcI_dd18")?.querySelector(".mcCardTitle");
+    if(t12) t12.textContent = isEq ? "📉 P(Drawdown ≤ -12 %)" : "📉 P(Drawdown ≤ -12 R)";
+    if(t18) t18.textContent = isEq ? "🔴 P(Drawdown ≤ -18 %)" : "🔴 P(Drawdown ≤ -18 R)";
+
+    // Row 1
+    $("mcI_goal_val").textContent = mcFmtProb(I.goal_hit_primary);
+    const goalSub = isEq
+      ? `Ziele: +30 % / +50 % pro 100 Trades`
+      : `Ziele: +30 R / +50 R pro 100 Trades`;
+    $("mcI_goal_sub").textContent = goalSub;
+
+    // time-to-goal
+    const ttgMed = I.time_to_goal_median;
+    const ttgP90 = I.time_to_goal_p90;
+    $("mcI_ttg_val").textContent = (ttgMed == null) ? "—" : `${mcFmtTrades(ttgMed)} Trades`;
+    $("mcI_ttg_badge").textContent = `p90: ${(ttgP90==null) ? "—" : (mcFmtTrades(ttgP90) + " Trades")}`;
+
+    // P(end>start)
+    $("mcI_pos_val").textContent = mcFmtProb(I.p_end_positive);
+
+    // Row 2
+    const p90dd = I.p90_max_dd;
+    $("mcI_p90dd_val").textContent = isEq ? mcFmtPctNegSp(p90dd) : mcFmtRSp(p90dd);
+    $("mcI_dd12_val").textContent = mcFmtProb(I.p_dd_12);
+    $("mcI_dd18_val").textContent = mcFmtProb(I.p_dd_18);
+    $("mcI_dd18_sub").textContent = isEq
+      ? `Stress-Test: ≤ -25 % = ${mcFmtProb(I.p_dd_25)}`
+      : `Stress-Test: ≤ -25 R = ${mcFmtProb(I.p_dd_25)}`;
+
+    // Row 3
+    $("mcI_uw_med_val").textContent = (I.underwater_median==null) ? "—" : `${mcFmtTrades(I.underwater_median)} Trades`;
+    $("mcI_uw_p90_val").textContent = (I.underwater_p90==null) ? "—" : `${mcFmtTrades(I.underwater_p90)} Trades`;
+
+    $("mcI_rec_val").textContent = mcFmtProb(I.recovery_prob);
+    const cond = I.recovery_after_dd18;
+    $("mcI_rec_sub").textContent = isEq
+      ? `nach DD ≤ 18 %: ${(cond==null) ? "—" : (mcFmtProb(cond))}`
+      : `nach DD ≤ 18R: ${(cond==null) ? "—" : (mcFmtProb(cond))}`;
+  }
+
+  function bindMcRowTooltips(){
+    const wrap = $("mcWrap");
+    const tip = $("mcRowTip");
+    if(!wrap || !tip || bindMcRowTooltips._bound) return;
+    bindMcRowTooltips._bound = true;
+
+    function setTipHtml(html){
+      tip.innerHTML = html;
+    }
+    function showAt(btn){
+      const r = wrap.getBoundingClientRect();
+      const b = btn.getBoundingClientRect();
+      const x = (b.left - r.left) + b.width/2;
+      const y = (b.top - r.top) + b.height + 8;
+      tip.style.display = "block";
+
+      // clamp inside wrap
+      const tw = 360;
+      const th = 140;
+      let left = x - tw/2;
+      left = Math.max(10, Math.min(r.width - tw - 10, left));
+      let top = y;
+      top = Math.max(10, Math.min(r.height - th - 10, top));
+      tip.style.left = left + "px";
+      tip.style.top = top + "px";
+    }
+    function hide(){ tip.style.display = "none"; }
+
+    wrap.addEventListener("mouseover", (e)=>{
+      const btn = e.target && e.target.closest(".mcRowInfo");
+      if(!btn) return;
+      const metric = (GLOBAL.mc.metric === "cumr") ? "cumr" : "equity";
+      const isEq = metric === "equity";
+      const rowId = btn.getAttribute("data-rowtip");
+
+      let html = "";
+      if(rowId === "mcTipRow1"){
+        html = `<div><b>Ziel &amp; Erfolg</b></div>
+          <div style="margin-top:6px; opacity:.9;">„Ziel erreicht“ bedeutet: <b>Ende am Horizont</b> liegt über dem Ziel.</div>
+          <div style="margin-top:6px; opacity:.85;">„Median Trades bis Ziel“ = <b>erstes Mal erreicht</b> – nur Pfade, die das Ziel erreichen.</div>
+          <div style="margin-top:6px; opacity:.75;">Ziele sind skaliert: ${isEq ? "+30 % / +50 %" : "+30 R / +50 R"} <span style="opacity:.8;">pro 100 Trades</span>.</div>`;
+      } else if(rowId === "mcTipRow2"){
+        html = `<div><b>Risiko</b></div>
+          <div style="margin-top:6px; opacity:.9;">Max Drawdown wird pro Pfad gemessen (Peak → Tief).</div>
+          <div style="margin-top:6px; opacity:.85;">„p90 Max Drawdown“ ist das <b>Worst-Tail</b>-Niveau: <b>90% der Pfade sind besser</b>.</div>
+          <div style="margin-top:6px; opacity:.75;">Schwellen: ${isEq ? "12% / 18% / 25%" : "12R / 18R / 25R"}.</div>`;
+      } else {
+        html = `<div><b>Durchhalten &amp; Erholung</b></div>
+          <div style="margin-top:6px; opacity:.9;">Time Under Water = längste Phase unter dem bisherigen Peak (Trades am Stück).</div>
+          <div style="margin-top:6px; opacity:.85;">Recovery = neuer Peak über Startniveau (Equity: Startbalance, CumR: 0R).</div>
+          <div style="margin-top:6px; opacity:.75;">Zusatz: Recovery <b>nach</b> DD ≤ 18 (${isEq ? "%" : "R"}).</div>`;
+      }
+
+      setTipHtml(html);
+      showAt(btn);
+    });
+    wrap.addEventListener("mouseout", (e)=>{
+      const btn = e.target && e.target.closest(".mcRowInfo");
+      if(btn) hide();
+    });
+  }
+
+
   
   function mcFmtUSDSp(n){
     const s = fmtUSD(n);
@@ -5670,6 +5971,19 @@ function mcCompute(Rs, equityRow, T, M){
     const endEq = new Float64Array(M);
     const maxDD_$ = new Float64Array(M);
     const maxDD_pct = new Float64Array(M);
+
+    // --- Insights tracking (per-path) ---
+    const targetR  = 30 * (T / 100);
+    const targetR2 = 50 * (T / 100);
+    const targetEq  = E0 * (1 + 0.30 * (T / 100));
+    const targetEq2 = E0 * (1 + 0.50 * (T / 100));
+
+    const tauR = new Int32Array(M);      // first hit time (primary target), 0 means not hit
+    const tauEq = new Int32Array(M);     // first hit time (primary target), 0 means not hit
+    const uwR_longest = new Int32Array(M);   // longest underwater streak (CumR) in trades
+    const uwEq_longest = new Int32Array(M);  // longest underwater streak (Equity) in trades
+    const recR = new Uint8Array(M);      // recovered (new CumR high above 0)
+    const recEq = new Uint8Array(M);     // recovered (new equity high above EQ0)
 
     let bestRIdx = 0, worstRIdx = 0;
     let bestEqIdx = 0, worstEqIdx = 0;
@@ -5715,6 +6029,12 @@ function mcCompute(Rs, equityRow, T, M){
       let dd$min = 0;
       let ddPctMax = 0;
 
+      // Insights helpers (per path)
+      let hitR = 0;
+      let hitEq = 0;
+      let uwR_cur = 0, uwR_max = 0;
+      let uwEq_cur = 0, uwEq_max = 0;
+
       // temp arrays only for best/worst capture? we avoid storing full path per m
       for(let t=1; t<=T; t++){
         const r = Rs[randIdx()];
@@ -5725,6 +6045,18 @@ function mcCompute(Rs, equityRow, T, M){
         const ddR = cumR - peakR; // <=0
         if(ddR < ddRmin) ddRmin = ddR;
         cumBuckets[t][m] = cumR;
+
+        // Insights: first hit + underwater (CumR)
+        if(!hitR && cumR >= targetR){
+          hitR = 1;
+          tauR[m] = t;
+        }
+        if(cumR < peakR){
+          uwR_cur++;
+          if(uwR_cur > uwR_max) uwR_max = uwR_cur;
+        } else {
+          uwR_cur = 0;
+        }
 
         // Equity update
         const pnl = r * effRisk;
@@ -5761,6 +6093,19 @@ function mcCompute(Rs, equityRow, T, M){
         effRisk = baseRisk * ddState;
 
         if(equity > peakEq) peakEq = equity;
+
+        // Insights: first hit + underwater (Equity)
+        if(!hitEq && equity >= targetEq){
+          hitEq = 1;
+          tauEq[m] = t;
+        }
+        if(equity < peakEq){
+          uwEq_cur++;
+          if(uwEq_cur > uwEq_max) uwEq_max = uwEq_cur;
+        } else {
+          uwEq_cur = 0;
+        }
+
         const dd$ = equity - peakEq; // <=0
         if(dd$ < dd$min) dd$min = dd$;
         const ddPctFromPeak = peakEq > 0 ? ((peakEq - equity)/peakEq)*100 : 0;
@@ -5768,6 +6113,11 @@ function mcCompute(Rs, equityRow, T, M){
 
         eqBuckets[t][m] = equity;
       }
+      // store insights per path
+      uwR_longest[m] = uwR_max;
+      uwEq_longest[m] = uwEq_max;
+      if(peakR > 0) recR[m] = 1;
+      if(peakEq > E0) recEq[m] = 1;
 
       endR[m] = cumR;
       maxDD_R[m] = ddRmin;
@@ -5857,6 +6207,91 @@ function mcCompute(Rs, equityRow, T, M){
     const probR = cR / M;
     const probEq = cEq / M;
 
+    // --- Insights aggregation ---
+    const goalHitR  = endR.reduce((c,v)=> c + (v >= targetR ? 1 : 0), 0) / M;
+    const goalHitR2 = endR.reduce((c,v)=> c + (v >= targetR2 ? 1 : 0), 0) / M;
+    const goalHitEq  = endEq.reduce((c,v)=> c + (v >= targetEq ? 1 : 0), 0) / M;
+    const goalHitEq2 = endEq.reduce((c,v)=> c + (v >= targetEq2 ? 1 : 0), 0) / M;
+
+    // time-to-goal arrays (only hitters)
+    const tauR_hits = [];
+    const tauEq_hits = [];
+    for(let m=0;m<M;m++){
+      if(tauR[m] > 0) tauR_hits.push(tauR[m]);
+      if(tauEq[m] > 0) tauEq_hits.push(tauEq[m]);
+    }
+    tauR_hits.sort((a,b)=>a-b);
+    tauEq_hits.sort((a,b)=>a-b);
+    const qInt = (arr, q)=>{
+      if(!arr.length) return null;
+      const idx = Math.max(0, Math.min(arr.length-1, Math.floor(q*(arr.length-1))));
+      return arr[idx];
+    };
+
+    // underwater distribution
+    const uwR = Array.from(uwR_longest);
+    const uwEq = Array.from(uwEq_longest);
+    uwR.sort((a,b)=>a-b);
+    uwEq.sort((a,b)=>a-b);
+
+    // DD event probabilities
+    let ddR12=0, ddR18=0, ddR25=0, ddR18_total=0, ddR18_rec=0;
+    let ddE12=0, ddE18=0, ddE25=0, ddE18_total=0, ddE18_rec=0;
+    let posR=0, posE=0, recRcnt=0, recEcnt=0;
+
+    for(let m=0;m<M;m++){
+      if(endR[m] > 0) posR++;
+      if(endEq[m] > E0) posE++;
+
+      if(recR[m]) recRcnt++;
+      if(recEq[m]) recEcnt++;
+
+      if(maxDD_R[m] <= -12) ddR12++;
+      if(maxDD_R[m] <= -18){ ddR18++; ddR18_total++; if(recR[m]) ddR18_rec++; }
+      if(maxDD_R[m] <= -25) ddR25++;
+
+      if(maxDD_pct[m] <= -12) ddE12++;
+      if(maxDD_pct[m] <= -18){ ddE18++; ddE18_total++; if(recEq[m]) ddE18_rec++; }
+      if(maxDD_pct[m] <= -25) ddE25++;
+    }
+
+    const insights = {
+      cumr: {
+        goal_hit_primary: goalHitR,
+        goal_hit_stretch: goalHitR2,
+        time_to_goal_median: qInt(tauR_hits, 0.50),
+        time_to_goal_p90: qInt(tauR_hits, 0.90),
+        p_end_positive: posR / M,
+        p90_max_dd: ddRstats.p10,
+        p_dd_12: ddR12 / M,
+        p_dd_18: ddR18 / M,
+        p_dd_25: ddR25 / M,
+        underwater_median: qInt(uwR, 0.50),
+        underwater_p90: qInt(uwR, 0.90),
+        recovery_prob: recRcnt / M,
+        recovery_after_dd18: (ddR18_total ? (ddR18_rec / ddR18_total) : null),
+        target_primary: targetR,
+        target_stretch: targetR2
+      },
+      equity: {
+        goal_hit_primary: goalHitEq,
+        goal_hit_stretch: goalHitEq2,
+        time_to_goal_median: qInt(tauEq_hits, 0.50),
+        time_to_goal_p90: qInt(tauEq_hits, 0.90),
+        p_end_positive: posE / M,
+        p90_max_dd: ddPctStats.p10,
+        p_dd_12: ddE12 / M,
+        p_dd_18: ddE18 / M,
+        p_dd_25: ddE25 / M,
+        underwater_median: qInt(uwEq, 0.50),
+        underwater_p90: qInt(uwEq, 0.90),
+        recovery_prob: recEcnt / M,
+        recovery_after_dd18: (ddE18_total ? (ddE18_rec / ddE18_total) : null),
+        target_primary: targetEq,
+        target_stretch: targetEq2
+      }
+    };
+
     return {
       meta: {
         M, T, N,
@@ -5876,11 +6311,11 @@ function mcCompute(Rs, equityRow, T, M){
           maxDD_$: dd$Stats,
           maxDD_pct: ddPctStats
         }
-      },
-      prob: {
+      },      prob: {
         cumr_end_below_0: probR,
         equity_end_below_start: probEq
-      }
+      },
+      insights
     };
   }
 
@@ -6075,13 +6510,16 @@ function mcCompute(Rs, equityRow, T, M){
     if(!mcWrap) return;
 
     GLOBAL.mc.active = true;
-    if(!GLOBAL.mc.scopeKey) GLOBAL.mc.scopeKey = mcBuildScopeKey();
+    GLOBAL.mc.scopeKey = mcBuildScopeKey();
 
     const key = `${GLOBAL.mc.scopeKey}|${GLOBAL.mc.T}`;
     const cached = mcCacheGet(key);
 
+    const sampleN = Number(cached?.meta?.N ?? (Array.isArray(GLOBAL.filteredTrades) ? GLOBAL.filteredTrades.length : 0));
+
     const chartArea = $("mcChartArea");
     const statsArea = $("mcStatsArea");
+    const insightsArea = $("mcInsightsArea");
     const empty = $("mcEmpty");
 
     // info tooltip content (dynamic, reflects current filter scope)
@@ -6118,7 +6556,7 @@ function mcCompute(Rs, equityRow, T, M){
           `<b>Monte Carlo · Info</b>`,
           `<div class="muted">Instrument: ${mcDisplayInstrument()}</div>`,
           `<div class="muted">Zeitraum: ${mcDisplayRange()}</div>`,
-          `<div class="muted">Trades im Sample: ${N}</div>`,
+          `<div class="muted">Trades im Sample: ${sampleN}</div>`,
           `<div class="muted">Pfade (M): ${GLOBAL.mc.M}</div>`,
           `<div class="muted">Horizons: 100 / 200 / 500 / 1.000 Trades</div>`,
           `<div class="muted">Equity: 1% Risk · 5% Ladder · DD Multiplier (sticky)</div>`
@@ -6140,9 +6578,13 @@ function mcCompute(Rs, equityRow, T, M){
       }
     }
 // view toggles
-    const wantStats = (GLOBAL.mc.view === "stats");
-    if(chartArea) chartArea.style.display = wantStats ? "none" : "block";
+    const v = (GLOBAL.mc.view || "chart");
+    const wantChart = (v === "chart");
+    const wantStats = (v === "stats");
+    const wantInsights = (v === "insights");
+    if(chartArea) chartArea.style.display = wantChart ? "block" : "none";
     if(statsArea) statsArea.style.display = wantStats ? "block" : "none";
+    if(insightsArea) insightsArea.style.display = wantInsights ? "block" : "none";
 
     const canvas = $("mcCanvas");
 
@@ -6150,20 +6592,22 @@ function mcCompute(Rs, equityRow, T, M){
       if(empty) empty.style.display = "flex";
       if(chartArea) chartArea.style.display = "none";
       if(statsArea) statsArea.style.display = "none";
+      if(insightsArea) insightsArea.style.display = "none";
       if(canvas) { canvas.onmousemove=null; canvas.onmouseleave=null; }
       return;
     }
 
     if(empty) empty.style.display = "none";
 
-    // render either chart or stats
-    if(!wantStats){
-      if(chartArea) chartArea.style.display = "block";
+    // render chart / stats / insights
+    if(wantChart){
       const series = (GLOBAL.mc.metric === "cumr") ? cached.cumr : cached.equity;
       const spine = Array.from({length: cached.meta.T + 1}, (_,i)=> i);
       drawMonteCarloChart(canvas, spine, series, GLOBAL.mc.metric);
-      if($("mcStatsArea")) $("mcStatsArea").style.display = "none";
-    } else {
+      if(statsArea) statsArea.style.display = "none";
+      if(insightsArea) insightsArea.style.display = "none";
+    } else if(wantStats){
+
       if(statsArea) statsArea.style.display = "block";
       if(chartArea) chartArea.style.display = "none";
       if(canvas) { canvas.onmousemove=null; canvas.onmouseleave=null; }
@@ -6210,6 +6654,12 @@ function mcCompute(Rs, equityRow, T, M){
       }
 
       tbl.innerHTML = head + `<tbody>${bodyRows}</tbody>`;
+    } else if(wantInsights){
+      if(insightsArea) insightsArea.style.display = "block";
+      if(chartArea) chartArea.style.display = "none";
+      if(statsArea) statsArea.style.display = "none";
+      if(canvas) { canvas.onmousemove=null; canvas.onmouseleave=null; }
+      renderMonteCarloInsights(cached, GLOBAL.mc.metric);
     }
   }
 
@@ -6286,7 +6736,7 @@ function mcCompute(Rs, equityRow, T, M){
         const b = e.target && e.target.closest("button[data-view]");
         if(!b) return;
         const v = String(b.getAttribute("data-view") || "chart");
-        GLOBAL.mc.view = (v === "stats") ? "stats" : "chart";
+        GLOBAL.mc.view = (v === "stats") ? "stats" : (v === "insights" ? "insights" : "chart");
         for(const btn of view.querySelectorAll("button")) btn.classList.toggle("active", btn === b);
         if(GLOBAL.mode === "mc") renderMonteCarloView();
       });
@@ -6329,6 +6779,9 @@ function mcCompute(Rs, equityRow, T, M){
         mcRunCompute();
       });
     }
+
+    // row tooltips for Insights
+    bindMcRowTooltips();
   }
 
 
