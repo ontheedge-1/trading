@@ -5731,7 +5731,7 @@ GLOBAL.meta = meta;
 
     const DATE_UI = { kind: null, anchor: null };
 
-    function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+    function clamp01_mc(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
 
     function closeDatePopup(){
       if(datePopup) datePopup.classList.add("hidden");
