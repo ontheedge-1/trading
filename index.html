@@ -1796,6 +1796,134 @@ background: var(--cardGrad);
     .mcStatsTable th, .mcStatsTable td{ font-size: 15px; }
     .mcStatsTable td:first-child{ font-size: 15px; }
     .mcSep td{ padding: 10px 0; border-bottom: 1px solid rgba(120,160,255,.12); background: rgba(0,0,0,0); }
+
+/* === Monte Carlo: Insights (compact 3-column layout) === */
+.mcInsightsArea{ padding-top: 6px; }
+.mcInsightsCols{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  align-items:start;
+}
+.mcInsightsColHead{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  font-size: 13px;
+  letter-spacing:.06em;
+  text-transform: uppercase;
+  color: rgba(210,230,255,.92);
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(160,205,255,.16);
+  background: linear-gradient(180deg, rgba(20,40,70,.85), rgba(10,18,32,.85));
+  user-select:none;
+  cursor: default;
+  position: relative;
+}
+.mcInsightsColHead .mcColInfo{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width: 18px; height: 18px;
+  border-radius: 9px;
+  border: 1px solid rgba(120,170,255,.28);
+  background: rgba(45,107,255,.20);
+  color: rgba(226,240,255,.92);
+  font-size: 12px;
+  line-height: 1;
+}
+.mcInsightsColGrid{
+  display:grid;
+  grid-template-rows: auto auto;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.mcInsightCard{
+  position: relative;
+  border-radius: 12px;
+  padding: 14px 14px 12px;
+  border: 1px solid rgba(160,205,255,.18);
+  background:
+    radial-gradient(680px 240px at 18% 0%, rgba(120,170,255,.18), transparent 60%),
+    radial-gradient(740px 280px at 82% 120%, rgba(0,255,208,.06), transparent 62%),
+    linear-gradient(180deg, rgba(20,40,70,.72), rgba(10,18,32,.62));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.10),
+    0 18px 46px rgba(0,0,0,.42);
+  overflow:hidden;
+}
+.mcInsightCard::before{
+  content:"";
+  position:absolute; inset:-1px;
+  border-radius: inherit;
+  padding:1px;
+  background: linear-gradient(135deg,
+    rgba(120,170,255,.35),
+    rgba(255,255,255,.06),
+    rgba(0,255,208,.18));
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events:none;
+  opacity:.75;
+}
+.mcInsightCard::after{
+  content:"";
+  position:absolute; inset:0;
+  border-radius: inherit;
+  background: radial-gradient(520px 160px at 30% -10%, rgba(255,255,255,.10), transparent 60%);
+  pointer-events:none;
+  opacity:.9;
+}
+
+.mcInsightCard .mcCardTitle{
+  font-size: 12px;
+  letter-spacing:.02em;
+  color: rgba(214,232,255,.88);
+  margin-bottom: 10px;
+}
+.mcInsightCard .mcCardValue{
+  font-size: 22px; /* slightly smaller */
+  font-weight: 800;
+  letter-spacing:.01em;
+  color: rgba(170,200,255,.92); /* light blue */
+  font-variant-numeric: tabular-nums;
+}
+
+/* Solid tooltips for MC (no transparency) */
+.tooltip.mcSolid{
+  background: linear-gradient(180deg, rgb(14,24,44), rgb(10,16,30));
+  border: 1px solid rgba(120,170,255,.28);
+  box-shadow: 0 18px 60px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.06);
+  color: rgba(236,246,255,.96);
+}
+.tooltip.mcSolid .mcTipSub{
+  margin-top: 6px;
+  font-size: 12px;
+  color: rgba(140,190,255,.90);
+}
+.tooltip.mcSolid .mcTipSep{ margin: 10px 0; height:1px; background: rgba(120,170,255,.14); }
+
+/* Stats tooltip icon */
+.mcStatsInfo{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width: 18px; height: 18px;
+  margin-left: 8px;
+  border-radius: 9px;
+  border: 1px solid rgba(120,170,255,.28);
+  background: rgba(45,107,255,.20);
+  color: rgba(226,240,255,.92);
+  font-size: 12px;
+  line-height: 1;
+  cursor: default;
+}
 </style>
  </head>
 <body>
@@ -1975,106 +2103,76 @@ background: var(--cardGrad);
             </div>
           </div>
         </div>
-        <div class="tooltip" id="mcInfoTip" style="display:none;"></div>
-        <div class="tooltip" id="mcRowTip" style="display:none;"></div>
+        <div class="tooltip mcSolid" id="mcInfoTip" style="display:none;"></div>
+        <div class="tooltip mcSolid" id="mcRowTip" style="display:none;"></div>
         <div id="mcTipRow1" style="display:none;"></div>
         <div id="mcTipRow2" style="display:none;"></div>
         <div id="mcTipRow3" style="display:none;"></div>
 
         <div class="mcBody">
-          <div class="mcChartArea" id="mcChartArea">
-            <canvas id="mcCanvas"></canvas>
-            <div class="tooltip" id="mcTooltip" style="display:none;"></div>
+  <div class="mcChartArea" id="mcChartArea">
+    <canvas id="mcCanvas"></canvas>
+    <div class="tooltip mcSolid" id="mcTooltip" style="display:none;"></div>
+  </div>
+
+  <div class="mcStatsArea" id="mcStatsArea" style="display:none;">
+    <div id="mcProb" class="mcProb" style="display:none;"></div>
+    <div class="mcStatsTableWrap">
+      <table class="mcStatsTable" id="mcStatsTable"></table>
+    </div>
+  </div>
+
+  <div class="mcInsightsArea" id="mcInsightsArea" style="display:none;">
+    <div class="mcInsightsCols">
+      <div class="mcInsightsCol">
+        <div class="mcInsightsColHead" data-mc-coltip="goal">Goal &amp; Success <span class="mcColInfo">i</span></div>
+        <div class="mcInsightsColGrid">
+          <div class="mcInsightCard" id="mcIG_goal" data-mc-cardtip="goal_primary">
+            <div class="mcCardTitle" id="mcIG_goal_title">Chance to reach target</div>
+            <div class="mcCardValue" id="mcIG_goal_val">—</div>
           </div>
-
-          <div class="mcStatsArea" id="mcStatsArea" style="display:none;">
-            <div id="mcProb" class="mcProb" style="display:none;"></div>
-            <div class="mcStatsTableWrap">
-              <table class="mcStatsTable" id="mcStatsTable"></table>
-            </div>
+          <div class="mcInsightCard" id="mcIG_ttg" data-mc-cardtip="ttg">
+            <div class="mcCardTitle">Median trades to target</div>
+            <div class="mcCardValue" id="mcIG_ttg_val">—</div>
           </div>
+        </div>
+      </div>
 
-          <div class="mcEmpty"
-          <div class="mcInsightsArea" id="mcInsightsArea" style="display:none;">
-            <div class="mcInsightsRow">
-              <div class="mcInsightsRowHead">
-                <div class="mcInsightsRowTitle">Ziel &amp; Erfolg</div>
-                <button class="mcRowInfo" type="button" data-rowtip="mcTipRow1" aria-label="Info">i</button>
-              </div>
-              <div class="mcInsightsGrid">
-                <div class="mcInsightCard mcPrimary" id="mcI_goal">
-                  <div class="mcCardTitle">🎯 Chance Ziel zu erreichen</div>
-                  <div class="mcCardValue" id="mcI_goal_val">—</div>
-                  <div class="mcCardSub" id="mcI_goal_sub">—</div>
-                </div>
-                <div class="mcInsightCard" id="mcI_ttg">
-                  <div class="mcCardTitle">⏱ Median Trades bis Ziel</div>
-                  <div class="mcCardBadge" id="mcI_ttg_badge">p90: —</div>
-                  <div class="mcCardValue" id="mcI_ttg_val">—</div>
-                  <div class="mcCardSub" id="mcI_ttg_sub" style="display:none;"></div>
-                </div>
-                <div class="mcInsightCard" id="mcI_pos">
-                  <div class="mcCardTitle">✅ P(End &gt; Start)</div>
-                  <div class="mcCardValue" id="mcI_pos_val">—</div>
-                  <div class="mcCardSub" id="mcI_pos_sub" style="display:none;"></div>
-                </div>
-              </div>
-            </div>
-
-            <div class="mcInsightsRow">
-              <div class="mcInsightsRowHead">
-                <div class="mcInsightsRowTitle">Risiko</div>
-                <button class="mcRowInfo" type="button" data-rowtip="mcTipRow2" aria-label="Info">i</button>
-              </div>
-              <div class="mcInsightsGrid">
-                <div class="mcInsightCard" id="mcI_p90dd">
-                  <div class="mcCardTitle">⚠️ p90 Max Drawdown</div>
-                  <div class="mcCardValue" id="mcI_p90dd_val">—</div>
-                  <div class="mcCardSub" id="mcI_p90dd_sub" style="display:none;"></div>
-                </div>
-                <div class="mcInsightCard" id="mcI_dd12">
-                  <div class="mcCardTitle">📉 P(Drawdown ≤ -12)</div>
-                  <div class="mcCardValue" id="mcI_dd12_val">—</div>
-                  <div class="mcCardSub" id="mcI_dd12_sub" style="display:none;"></div>
-                </div>
-                <div class="mcInsightCard" id="mcI_dd18">
-                  <div class="mcCardTitle">🔴 P(Drawdown ≤ -18)</div>
-                  <div class="mcCardValue" id="mcI_dd18_val">—</div>
-                  <div class="mcCardSub" id="mcI_dd18_sub">Stress-Test: ≤ -25 = —</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="mcInsightsRow">
-              <div class="mcInsightsRowHead">
-                <div class="mcInsightsRowTitle">Durchhalten &amp; Erholung</div>
-                <button class="mcRowInfo" type="button" data-rowtip="mcTipRow3" aria-label="Info">i</button>
-              </div>
-              <div class="mcInsightsGrid">
-                <div class="mcInsightCard" id="mcI_uw_med">
-                  <div class="mcCardTitle">🕒 Median Time Under Water</div>
-                  <div class="mcCardValue" id="mcI_uw_med_val">—</div>
-                  <div class="mcCardSub" id="mcI_uw_med_sub" style="display:none;"></div>
-                </div>
-                <div class="mcInsightCard" id="mcI_uw_p90">
-                  <div class="mcCardTitle">🧭 p90 Time Under Water</div>
-                  <div class="mcCardValue" id="mcI_uw_p90_val">—</div>
-                  <div class="mcCardSub" id="mcI_uw_p90_sub" style="display:none;"></div>
-                </div>
-                <div class="mcInsightCard" id="mcI_rec">
-                  <div class="mcCardTitle">🔁 Recovery Probability</div>
-                  <div class="mcCardValue" id="mcI_rec_val">—</div>
-                  <div class="mcCardSub" id="mcI_rec_sub">—</div>
-                </div>
-              </div>
-            </div>
+      <div class="mcInsightsCol">
+        <div class="mcInsightsColHead" data-mc-coltip="risk">Risk <span class="mcColInfo">i</span></div>
+        <div class="mcInsightsColGrid">
+          <div class="mcInsightCard" id="mcIR_p90dd" data-mc-cardtip="p90dd">
+            <div class="mcCardTitle">p90 Max Drawdown</div>
+            <div class="mcCardValue" id="mcIR_p90dd_val">—</div>
           </div>
-
-
-          <div class="mcEmpty id="mcEmpty" style="display:none;">
-            <div class="mcEmptyTitle">Monte Carlo</div>
-            <div class="mcEmptySub">Click ▶ Start to compute the simulation.</div>
+          <div class="mcInsightCard" id="mcIR_dd12" data-mc-cardtip="dd12">
+            <div class="mcCardTitle" id="mcIR_dd12_title">P(Drawdown ≤ -12)</div>
+            <div class="mcCardValue" id="mcIR_dd12_val">—</div>
           </div>
+        </div>
+      </div>
+
+      <div class="mcInsightsCol">
+        <div class="mcInsightsColHead" data-mc-coltip="endur">Endurance &amp; Recovery <span class="mcColInfo">i</span></div>
+        <div class="mcInsightsColGrid">
+          <div class="mcInsightCard" id="mcIE_uw_med" data-mc-cardtip="uw_med">
+            <div class="mcCardTitle">Median Time Under Water</div>
+            <div class="mcCardValue" id="mcIE_uw_med_val">—</div>
+          </div>
+          <div class="mcInsightCard" id="mcIE_uw_p90" data-mc-cardtip="uw_p90">
+            <div class="mcCardTitle">p90 Time Under Water</div>
+            <div class="mcCardValue" id="mcIE_uw_p90_val">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mcEmpty" id="mcEmpty" style="display:none;">
+    <div class="mcEmptyTitle">Monte Carlo</div>
+    <div class="mcEmptySub">Click ▶ Start to compute the simulation.</div>
+  </div>
+</div></div>
         </div>
       </div>
 
@@ -5820,117 +5918,190 @@ if(dpApply && !dpApply._bound){
     return String(Math.round(n));
   }
   function renderMonteCarloInsights(cached, metric){
-    const I = cached?.insights?.[metric];
-    if(!I) return;
+  const I = cached?.insights?.[metric];
+  if(!I) return;
 
+  const isEq = (metric === "equity");
+  const T = Number(cached?.meta?.T || GLOBAL.mc.T || 100);
+
+  // Dynamic goal title: "+ 30% / +30R" scaled to selected horizon
+  const goalAmtPrimary = isEq ? (30 * (T/100)) : (30 * (T/100));
+  const goalLabel = isEq ? `+ ${goalAmtPrimary.toFixed(0)} %` : `+ ${goalAmtPrimary.toFixed(0)} R`;
+  const goalTitle = $("mcIG_goal_title");
+  if(goalTitle) goalTitle.textContent = `Chance to reach ${goalLabel}`;
+
+  // Dynamic DD title units
+  const dd12Title = $("mcIR_dd12_title");
+  if(dd12Title) dd12Title.textContent = isEq ? "P(Drawdown ≤ -12 %)" : "P(Drawdown ≤ -12 R)";
+
+  // Values
+  $("mcIG_goal_val").textContent = mcFmtProb(I.goal_hit_primary);
+
+  const ttgMed = I.time_to_goal_median;
+  $("mcIG_ttg_val").textContent = (ttgMed == null) ? "—" : `${mcFmtTrades(ttgMed)} trades`;
+
+  const p90dd = I.p90_max_dd;
+  $("mcIR_p90dd_val").textContent = isEq ? mcFmtPctNegSp(p90dd) : mcFmtRSp(p90dd);
+
+  $("mcIR_dd12_val").textContent = mcFmtProb(I.p_dd_12);
+
+  $("mcIE_uw_med_val").textContent = (I.underwater_median==null) ? "—" : `${mcFmtTrades(I.underwater_median)} trades`;
+  $("mcIE_uw_p90_val").textContent = (I.underwater_p90==null) ? "—" : `${mcFmtTrades(I.underwater_p90)} trades`;
+}
+
+function bindMcTooltips(){
+  const wrap = $("mcWrap");
+  const tip = $("mcRowTip"); // reused as generic MC tooltip
+  if(!wrap || !tip || bindMcTooltips._bound) return;
+  bindMcTooltips._bound = true;
+
+  if(tip.parentElement !== document.body) document.body.appendChild(tip);
+
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  function position(e){
+    const pad = 14;
+    const vw = window.innerWidth || document.documentElement.clientWidth || 1200;
+    const vh = window.innerHeight || document.documentElement.clientHeight || 800;
+
+    const tw = tip.offsetWidth || 360;
+    const th = tip.offsetHeight || 150;
+
+    let x = (e?.clientX ?? 0) + pad;
+    let y = (e?.clientY ?? 0) + pad;
+
+    x = clamp(x, 10, vw - tw - 10);
+    y = clamp(y, 10, vh - th - 10);
+
+    tip.style.left = x + "px";
+    tip.style.top  = y + "px";
+  }
+
+  function show(html, e){
+    tip.innerHTML = html;
+    tip.style.display = "block";
+    position(e);
+  }
+  function hide(){ tip.style.display = "none"; }
+
+  function getCached(){
+    const scopeKey = mcBuildScopeKey();
+    const key = `${scopeKey}|${GLOBAL.mc.T}`;
+    return mcCacheGet(key);
+  }
+
+  function colTip(which){
+    if(which === "goal"){
+      return `<div><b>Goal &amp; Success (Monte Carlo)</b></div>
+      <div style="margin-top:8px; opacity:.95;">These tiles show how often and how quickly the simulation reaches a target.</div>
+      <div style="margin-top:8px; opacity:.92;">Targets are scaled per 100 trades (e.g., 30R/30% per 100 trades) and extrapolated to the selected horizon (100/200/500/1000).</div>`;
+    }
+    if(which === "risk"){
+      return `<div><b>Risk (Monte Carlo)</b></div>
+      <div style="margin-top:8px; opacity:.95;">These tiles summarize drawdown risk across all 2,000 paths.</div>
+      <div style="margin-top:8px; opacity:.92;">p90 is a “bad but realistic” value.</div>
+      <div style="margin-top:8px; opacity:.90;">Probabilities show how often certain drawdown thresholds (e.g., -12/-18/-25) are reached at least once.</div>`;
+    }
+    return `<div><b>Endurance &amp; Recovery (Monte Carlo)</b></div>
+      <div style="margin-top:8px; opacity:.95;">These tiles describe how long paths typically stay below their prior peak (Time Under Water) and how often a new high is reached by the horizon (Recovery).</div>
+      <div style="margin-top:8px; opacity:.90;">Values are aggregated across all 2,000 paths.</div>`;
+  }
+
+  function fmtGoalAmt(v, isEq){
+    return isEq ? `+ ${v.toFixed(0)} %` : `+ ${v.toFixed(0)} R`;
+  }
+
+  function cardTip(which){
+    const cached = getCached();
+    const metric = (GLOBAL.mc.metric === "cumr") ? "cumr" : "equity";
     const isEq = (metric === "equity");
+    const I = cached?.insights?.[metric];
+    const T = Number(cached?.meta?.T || GLOBAL.mc.T || 100);
+    if(!I) return null;
 
-    // Titles for DD probability tiles (units)
-    const t12 = $("mcI_dd12")?.querySelector(".mcCardTitle");
-    const t18 = $("mcI_dd18")?.querySelector(".mcCardTitle");
-    if(t12) t12.textContent = isEq ? "📉 P(Drawdown ≤ -12 %)" : "📉 P(Drawdown ≤ -12 R)";
-    if(t18) t18.textContent = isEq ? "🔴 P(Drawdown ≤ -18 %)" : "🔴 P(Drawdown ≤ -18 R)";
+    if(which === "goal_primary"){
+      const stretchAmt = isEq ? (50 * (T/100)) : (50 * (T/100));
+      return `<div><b>Chance to reach target</b></div>
+        <div style="margin-top:8px; opacity:.92;">Stretch target ${fmtGoalAmt(stretchAmt, isEq)} reached: <b>${mcFmtProb(I.goal_hit_stretch)}</b></div>`;
+    }
 
-    // Row 1
-    $("mcI_goal_val").textContent = mcFmtProb(I.goal_hit_primary);
-    const goalSub = isEq
-      ? `Ziele: +30 % / +50 % pro 100 Trades`
-      : `Ziele: +30 R / +50 R pro 100 Trades`;
-    $("mcI_goal_sub").textContent = goalSub;
+    if(which === "ttg"){
+      const p90 = I.time_to_goal_p90;
+      const p90Txt = (p90 == null) ? "—" : `${mcFmtTrades(p90)} trades`;
+      return `<div><b>Median trades to target</b></div>
+        <div style="margin-top:8px; opacity:.92;">p90 trades to target: <b>${p90Txt}</b></div>
+        <div class="mcTipSep"></div>
+        <div style="opacity:.92;">P(End &gt; Start): <b>${mcFmtProb(I.p_end_positive)}</b></div>`;
+    }
 
-    // time-to-goal
-    const ttgMed = I.time_to_goal_median;
-    const ttgP90 = I.time_to_goal_p90;
-    $("mcI_ttg_val").textContent = (ttgMed == null) ? "—" : `${mcFmtTrades(ttgMed)} Trades`;
-    $("mcI_ttg_badge").textContent = `p90: ${(ttgP90==null) ? "—" : (mcFmtTrades(ttgP90) + " Trades")}`;
+    if(which === "p90dd"){
+      const val = isEq ? mcFmtPctNegSp(I.p90_max_dd) : mcFmtRSp(I.p90_max_dd);
+      return `<div><b>p90 Max Drawdown</b></div>
+        <div style="margin-top:8px; opacity:.92;">90% of paths have a smaller drawdown than <b>${val}</b>.</div>`;
+    }
 
-    // P(end>start)
-    $("mcI_pos_val").textContent = mcFmtProb(I.p_end_positive);
+    if(which === "dd12"){
+      const dd18 = mcFmtProb(I.p_dd_18);
+      const dd25 = mcFmtProb(I.p_dd_25);
+      const u18 = isEq ? "-18 %" : "-18 R";
+      const u25 = isEq ? "-25 %" : "-25 R";
+      return `<div><b>Drawdown thresholds</b></div>
+        <div style="margin-top:8px; opacity:.92;">P(Drawdown ≤ ${u18}): <b>${dd18}</b></div>
+        <div style="margin-top:8px; opacity:.88;">Stress-test (≤ ${u25}): <b>${dd25}</b></div>`;
+    }
 
-    // Row 2
-    const p90dd = I.p90_max_dd;
-    $("mcI_p90dd_val").textContent = isEq ? mcFmtPctNegSp(p90dd) : mcFmtRSp(p90dd);
-    $("mcI_dd12_val").textContent = mcFmtProb(I.p_dd_12);
-    $("mcI_dd18_val").textContent = mcFmtProb(I.p_dd_18);
-    $("mcI_dd18_sub").textContent = isEq
-      ? `Stress-Test: ≤ -25 % = ${mcFmtProb(I.p_dd_25)}`
-      : `Stress-Test: ≤ -25 R = ${mcFmtProb(I.p_dd_25)}`;
+    if(which === "uw_p90"){
+      const rec = mcFmtProb(I.recovery_prob);
+      const cond = I.recovery_after_dd18;
+      const condTxt = (cond == null) ? "—" : mcFmtProb(cond);
+      const unit = isEq ? "18 %" : "18 R";
+      return `<div><b>Recovery</b></div>
+        <div style="margin-top:8px; opacity:.92;">Recovery probability: <b>${rec}</b></div>
+        <div style="margin-top:8px; opacity:.88;">After DD ≤ ${unit}: <b>${condTxt}</b></div>`;
+    }
 
-    // Row 3
-    $("mcI_uw_med_val").textContent = (I.underwater_median==null) ? "—" : `${mcFmtTrades(I.underwater_median)} Trades`;
-    $("mcI_uw_p90_val").textContent = (I.underwater_p90==null) ? "—" : `${mcFmtTrades(I.underwater_p90)} Trades`;
-
-    $("mcI_rec_val").textContent = mcFmtProb(I.recovery_prob);
-    const cond = I.recovery_after_dd18;
-    $("mcI_rec_sub").textContent = isEq
-      ? `nach DD ≤ 18 %: ${(cond==null) ? "—" : (mcFmtProb(cond))}`
-      : `nach DD ≤ 18R: ${(cond==null) ? "—" : (mcFmtProb(cond))}`;
+    return null;
   }
 
-  function bindMcRowTooltips(){
-    const wrap = $("mcWrap");
-    const tip = $("mcRowTip");
-    if(!wrap || !tip || bindMcRowTooltips._bound) return;
-    bindMcRowTooltips._bound = true;
-
-    function setTipHtml(html){
-      tip.innerHTML = html;
-    }
-    function showAt(btn){
-      const r = wrap.getBoundingClientRect();
-      const b = btn.getBoundingClientRect();
-      const x = (b.left - r.left) + b.width/2;
-      const y = (b.top - r.top) + b.height + 8;
-      tip.style.display = "block";
-
-      // clamp inside wrap
-      const tw = 360;
-      const th = 140;
-      let left = x - tw/2;
-      left = Math.max(10, Math.min(r.width - tw - 10, left));
-      let top = y;
-      top = Math.max(10, Math.min(r.height - th - 10, top));
-      tip.style.left = left + "px";
-      tip.style.top = top + "px";
-    }
-    function hide(){ tip.style.display = "none"; }
-
-    wrap.addEventListener("mouseover", (e)=>{
-      const btn = e.target && e.target.closest(".mcRowInfo");
-      if(!btn) return;
-      const metric = (GLOBAL.mc.metric === "cumr") ? "cumr" : "equity";
-      const isEq = metric === "equity";
-      const rowId = btn.getAttribute("data-rowtip");
-
-      let html = "";
-      if(rowId === "mcTipRow1"){
-        html = `<div><b>Ziel &amp; Erfolg</b></div>
-          <div style="margin-top:6px; opacity:.9;">„Ziel erreicht“ bedeutet: <b>Ende am Horizont</b> liegt über dem Ziel.</div>
-          <div style="margin-top:6px; opacity:.85;">„Median Trades bis Ziel“ = <b>erstes Mal erreicht</b> – nur Pfade, die das Ziel erreichen.</div>
-          <div style="margin-top:6px; opacity:.75;">Ziele sind skaliert: ${isEq ? "+30 % / +50 %" : "+30 R / +50 R"} <span style="opacity:.8;">pro 100 Trades</span>.</div>`;
-      } else if(rowId === "mcTipRow2"){
-        html = `<div><b>Risiko</b></div>
-          <div style="margin-top:6px; opacity:.9;">Max Drawdown wird pro Pfad gemessen (Peak → Tief).</div>
-          <div style="margin-top:6px; opacity:.85;">„p90 Max Drawdown“ ist das <b>Worst-Tail</b>-Niveau: <b>90% der Pfade sind besser</b>.</div>
-          <div style="margin-top:6px; opacity:.75;">Schwellen: ${isEq ? "12% / 18% / 25%" : "12R / 18R / 25R"}.</div>`;
-      } else {
-        html = `<div><b>Durchhalten &amp; Erholung</b></div>
-          <div style="margin-top:6px; opacity:.9;">Time Under Water = längste Phase unter dem bisherigen Peak (Trades am Stück).</div>
-          <div style="margin-top:6px; opacity:.85;">Recovery = neuer Peak über Startniveau (Equity: Startbalance, CumR: 0R).</div>
-          <div style="margin-top:6px; opacity:.75;">Zusatz: Recovery <b>nach</b> DD ≤ 18 (${isEq ? "%" : "R"}).</div>`;
-      }
-
-      setTipHtml(html);
-      showAt(btn);
-    });
-    wrap.addEventListener("mouseout", (e)=>{
-      const btn = e.target && e.target.closest(".mcRowInfo");
-      if(btn) hide();
-    });
+  function statsTip(){
+    return `<div><b>How to read this table</b></div>
+      <div style="margin-top:8px; opacity:.92;">Each column describes one possible future path.</div>
+      <div style="margin-top:6px; opacity:.92;">All values within a column belong to the same path (Worst, p10, Median, p90, Best).</div>
+      <div class="mcTipSub">Rows show metrics of that path — not global extremes.</div>`;
   }
 
+  wrap.addEventListener("mouseover", (e)=>{
+    const col = e.target && e.target.closest("[data-mc-coltip]");
+    if(col){
+      const which = col.getAttribute("data-mc-coltip");
+      show(colTip(which), e);
+      return;
+    }
+    const card = e.target && e.target.closest("[data-mc-cardtip]");
+    if(card){
+      const which = card.getAttribute("data-mc-cardtip");
+      const html = cardTip(which);
+      if(html) show(html, e);
+      return;
+    }
+    const st = e.target && e.target.closest(".mcStatsInfo");
+    if(st){
+      show(statsTip(), e);
+      return;
+    }
+  });
 
-  
+  wrap.addEventListener("mousemove", (e)=>{
+    if(tip.style.display !== "none") position(e);
+  });
+
+  wrap.addEventListener("mouseout", (e)=>{
+    const leftWrap = !wrap.contains(e.relatedTarget);
+    const leavingTipTarget = e.target && (e.target.closest("[data-mc-coltip]") || e.target.closest("[data-mc-cardtip]") || e.target.closest(".mcStatsInfo"));
+    if(leftWrap || leavingTipTarget) hide();
+  });
+}
+
   function mcFmtUSDSp(n){
     const s = fmtUSD(n);
     return (s && s !== "—") ? s.replace("$", "$ ") : "—";
@@ -6515,7 +6686,7 @@ function mcCompute(Rs, equityRow, T, M){
     const key = `${GLOBAL.mc.scopeKey}|${GLOBAL.mc.T}`;
     const cached = mcCacheGet(key);
 
-    const sampleN = Number(cached?.meta?.N ?? (Array.isArray(GLOBAL.filteredTrades) ? GLOBAL.filteredTrades.length : 0));
+    const sampleN = (Array.isArray(GLOBAL.filteredTrades) ? GLOBAL.filteredTrades.length : 0);
 
     const chartArea = $("mcChartArea");
     const statsArea = $("mcStatsArea");
@@ -6555,11 +6726,11 @@ function mcCompute(Rs, equityRow, T, M){
         return [
           `<b>Monte Carlo · Info</b>`,
           `<div class="muted">Instrument: ${mcDisplayInstrument()}</div>`,
-          `<div class="muted">Zeitraum: ${mcDisplayRange()}</div>`,
-          `<div class="muted">Trades im Sample: ${sampleN}</div>`,
-          `<div class="muted">Pfade (M): ${GLOBAL.mc.M}</div>`,
-          `<div class="muted">Horizons: 100 / 200 / 500 / 1.000 Trades</div>`,
-          `<div class="muted">Equity: 1% Risk · 5% Ladder · DD Multiplier (sticky)</div>`
+          `<div class="muted">Range: ${mcDisplayRange()}</div>`,
+          `<div class="muted">Trades in sample: ${sampleN}</div>`,
+          `<div class="muted">Paths (M): ${GLOBAL.mc.M}</div>`,
+          `<div class="muted">Horizons: 100 / 200 / 500 / 1,000 trades</div>`,
+          `<div class="muted">Equity: 1% risk · 5% ladder · DD multiplier (sticky)</div>`
         ].join("");
       };
 
@@ -6616,7 +6787,7 @@ function mcCompute(Rs, equityRow, T, M){
       const prob = $("mcProb");
       if(!tbl) return;
 
-      const cols = ["", "Worst", "p10", "Median", "p90", "Best"];
+      const cols = [`<span style="opacity:.65;">&nbsp;</span><span class="mcStatsInfo" aria-label="Info">i</span>`, "Worst", "p10", "Median", "p90", "Best"];
       const head = `<thead><tr>${cols.map((c,i)=> `<th${i===3?' class="mcMed"':''}>${c}</th>`).join("")}</tr></thead>`;
 
       let bodyRows = "";
@@ -6780,8 +6951,8 @@ function mcCompute(Rs, equityRow, T, M){
       });
     }
 
-    // row tooltips for Insights
-    bindMcRowTooltips();
+    // MC tooltips (columns, cards, stats)
+    bindMcTooltips();
   }
 
 
