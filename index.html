@@ -621,7 +621,14 @@ background: var(--cardGrad);
       transform: none;
       z-index: 9999;
       white-space: normal;
-      max-width: 380px;
+      max-width: 520px;
+    }
+    #mcRowTip{
+      position: fixed;
+      transform: none;
+      z-index: 9999;
+      white-space: normal;
+      max-width: 520px;
     }
 
     .mcBody{
@@ -1797,102 +1804,106 @@ background: var(--cardGrad);
     .mcStatsTable td:first-child{ font-size: 15px; }
     .mcSep td{ padding: 10px 0; border-bottom: 1px solid rgba(120,160,255,.12); background: rgba(0,0,0,0); }
 
-/* === Monte Carlo: Insights (compact 3-column layout) === */
+/* === Monte Carlo: Insights (3-column layout) === */
 .mcInsightsArea{ padding-top: 6px; }
+
 .mcInsightsCols{
   display:grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  gap: 26px; /* clearer separation between columns */
   align-items:start;
 }
+
+.mcInsightsCol{
+  position: relative;
+  padding-right: 18px;
+}
+.mcInsightsCol:last-child{ padding-right: 0; }
+.mcInsightsCol:not(:last-child)::after{
+  content:"";
+  position:absolute;
+  top: 44px;
+  right: 4px;
+  bottom: 10px;
+  width:1px;
+  background: rgba(120,160,255,.10);
+}
+
 .mcInsightsColHead{
   display:flex;
   align-items:center;
   justify-content:center;
   gap:10px;
-  font-size: 13px;
-  letter-spacing:.06em;
+  font-size: 14px;
+  font-weight: 950;
+  letter-spacing:.08em;
   text-transform: uppercase;
-  color: rgba(210,230,255,.92);
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(160,205,255,.16);
-  background: linear-gradient(180deg, rgba(20,40,70,.85), rgba(10,18,32,.85));
+  color: rgba(235,245,255,.95);
+  padding: 8px 10px 10px;
+  border-bottom: 1px solid rgba(120,160,255,.12);
   user-select:none;
-  cursor: default;
-  position: relative;
 }
-.mcInsightsColHead .mcColInfo{
+
+.mcColInfo{
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  width: 18px; height: 18px;
-  border-radius: 9px;
-  border: 1px solid rgba(120,170,255,.28);
-  background: rgba(45,107,255,.20);
-  color: rgba(226,240,255,.92);
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  border: 1px solid rgba(120,160,255,.22);
+  background: rgba(12,18,34,.55);
+  color: rgba(200,220,255,.92);
+  font-weight: 950;
   font-size: 12px;
   line-height: 1;
 }
+
 .mcInsightsColGrid{
-  display:grid;
-  grid-template-rows: auto auto;
-  gap: 12px;
-  margin-top: 10px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  padding-top: 12px;
 }
 
 .mcInsightCard{
-  position: relative;
-  border-radius: 12px;
-  padding: 14px 14px 12px;
-  border: 1px solid rgba(160,205,255,.18);
-  background:
-    radial-gradient(680px 240px at 18% 0%, rgba(120,170,255,.18), transparent 60%),
-    radial-gradient(740px 280px at 82% 120%, rgba(0,255,208,.06), transparent 62%),
-    linear-gradient(180deg, rgba(20,40,70,.72), rgba(10,18,32,.62));
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.10),
-    0 18px 46px rgba(0,0,0,.42);
+  background: var(--cardGrad); /* 1:1 with KPI cards */
+  border: 1px solid var(--border);
+  border-radius: var(--rCard);
+  box-shadow: 0 14px 34px rgba(0,0,0,.40);
+  padding: 14px 14px 12px 14px;
+  position:relative;
   overflow:hidden;
-}
-.mcInsightCard::before{
-  content:"";
-  position:absolute; inset:-1px;
-  border-radius: inherit;
-  padding:1px;
-  background: linear-gradient(135deg,
-    rgba(120,170,255,.35),
-    rgba(255,255,255,.06),
-    rgba(0,255,208,.18));
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask-composite: exclude;
-  pointer-events:none;
-  opacity:.75;
-}
-.mcInsightCard::after{
-  content:"";
-  position:absolute; inset:0;
-  border-radius: inherit;
-  background: radial-gradient(520px 160px at 30% -10%, rgba(255,255,255,.10), transparent 60%);
-  pointer-events:none;
-  opacity:.9;
 }
 
 .mcInsightCard .mcCardTitle{
-  font-size: 12px;
-  letter-spacing:.02em;
-  color: rgba(214,232,255,.88);
-  margin-bottom: 10px;
+  font-size:12px;
+  letter-spacing:.25px;
+  text-transform: uppercase;
+  color: rgba(170,200,255,.92);
+  font-weight: 900;
+  margin-bottom: 8px;
 }
+
 .mcInsightCard .mcCardValue{
-  font-size: 22px; /* slightly smaller */
-  font-weight: 800;
+  font-size: 24px; /* slightly smaller than before */
+  font-weight: 900;
   letter-spacing:.01em;
-  color: rgba(170,200,255,.92); /* light blue */
+  color: rgba(160,205,255,.92);
+  text-shadow: 0 0 18px rgba(120,170,255,.18);
   font-variant-numeric: tabular-nums;
+}
+
+.mcInsightCard .mcCardSub{
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: rgba(190,212,255,.74);
+  line-height: 1.35;
+  font-variant-numeric: tabular-nums;
+}
+.mcInsightCard .mcCardSub b{
+  color: rgba(235,245,255,.92);
+  font-weight: 950;
 }
 
 /* Solid tooltips for MC (no transparency) */
@@ -2127,13 +2138,15 @@ background: var(--cardGrad);
       <div class="mcInsightsCol">
         <div class="mcInsightsColHead" data-mc-coltip="goal">Goal &amp; Success <span class="mcColInfo">i</span></div>
         <div class="mcInsightsColGrid">
-          <div class="mcInsightCard" id="mcIG_goal" data-mc-cardtip="goal_primary">
+          <div class="mcInsightCard" id="mcIG_goal">
             <div class="mcCardTitle" id="mcIG_goal_title">Chance to reach target</div>
             <div class="mcCardValue" id="mcIG_goal_val">—</div>
+            <div class="mcCardSub" id="mcIG_goal_sub"></div>
           </div>
-          <div class="mcInsightCard" id="mcIG_ttg" data-mc-cardtip="ttg">
+          <div class="mcInsightCard" id="mcIG_ttg">
             <div class="mcCardTitle">Median trades to target</div>
             <div class="mcCardValue" id="mcIG_ttg_val">—</div>
+            <div class="mcCardSub" id="mcIG_ttg_sub"></div>
           </div>
         </div>
       </div>
@@ -2141,13 +2154,14 @@ background: var(--cardGrad);
       <div class="mcInsightsCol">
         <div class="mcInsightsColHead" data-mc-coltip="risk">Risk <span class="mcColInfo">i</span></div>
         <div class="mcInsightsColGrid">
-          <div class="mcInsightCard" id="mcIR_p90dd" data-mc-cardtip="p90dd">
+          <div class="mcInsightCard" id="mcIR_p90dd">
             <div class="mcCardTitle">p90 Max Drawdown</div>
             <div class="mcCardValue" id="mcIR_p90dd_val">—</div>
           </div>
-          <div class="mcInsightCard" id="mcIR_dd12" data-mc-cardtip="dd12">
+          <div class="mcInsightCard" id="mcIR_dd12">
             <div class="mcCardTitle" id="mcIR_dd12_title">P(Drawdown ≤ -12)</div>
             <div class="mcCardValue" id="mcIR_dd12_val">—</div>
+            <div class="mcCardSub" id="mcIR_dd12_sub"></div>
           </div>
         </div>
       </div>
@@ -2155,11 +2169,11 @@ background: var(--cardGrad);
       <div class="mcInsightsCol">
         <div class="mcInsightsColHead" data-mc-coltip="endur">Endurance &amp; Recovery <span class="mcColInfo">i</span></div>
         <div class="mcInsightsColGrid">
-          <div class="mcInsightCard" id="mcIE_uw_med" data-mc-cardtip="uw_med">
+          <div class="mcInsightCard" id="mcIE_uw_med">
             <div class="mcCardTitle">Median Time Under Water</div>
             <div class="mcCardValue" id="mcIE_uw_med_val">—</div>
           </div>
-          <div class="mcInsightCard" id="mcIE_uw_p90" data-mc-cardtip="uw_p90">
+          <div class="mcInsightCard" id="mcIE_uw_p90">
             <div class="mcCardTitle">p90 Time Under Water</div>
             <div class="mcCardValue" id="mcIE_uw_p90_val">—</div>
           </div>
@@ -5940,10 +5954,35 @@ if(dpApply && !dpApply._bound){
   const ttgMed = I.time_to_goal_median;
   $("mcIG_ttg_val").textContent = (ttgMed == null) ? "—" : `${mcFmtTrades(ttgMed)} trades`;
 
-  const p90dd = I.p90_max_dd;
+  const ttgSub = $("mcIG_ttg_sub");
+  if(ttgSub){
+    const p90 = I.time_to_goal_p90;
+    ttgSub.textContent = (p90==null) ? "" : `p90 trades to ${goalLabel}: ${mcFmtTrades(p90)} trades`;
+  }
+
+
+  // Goal stretch probability (50 per 100 trades)
+  const goalAmtStretch = isEq ? (50 * (T/100)) : (50 * (T/100));
+  const goalStretchLabel = isEq ? `+ ${goalAmtStretch.toFixed(0)} %` : `+ ${goalAmtStretch.toFixed(0)} R`;
+  const goalSub = $("mcIG_goal_sub");
+  if(goalSub){
+    const pStretch = mcFmtProb(I.goal_hit_stretch);
+    goalSub.textContent = `Target ${goalStretchLabel} reached: ${pStretch}`;
+  }
+
+    const p90dd = I.p90_max_dd;
   $("mcIR_p90dd_val").textContent = isEq ? mcFmtPctNegSp(p90dd) : mcFmtRSp(p90dd);
 
   $("mcIR_dd12_val").textContent = mcFmtProb(I.p_dd_12);
+
+  const ddSub = $("mcIR_dd12_sub");
+  if(ddSub){
+    const thr18 = isEq ? "≤ -18 %" : "≤ -18 R";
+    const thr25 = isEq ? "≤ -25 %" : "≤ -25 R";
+    const p18 = mcFmtProb(I.p_dd_18);
+    const p25 = mcFmtProb(I.p_dd_25);
+    ddSub.innerHTML = `${thr18}: <b>${p18}</b> &nbsp;|&nbsp; ${thr25}: <b>${p25}</b>`;
+  }
 
   $("mcIE_uw_med_val").textContent = (I.underwater_median==null) ? "—" : `${mcFmtTrades(I.underwater_median)} trades`;
   $("mcIE_uw_p90_val").textContent = (I.underwater_p90==null) ? "—" : `${mcFmtTrades(I.underwater_p90)} trades`;
@@ -5951,7 +5990,7 @@ if(dpApply && !dpApply._bound){
 
 function bindMcTooltips(){
   const wrap = $("mcWrap");
-  const tip = $("mcRowTip"); // reused as generic MC tooltip
+  const tip = $("mcRowTip"); // generic MC tooltip (solid)
   if(!wrap || !tip || bindMcTooltips._bound) return;
   bindMcTooltips._bound = true;
 
@@ -5959,150 +5998,91 @@ function bindMcTooltips(){
 
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-  function position(e){
-    const pad = 14;
-    const vw = window.innerWidth || document.documentElement.clientWidth || 1200;
-    const vh = window.innerHeight || document.documentElement.clientHeight || 800;
+  function positionUnder(el){
+    if(!el) return;
+    const r = el.getBoundingClientRect();
 
-    const tw = tip.offsetWidth || 360;
-    const th = tip.offsetHeight || 150;
+    // Ensure we measure with final content
+    tip.style.left = "0px";
+    tip.style.top  = "0px";
 
-    let x = (e?.clientX ?? 0) + pad;
-    let y = (e?.clientY ?? 0) + pad;
+    const pad = 10;
+    const tw = tip.offsetWidth;
+    const th = tip.offsetHeight;
 
-    x = clamp(x, 10, vw - tw - 10);
-    y = clamp(y, 10, vh - th - 10);
+    let left = r.left + (r.width/2) - (tw/2);
+    left = clamp(left, pad, window.innerWidth - tw - pad);
 
-    tip.style.left = x + "px";
-    tip.style.top  = y + "px";
+    let top = r.bottom + 10;
+    if(top + th + pad > window.innerHeight){
+      top = r.top - th - 10;
+    }
+    top = clamp(top, pad, window.innerHeight - th - pad);
+
+    tip.style.left = left + "px";
+    tip.style.top  = top  + "px";
   }
 
-  function show(html, e){
+  function showAt(el, html){
     tip.innerHTML = html;
     tip.style.display = "block";
-    position(e);
+    bindMcTooltips._lastEl = el;
+    positionUnder(el);
   }
-  function hide(){ tip.style.display = "none"; }
-
-  function getCached(){
-    const scopeKey = mcBuildScopeKey();
-    const key = `${scopeKey}|${GLOBAL.mc.T}`;
-    return mcCacheGet(key);
+  function hide(){
+    tip.style.display = "none";
+    bindMcTooltips._lastEl = null;
   }
 
   function colTip(which){
     if(which === "goal"){
-      return `<div><b>Goal &amp; Success (Monte Carlo)</b></div>
-      <div style="margin-top:8px; opacity:.95;">These tiles show how often and how quickly the simulation reaches a target.</div>
-      <div style="margin-top:8px; opacity:.92;">Targets are scaled per 100 trades (e.g., 30R/30% per 100 trades) and extrapolated to the selected horizon (100/200/500/1000).</div>`;
+      return `
+        <div><b>Goal &amp; Success (Monte Carlo)</b></div>
+        <div class="mcTipBody" style="margin-top:8px;">These tiles show how often and how quickly the simulation reaches a target.</div>
+        <div class="mcTipBody" style="margin-top:8px;">Targets are scaled per 100 trades (e.g., 30R / 30% per 100 trades) and then scaled to the selected horizon (100 / 200 / 500 / 1,000).</div>
+      `;
     }
     if(which === "risk"){
-      return `<div><b>Risk (Monte Carlo)</b></div>
-      <div style="margin-top:8px; opacity:.95;">These tiles summarize drawdown risk across all 2,000 paths.</div>
-      <div style="margin-top:8px; opacity:.92;">p90 is a “bad but realistic” value.</div>
-      <div style="margin-top:8px; opacity:.90;">Probabilities show how often certain drawdown thresholds (e.g., -12/-18/-25) are reached at least once.</div>`;
+      return `
+        <div><b>Risk (Monte Carlo)</b></div>
+        <div class="mcTipBody" style="margin-top:8px;">These tiles summarize drawdown risk across all 2,000 paths.</div>
+        <div class="mcTipBody" style="margin-top:8px;">p90 is a “bad but realistic” value.</div>
+        <div class="mcTipBody" style="margin-top:8px;">Probabilities show how often certain drawdown thresholds (e.g., -12/-18/-25) are reached at least once.</div>
+      `;
     }
-    return `<div><b>Endurance &amp; Recovery (Monte Carlo)</b></div>
-      <div style="margin-top:8px; opacity:.95;">These tiles describe how long paths typically stay below their prior peak (Time Under Water) and how often a new high is reached by the horizon (Recovery).</div>
-      <div style="margin-top:8px; opacity:.90;">Values are aggregated across all 2,000 paths.</div>`;
+    return `
+      <div><b>Endurance &amp; Recovery (Monte Carlo)</b></div>
+      <div class="mcTipBody" style="margin-top:8px;">These tiles describe how long paths typically stay below their prior peak (Time Under Water) and how often a new peak is made by the horizon (Recovery).</div>
+      <div class="mcTipBody" style="margin-top:8px;">Values are aggregated across all 2,000 paths.</div>
+    `;
   }
 
-  function fmtGoalAmt(v, isEq){
-    return isEq ? `+ ${v.toFixed(0)} %` : `+ ${v.toFixed(0)} R`;
-  }
-
-  function cardTip(which){
-    const cached = getCached();
-    const metric = (GLOBAL.mc.metric === "cumr") ? "cumr" : "equity";
-    const isEq = (metric === "equity");
-    const I = cached?.insights?.[metric];
-    const T = Number(cached?.meta?.T || GLOBAL.mc.T || 100);
-    if(!I) return null;
-
-    if(which === "goal_primary"){
-      const stretchAmt = isEq ? (50 * (T/100)) : (50 * (T/100));
-      return `<div><b>Chance to reach target</b></div>
-        <div style="margin-top:8px; opacity:.92;">Stretch target ${fmtGoalAmt(stretchAmt, isEq)} reached: <b>${mcFmtProb(I.goal_hit_stretch)}</b></div>`;
-    }
-
-    if(which === "ttg"){
-      const p90 = I.time_to_goal_p90;
-      const p90Txt = (p90 == null) ? "—" : `${mcFmtTrades(p90)} trades`;
-      return `<div><b>Median trades to target</b></div>
-        <div style="margin-top:8px; opacity:.92;">p90 trades to target: <b>${p90Txt}</b></div>
-        <div class="mcTipSep"></div>
-        <div style="opacity:.92;">P(End &gt; Start): <b>${mcFmtProb(I.p_end_positive)}</b></div>`;
-    }
-
-    if(which === "p90dd"){
-      const val = isEq ? mcFmtPctNegSp(I.p90_max_dd) : mcFmtRSp(I.p90_max_dd);
-      return `<div><b>p90 Max Drawdown</b></div>
-        <div style="margin-top:8px; opacity:.92;">90% of paths have a smaller drawdown than <b>${val}</b>.</div>`;
-    }
-
-    if(which === "dd12"){
-      const dd18 = mcFmtProb(I.p_dd_18);
-      const dd25 = mcFmtProb(I.p_dd_25);
-      const u18 = isEq ? "-18 %" : "-18 R";
-      const u25 = isEq ? "-25 %" : "-25 R";
-      return `<div><b>Drawdown thresholds</b></div>
-        <div style="margin-top:8px; opacity:.92;">P(Drawdown ≤ ${u18}): <b>${dd18}</b></div>
-        <div style="margin-top:8px; opacity:.88;">Stress-test (≤ ${u25}): <b>${dd25}</b></div>`;
-    }
-
-    if(which === "uw_p90"){
-      const rec = mcFmtProb(I.recovery_prob);
-      const cond = I.recovery_after_dd18;
-      const condTxt = (cond == null) ? "—" : mcFmtProb(cond);
-      const unit = isEq ? "18 %" : "18 R";
-      return `<div><b>Recovery</b></div>
-        <div style="margin-top:8px; opacity:.92;">Recovery probability: <b>${rec}</b></div>
-        <div style="margin-top:8px; opacity:.88;">After DD ≤ ${unit}: <b>${condTxt}</b></div>`;
-    }
-
-    return null;
-  }
-
-  function statsTip(){
-    return `<div><b>How to read this table</b></div>
-      <div style="margin-top:8px; opacity:.92;">Each column describes one possible future path.</div>
-      <div style="margin-top:6px; opacity:.92;">All values within a column belong to the same path (Worst, p10, Median, p90, Best).</div>
-      <div class="mcTipSub">Rows show metrics of that path — not global extremes.</div>`;
-  }
-
+  // Only column header tooltips (anchored under the header, not the mouse)
   wrap.addEventListener("mouseover", (e)=>{
-    const col = e.target && e.target.closest("[data-mc-coltip]");
-    if(col){
-      const which = col.getAttribute("data-mc-coltip");
-      show(colTip(which), e);
-      return;
+    const head = e.target && e.target.closest("[data-mc-coltip]");
+    if(head){
+      const which = head.getAttribute("data-mc-coltip");
+      showAt(head, colTip(which));
     }
-    const card = e.target && e.target.closest("[data-mc-cardtip]");
-    if(card){
-      const which = card.getAttribute("data-mc-cardtip");
-      const html = cardTip(which);
-      if(html) show(html, e);
-      return;
-    }
-    const st = e.target && e.target.closest(".mcStatsInfo");
-    if(st){
-      show(statsTip(), e);
-      return;
-    }
-  });
-
-  wrap.addEventListener("mousemove", (e)=>{
-    if(tip.style.display !== "none") position(e);
   });
 
   wrap.addEventListener("mouseout", (e)=>{
-    const leftWrap = !wrap.contains(e.relatedTarget);
-    const leavingTipTarget = e.target && (e.target.closest("[data-mc-coltip]") || e.target.closest("[data-mc-cardtip]") || e.target.closest(".mcStatsInfo"));
-    if(leftWrap || leavingTipTarget) hide();
+    const head = e.target && e.target.closest("[data-mc-coltip]");
+    if(!head) return;
+    const leavingHead = !head.contains(e.relatedTarget);
+    if(leavingHead) hide();
   });
+
+  window.addEventListener("resize", ()=>{
+    if(tip.style.display !== "none" && bindMcTooltips._lastEl) positionUnder(bindMcTooltips._lastEl);
+  });
+  window.addEventListener("scroll", ()=>{
+    if(tip.style.display !== "none" && bindMcTooltips._lastEl) positionUnder(bindMcTooltips._lastEl);
+  }, true);
 }
 
-  function mcFmtUSDSp(n){
+
+function mcFmtUSDSp(n){
     const s = fmtUSD(n);
     return (s && s !== "—") ? s.replace("$", "$ ") : "—";
   }
@@ -6727,7 +6707,7 @@ function mcCompute(Rs, equityRow, T, M){
           `<b>Monte Carlo · Info</b>`,
           `<div class="muted">Instrument: ${mcDisplayInstrument()}</div>`,
           `<div class="muted">Range: ${mcDisplayRange()}</div>`,
-          `<div class="muted">Trades in sample: ${sampleN}</div>`,
+          `<div class="muted">Trades in sample: ${(Array.isArray(GLOBAL.filteredTrades) ? GLOBAL.filteredTrades.length : 0)}</div>`,
           `<div class="muted">Paths (M): ${GLOBAL.mc.M}</div>`,
           `<div class="muted">Horizons: 100 / 200 / 500 / 1,000 trades</div>`,
           `<div class="muted">Equity: 1% risk · 5% ladder · DD multiplier (sticky)</div>`
