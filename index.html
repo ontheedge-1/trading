@@ -2274,7 +2274,7 @@ function ensureChartAreaReady(){
 
   // Ensure Monte Carlo area never leaks into other modes (Calendar/KPI/AI)
   if(GLOBAL.mode !== "mc" && mcWrap) mcWrap.style.display = "none";
-  const mcWrap = $("mcWrap");
+  let mcWrapDup = $("mcWrap");
   if(mcWrap && GLOBAL.mode !== "mc") mcWrap.style.display = "none";
   const canvas = $("curveCanvas");
 
@@ -5309,7 +5309,7 @@ function renderCurve(withCrosshair=false){
   
   // Monte Carlo mode: show MC panel, hide standard chart/calendar
   if(GLOBAL.mode === "mc"){
-    const mcWrap = $("mcWrap");
+    let mcWrapDup = $("mcWrap");
     const hint = document.querySelector(".hint");
     if(chartWrap) chartWrap.style.display = "none";
     if(calWrap) calWrap.style.display = "none";
@@ -6829,7 +6829,7 @@ function mcCompute(Rs, equityRow, T, M){
 }
 
   function renderMonteCarloView(){
-    const mcWrap = $("mcWrap");
+    let mcWrapDup = $("mcWrap");
     if(!mcWrap) return;
 
     GLOBAL.mc.active = true;
@@ -7044,7 +7044,7 @@ function mcCompute(Rs, equityRow, T, M){
   }
 
   function bindMonteCarloUI(){
-    const mcWrap = $("mcWrap");
+    let mcWrapDup = $("mcWrap");
     if(!mcWrap || bindMonteCarloUI._bound) return;
     bindMonteCarloUI._bound = true;
 
