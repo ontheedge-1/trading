@@ -3996,7 +3996,6 @@ if(type === "tradeQuality"){
           <div class="kpiTipLast">Tip: compare this with your Profit Factor and Win/Loss profile for context.</div>
         `;
       }
-      }
       if(type === "systemEdge"){
         const wr = k.winrate;
         const lr = k.lossrate;
@@ -4169,6 +4168,7 @@ if(type === "tradeQuality"){
     window.addEventListener("resize", ()=> hide());
     window.addEventListener("scroll", ()=> hide(), {passive:true});
 
+  }
 
   function renderDebug(){
     const el = $("debug");
