@@ -2238,6 +2238,7 @@ background: var(--cardGrad);
           <div class="mcInsightCard" id="mcIR_p90dd">
             <div class="mcCardTitle">p90 Max Drawdown</div>
             <div class="mcCardValue" id="mcIR_p90dd_val">—</div>
+            <div class="mcCardSub" id="mcIR_p90dd_sub"></div>
           </div>
           <div class="mcInsightCard" id="mcIR_dd12">
             <div class="mcCardTitle" id="mcIR_dd12_title">P(Drawdown ≤ -12)</div>
@@ -6060,9 +6061,9 @@ if(dpApply && !dpApply._bound){
 
   /* ===== MC: click-to-toggle header/stats tooltips (clamped) ===== */
   const MC_COL_TIPS = {
-    goal: "Goal & Success: probability to hit the selected target and the typical time-to-target.",
-    risk: "Risk: tail outcomes and drawdown probabilities across simulated paths.",
-    endur: "Endurance & Recovery: how long you are likely to stay under water before new highs."
+    goal: "Goal & Success: these tiles show how often and how quickly the simulation reaches a target. Targets are scaled per 100 trades and projected to the selected horizon (100/200/500/1000).",
+    risk: "Risk: these tiles summarize drawdown risk across all 2,000 paths. p90 is a “bad but realistic” value. Probabilities show how often certain drawdown thresholds (e.g., -12%/-18%/-25%) are reached at least once.",
+    endur: "Recovery: these tiles describe how long paths typically stay below their prior peak (Time Under Water) and how often a new high is reached by the horizon (Recovery). Values are aggregated across all 2,000 paths."
   };
 
   function mcGetTipEl(){
@@ -6143,8 +6144,9 @@ if(dpApply && !dpApply._bound){
 
         const body = [
           `<b>Monte Carlo · Stats</b>`,
-          `<div class="muted">Worst/p10/Median/p90/Best are computed across simulated paths.</div>`,
-          `<div class="muted">Median is the 50th percentile of outcomes.</div>`,
+          `<div class="muted">Each column represents one possible future path.</div>`,
+          `<div class="muted">All values in a column belong to the same path (Worst, p10, Median, p90, Best).</div>`,
+          `<div class="muted">Rows show metrics for that specific path, not global extrema across all paths.</div>`,
           `<span class="mcTipLast">Tip: switch Horizon (T) to see how tails evolve.</span>`
         ].join("");
         mcToggleAnchoredTip(stats, body);
