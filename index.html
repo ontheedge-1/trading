@@ -2064,8 +2064,8 @@ background: var(--cardGrad);
           <button id="btnR" type="button">Cum R</button>
           <button id="btnDD" type="button">DD (R)</button>
           <button id="btnStreaks" type="button">Streaks</button>
-          <button id="btnKPI" type="button">KPI</button>
           <button id="btnCal" type="button" title="Calendar">📅</button>
+          <button id="btnKPI" type="button">KPI</button>
           <button id="btnAI" type="button" title="🤖 Coach">🤖</button>
           <button id="btnMC" type="button" title="Monte Carlo">MC</button>
         </div>
@@ -5165,14 +5165,14 @@ function setChartHeaderByModeSafe(mode){
   }
   if(m === "ai"){
     const t = $("curveTitle"); const s = $("curveSub"); if(!t||!s) return;
-    t.textContent = "🤖 Coach";
-    s.textContent = "";
+    t.textContent = "🤖 AI Coach";
+    s.textContent = "A professional evaluation of your results.";
     return;
   }
   if(m === "mc"){
     const t = $("curveTitle"); const s = $("curveSub"); if(!t||!s) return;
     t.textContent = "Monte Carlo";
-    s.textContent = "";
+    s.textContent = "Calculate a reasonable expactation for future results.";
     return;
   }
   setChartHeaderByMode(m);
