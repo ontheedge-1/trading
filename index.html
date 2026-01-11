@@ -3819,7 +3819,7 @@ function computeScore(filteredTrades, tradeKPIs){
           const cls = tradeQualityClass(k.avgR);
           return `<span class="kpiMain ${cls}">${fmtR1(k.avgR)}</span>`;
         })(),
-        sub1: `Ø Window: ${fmtR1(k.avgWin)}`,
+        sub1: `Ø Win: ${fmtR1(k.avgWin)}`,
         sub2: `Ø Loss: ${fmtR1(k.avgLoss)}`,
         cls: ""
       },
