@@ -815,27 +815,9 @@ background: var(--cardGrad);
     }
 
         /* Subtle 2px top highlight per Insights column accent */
-    .mcInsightsCol[data-accent] .mcInsightCard::before{
-      content:"";
-      position:absolute;
-      left:0; right:0; top:0;
-      height:2px;
-      background: var(--mcAccent, rgba(120,170,255,.65));
-      opacity: .95;
-      pointer-events:none;
-    }
-    .mcInsightCard.mcPrimary{
-      border-color: rgba(45,107,255,.28);
-      box-shadow: inset 0 0 0 1px rgba(45,107,255,.14);
-      background: linear-gradient(180deg, rgba(45,107,255,.14), rgba(10,16,32,.10));
-    }
-    .mcCardTitle{
-      font-size: 11px;
-      font-weight: 900;
-      color: rgba(188,210,255,.92);
-      letter-spacing: .35px;
-      text-transform: uppercase;
-    }
+    .mcInsightsCol[data-accent] .mcInsightCard::before{ display:none; }
+    .mcInsightCard.mcPrimary{ border-color: rgba(45,107,255,.28); background: inherit; }
+    .mcCardTitle{ font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: rgba(205,225,255,.82); }
     .mcCardValue{
       margin-top: 8px;
       font-size: 24px;
@@ -1863,17 +1845,7 @@ background: var(--cardGrad);
   padding-right: 18px;
 }
 .mcInsightsCol:last-child{ padding-right: 0; }
-.mcInsightsCol:not(:last-child)::after{
-  content:"";
-  position:absolute;
-  top: 44px;
-  /* center the divider inside the inter-column gap (gap ≈ 26px => half ≈ 13px) */
-  right: -13px;
-  bottom: 10px;
-  width:2px;
-  background: rgba(120,160,255,.14);
-  border-radius: 2px;
-}
+.mcInsightsCol:not(:last-child)::after{ display:none; }
 
 .mcInsightsColHead{
   display:flex;
@@ -1895,6 +1867,14 @@ background: var(--cardGrad);
 .mcInsightsCol[data-accent="risk"]{ --mcAccent: rgba(255,190,90,.85); }
 .mcInsightsCol[data-accent="endurance"]{ --mcAccent: rgba(120,220,205,.65); }
 
+/* Accent border around the whole card (per column) */
+.mcInsightsCol[data-accent] .mcInsightCard{
+  border-color: var(--mcAccent);
+  box-shadow:
+    0 22px 60px rgba(0,0,0,.42),
+    0 0 0 1px rgba(0,0,0,.18) inset,
+    inset 0 1px 0 rgba(255,255,255,.10);
+}
 /* Prominent header underline uses column accent (reuses existing header line) */
 .mcInsightsColHead{
   position: relative;
@@ -1914,8 +1894,8 @@ background: var(--cardGrad);
   left: 10px;
   right: 10px;
   bottom: -1px;
-  height: 2px;
-  background: rgba(120,170,255,.70);
+  height: 1px;
+  background: rgba(255,255,255,.12);
   opacity: .75;
   pointer-events:none;
 }
@@ -4130,41 +4110,27 @@ if(type === "tradeQuality"){
       else { showAnchored(htmlContent, anchorEl); }
     }
 
-    document.querySelectorAll(".card").forEach((card, idx) => {
+    document.querySelectorAll(".card").forEach((card) => {
       const type = card.dataset?.kpiTip;
       if(!type) return;
 
       if(card.dataset.tipBound === "1") return;
       card.dataset.tipBound = "1";
 
-      // Inject a small info icon in the card header (click-to-toggle)
-      let icon = card.querySelector(".kpiInfoIcon");
-      if(!icon){
-        icon = document.createElement("button");
-        icon.type = "button";
-        icon.className = "kpiInfoIcon";
-        icon.textContent = "i";
-        icon.setAttribute("aria-label", "Info");
-        card.appendChild(icon);
-      }
-      icon.dataset.anchorId = "kpi_" + type + "_" + idx;
+      // Restore original: hover-based KPI tooltips (no injected [i] button)
+      card.style.cursor = "help";
+      card.removeAttribute("title");
 
-      icon.addEventListener("click", (e)=>{
-        e.preventDefault();
-        e.stopPropagation();
+      const showForEvent = (e) => {
         const html = buildHTML(type);
         if(!html) return;
-        toggleAnchored(html, icon);
-      });
-    });
+        show(html, e.clientX, e.clientY);
+      };
 
-    // Click outside closes
-    document.addEventListener("click", (e)=>{
-      if(tip.style.display !== "block") return;
-      const inside = e.target && (e.target.closest(".kpiInfoIcon") || e.target.closest("#kpiTooltip"));
-      if(!inside) hide();
+      card.addEventListener("mouseenter", showForEvent);
+      card.addEventListener("mousemove", showForEvent);
+      card.addEventListener("mouseleave", hide);
     });
-
     window.addEventListener("resize", ()=> hide());
     window.addEventListener("scroll", ()=> hide(), {passive:true});
 
@@ -6100,7 +6066,7 @@ if(dpApply && !dpApply._bound){
   };
 
   function mcGetTipEl(){
-    return $("mcHeaderTooltip") || $("dataTooltip") || $("kpiTooltip");
+    return $("mcRowTip") || $("mcHeaderTooltip") || $("dataTooltip") || $("kpiTooltip");
   }
 
   function mcHideTip(){
@@ -6316,7 +6282,7 @@ function bindMcTooltips(){
       `;
     }
     return `
-      <div><b>Endurance &amp; Recovery (Monte Carlo)</b></div>
+      <div><b>Recovery (Monte Carlo)</b></div>
       <div class="mcTipBody" style="margin-top:8px;">These tiles describe how long paths typically stay below their prior peak (Time Under Water) and how often a new peak is made by the horizon (Recovery).</div>
       <div class="mcTipBody" style="margin-top:8px;">Values are aggregated across all 2,000 paths.</div>
     `;
@@ -7159,6 +7125,11 @@ function mcCompute(Rs, equityRow, T, M){
     // Horizon chips
     const chips = $("mcChips");
     if(chips){
+      // Ensure GLOBAL.mc.T matches the visually active chip on load
+      const a0 = chips.querySelector("button.chip.active[data-T]");
+      const t0 = a0 ? Number(a0.getAttribute("data-T")) : NaN;
+      if([100,200,500,1000].includes(t0)) GLOBAL.mc.T = t0;
+
       chips.addEventListener("click", (e)=>{
         const b = e.target && e.target.closest("button[data-T]");
         if(!b) return;
@@ -7176,6 +7147,10 @@ function mcCompute(Rs, equityRow, T, M){
     if(runBtn){
       runBtn.addEventListener("click", ()=>{
         // recompute always on click (force)
+        const chips = $("mcChips");
+        const active = chips && chips.querySelector("button.chip.active[data-T]");
+        const t = active ? Number(active.getAttribute("data-T")) : NaN;
+        if([100,200,500,1000].includes(t)) GLOBAL.mc.T = t;
         GLOBAL.mc.scopeKey = mcBuildScopeKey();
         mcRunCompute();
       });
