@@ -3202,11 +3202,12 @@ function hideAIPanel(){
   if(last === "L"){ sumL += curL; cntL += 1; }
 
   return {
-    longestWindow: maxW,
+    longestWin:  maxW,
     longestLoss: maxL,
-    avgWindow: cntW ? (sumW / cntW) : 0,
+    avgWin:  cntW ? (sumW / cntW) : 0,
     avgLoss: cntL ? (sumL / cntL) : 0
   };
+
 }
 
 function aggregateDailyRFromTrades(trades){
