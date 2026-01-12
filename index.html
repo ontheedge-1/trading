@@ -4342,11 +4342,6 @@ if(type === "tradeQuality"){
     if(!Number.isFinite(x)) return "—";
     return x.toLocaleString("de-DE", { style:"currency", currency:"EUR", minimumFractionDigits:2, maximumFractionDigits:2 });
   };
-  const fmtR1 = (r) => {
-    const x = Number(r);
-    if(!Number.isFinite(x)) return "—";
-    return x.toFixed(1) + "R";
-  };
   const fmtSigned1 = (n, suffix="") => {
     const x = Number(n);
     if(!Number.isFinite(x)) return "—";
