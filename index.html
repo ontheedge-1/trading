@@ -4869,8 +4869,11 @@ if(type === "tradeQuality"){
             const b = Number(GLOBAL.seriesEquity?.[fullIdx-1]);
             delta = (Number.isFinite(a) && Number.isFinite(b)) ? (a-b) : null;
           } else {
-            const dr = Number(GLOBAL.seriesDailyR?.[fullIdx] ?? 0);
-            delta = Number.isFinite(dr) ? dr : null;
+            // Cum R is per day in `values` (already instrument-filtered),
+            // so Δ day = difference of the cumulative series
+            const a = Number(values?.[hoverIndex]);
+            const b = Number(values?.[hoverIndex - 1]);
+            delta = (Number.isFinite(a) && Number.isFinite(b)) ? (a - b) : null;
           }
         }
 
