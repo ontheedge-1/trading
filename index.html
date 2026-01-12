@@ -943,6 +943,62 @@ background: var(--cardGrad);
       min-height: 0;
       overflow:auto;
     }
+    /* Year view (calendar heatmap) */
+    .calYearGrid{
+      display:grid;
+      grid-template-columns: 78px repeat(12, minmax(18px, 1fr)) 96px;
+      gap:10px;
+      padding:12px 10px 10px 10px;
+      overflow:hidden; /* no horizontal scroll */
+      user-select:none;
+    }
+    .yHdr{
+      font-size:11px;
+      color: rgba(138,164,214,.95);
+      letter-spacing:.2px;
+      text-transform:uppercase;
+      padding:2px 0;
+      opacity:.9;
+    }
+    .yYear{
+      align-self:center;
+      font-weight:800;
+      color:#e7f0ff;
+      opacity:.95;
+      padding-left:6px;
+    }
+    .yCell{
+      height:28px;
+      border-radius:12px;
+      border: 1px solid rgba(120,160,255,.12);
+      background: rgba(10,16,32,.22);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.03);
+      position:relative;
+      cursor:default;
+    }
+    .yCell.interactive{ cursor:pointer; }
+    .yCell:hover{
+      border-color: rgba(120,160,255,.28);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.05), 0 10px 22px rgba(0,0,0,.25);
+    }
+    .yTotal{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      height:28px;
+      border-radius:12px;
+      border: 1px solid rgba(120,160,255,.16);
+      background: rgba(10,16,32,.22);
+      font-weight:800;
+      font-size:12px;
+      color:#e7f0ff;
+      cursor:pointer;
+    }
+    .yTotal:hover{
+      border-color: rgba(120,160,255,.28);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.05), 0 10px 22px rgba(0,0,0,.25);
+    }
+
     .calDow{
       padding:10px 10px 8px 10px;
       font-size:11px;
@@ -2162,13 +2218,17 @@ background: var(--cardGrad);
               <button data-mode="pnl" class="active">PnL</button>
               <button data-mode="tr">Trades & R</button>
             </div>
-            <div class="chipRow" id="calChips"></div>
+            <div class="calMode" id="calView" aria-label="Calendar view">
+              <button data-view="month" class="active">Month</button>
+              <button data-view="years">Years</button>
+            </div>
           </div>
         </div>
 
         <div class="calGrid" id="calGrid"></div>
       
-      </div>
+              <div class="calYearGrid" id="calYearGrid" style="display:none;"></div>
+</div>
 
       <div class="mcWrap" id="mcWrap" style="display:none;">
         <div class="calHead mcHead">
@@ -4275,10 +4335,403 @@ if(type === "tradeQuality"){
     return x > 0 ? "good" : "bad";
   }
 
-  function renderCalendar(){
+  
+  // ===== Calendar Years View (heatmap) =====
+  const fmtEUR2 = (n) => {
+    const x = Number(n);
+    if(!Number.isFinite(x)) return "—";
+    return x.toLocaleString("de-DE", { style:"currency", currency:"EUR", minimumFractionDigits:2, maximumFractionDigits:2 });
+  };
+  const fmtPct1 = (pct) => {
+    const x = Number(pct);
+    if(!Number.isFinite(x)) return "—";
+    return x.toFixed(1) + "%";
+  };
+  const fmtR1 = (r) => {
+    const x = Number(r);
+    if(!Number.isFinite(x)) return "—";
+    return x.toFixed(1) + "R";
+  };
+  const fmtSigned1 = (n, suffix="") => {
+    const x = Number(n);
+    if(!Number.isFinite(x)) return "—";
+    const s = (x < 0) ? "-" : "+";
+    return s + Math.abs(x).toFixed(1) + suffix;
+  };
+  const fmtSignedEUR2 = (n) => {
+    const x = Number(n);
+    if(!Number.isFinite(x)) return "—";
+    const s = (x < 0) ? "-" : "+";
+    return s + Math.abs(x).toLocaleString("de-DE", { minimumFractionDigits:2, maximumFractionDigits:2 }) + " €";
+  };
+  const fmtSignedR1 = (n) => {
+    const x = Number(n);
+    if(!Number.isFinite(x)) return "—";
+    const s = (x < 0) ? "-" : "+";
+    return s + Math.abs(x).toFixed(1) + " R";
+  };
+
+  function quantile(sortedArr, q){
+    if(!sortedArr || !sortedArr.length) return 0;
+    const n = sortedArr.length;
+    if(n === 1) return sortedArr[0];
+    const pos = (n - 1) * q;
+    const base = Math.floor(pos);
+    const rest = pos - base;
+    const a = sortedArr[base];
+    const b = sortedArr[Math.min(base + 1, n - 1)];
+    return a + rest * (b - a);
+  }
+
+  function showDataTipAnchored(html, anchorEl, align="center"){
+    const tip = $("dataTooltip");
+    if(!tip || !anchorEl) return;
+    tip.innerHTML = html;
+    tip.style.display = "block";
+    tip.style.left = "0px";
+    tip.style.top  = "0px";
+
+    const a = anchorEl.getBoundingClientRect();
+    const t = tip.getBoundingClientRect();
+    const pad = 10;
+
+    let left;
+    if(align === "right"){
+      left = a.right - t.width;
+    } else {
+      left = a.left + (a.width/2) - (t.width/2);
+    }
+    let top = a.bottom + 10;
+
+    left = clamp(left, pad, window.innerWidth - t.width - pad);
+    top  = clamp(top, pad, window.innerHeight - t.height - pad);
+
+    tip.style.left = Math.round(left) + "px";
+    tip.style.top  = Math.round(top) + "px";
+    tip.dataset.anchorId = anchorEl.dataset.anchorId || "";
+  }
+  function hideDataTip(){
+    const tip = $("dataTooltip");
+    if(tip) tip.style.display = "none";
+  }
+  function toggleDataTipAnchored(html, anchorEl, align="center"){
+    const tip = $("dataTooltip");
+    if(!tip || !anchorEl) return;
+    const id = anchorEl.dataset.anchorId || "";
+    const isOpen = (tip.style.display === "block" && tip.dataset.anchorId === id);
+    if(isOpen) hideDataTip();
+    else showDataTipAnchored(html, anchorEl, align);
+  }
+
+  function renderCalendarYears(allowedMonths){
+    const yearGrid = $("calYearGrid");
+    const grid = $("calGrid");
+    if(!yearGrid || !grid) return;
+
+    // Header
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    yearGrid.innerHTML = "";
+    const hdrBlank = document.createElement("div");
+    hdrBlank.className = "yHdr";
+    yearGrid.appendChild(hdrBlank);
+    for(const m of months){
+      const el = document.createElement("div");
+      el.className = "yHdr";
+      el.textContent = m;
+      yearGrid.appendChild(el);
+    }
+    const hdrY = document.createElement("div");
+    hdrY.className = "yHdr";
+    hdrY.textContent = "Year";
+    hdrY.style.textAlign = "center";
+    yearGrid.appendChild(hdrY);
+
+    // Build month buckets by year
+    const byYear = new Map(); // year -> Set(monthIndex 0..11) present
+    for(const mk of allowedMonths){
+      const y = Number(mk.slice(0,4));
+      const mo = Number(mk.slice(5,7)) - 1;
+      if(!byYear.has(y)) byYear.set(y, new Set());
+      byYear.get(y).add(mo);
+    }
+    const years = [...byYear.keys()].sort((a,b)=>b-a);
+
+    const spine = GLOBAL.spine || [];
+    const eq = GLOBAL.seriesEquity || [];
+    const dailyPnL = GLOBAL._calMaps?.dailyPnL || new Map();
+    const dailyR   = GLOBAL._calMaps?.dailyR   || new Map();
+    const tradeCnt = GLOBAL._calMaps?.tradeCount || new Map();
+
+    // Helper to iterate days in a month
+    const daysInMonth = (year, monthIdx) => {
+      const mm = String(monthIdx+1).padStart(2,"0");
+      const prefix = `${year}-${mm}-`;
+      // Find indices in spine range that match prefix (spine is sorted)
+      const idxs = [];
+      for(let i=0;i<spine.length;i++){
+        const d = spine[i];
+        if(d.startsWith(prefix)) idxs.push(i);
+      }
+      return idxs;
+    };
+
+    // Precompute month end equity index and aggregates for trades/r/pnl
+    const monthData = new Map(); // mk -> {endEquity, sumR, trades, sumPnL}
+    for(const mk of allowedMonths){
+      const y = Number(mk.slice(0,4));
+      const mo = Number(mk.slice(5,7)) - 1;
+      const idxs = daysInMonth(y, mo);
+      let endEquity = null;
+      if(idxs.length){
+        const iEnd = idxs[idxs.length-1];
+        endEquity = Number(eq[iEnd]);
+      }
+      let sumR = 0, trades = 0, sumPnL = 0;
+      for(const i of idxs){
+        const iso = spine[i];
+        const c = Number(tradeCnt.get(iso) ?? 0);
+        trades += (Number.isFinite(c) ? c : 0);
+        const r = Number(dailyR.get(iso) ?? 0);
+        sumR += (Number.isFinite(r) ? r : 0);
+        const p = Number(dailyPnL.get(iso) ?? 0);
+        sumPnL += (Number.isFinite(p) ? p : 0);
+      }
+      monthData.set(mk, { endEquity, sumR, trades, sumPnL });
+    }
+
+    // Create row per year
+    for(const y of years){
+      const yEl = document.createElement("div");
+      yEl.className = "yYear";
+      yEl.textContent = String(y);
+      yearGrid.appendChild(yEl);
+
+      // Decide metric based on calendarBadgeMode: "pnl" => equity month %, "tr" => monthly R sum
+      const mode = (typeof calendarBadgeMode === "string") ? calendarBadgeMode : "pnl";
+
+      // Collect active month values for cap
+      const activeValsAbs = [];
+      for(let mi=0; mi<12; mi++){
+        const mk = `${y}-${String(mi+1).padStart(2,"0")}`;
+        if(!monthData.has(mk)) continue;
+        if(mode === "pnl"){
+          // need prev month end
+          const prev = prevMonthKey(mk);
+          const endThis = monthData.get(mk)?.endEquity;
+          const endPrev = monthData.get(prev)?.endEquity;
+          const pct = (Number.isFinite(endThis) && Number.isFinite(endPrev) && endPrev !== 0) ? ((endThis/endPrev - 1) * 100) : 0;
+          activeValsAbs.push(Math.abs(pct));
+        } else {
+          const r = Number(monthData.get(mk)?.sumR ?? 0);
+          activeValsAbs.push(Math.abs(r));
+        }
+      }
+      const activeCount = activeValsAbs.length;
+      let cap = 0;
+      const maxAbs = activeValsAbs.length ? Math.max(...activeValsAbs) : 0;
+      if(activeCount >= 8){
+        const sorted = [...activeValsAbs].sort((a,b)=>a-b);
+        cap = quantile(sorted, 0.85);
+      } else {
+        cap = maxAbs;
+      }
+      const minCap = (mode === "pnl") ? 0.5 : 0.5; // 0.5% / 0.5R baseline
+      cap = Math.max(cap, minCap);
+
+      // Build 12 month cells
+      for(let mi=0; mi<12; mi++){
+        const mk = `${y}-${String(mi+1).padStart(2,"0")}`;
+        const cell = document.createElement("div");
+        cell.className = "yCell interactive";
+        cell.dataset.anchorId = `y_${mk}`;
+
+        const has = monthData.has(mk);
+        const valInfo = monthData.get(mk);
+
+        if(!has){
+          // no data for this month -> neutral blue-ish base (keep default bg)
+          cell.style.opacity = "0.65";
+        } else if(mode === "pnl"){
+          const prev = prevMonthKey(mk);
+          const endThis = Number(valInfo.endEquity);
+          const endPrev = Number(monthData.get(prev)?.endEquity);
+          const pct = (Number.isFinite(endThis) && Number.isFinite(endPrev) && endPrev !== 0) ? ((endThis/endPrev - 1) * 100) : 0;
+          const eurDelta = (Number.isFinite(endThis) && Number.isFinite(endPrev)) ? (endThis - endPrev) : 0;
+
+          // Color: blue at 0, red/green intensity
+          const abs = Math.abs(pct);
+          const t = Math.min(abs / cap, 1);
+          if(pct > 0){
+            cell.style.background = `linear-gradient(180deg, rgba(20,60,28,.25), rgba(30,180,90,${0.18 + 0.45*t}))`;
+            cell.style.borderColor = `rgba(40,220,120,${0.18 + 0.35*t})`;
+          } else if(pct < 0){
+            cell.style.background = `linear-gradient(180deg, rgba(60,22,22,.25), rgba(240,80,80,${0.18 + 0.45*t}))`;
+            cell.style.borderColor = `rgba(255,90,90,${0.18 + 0.35*t})`;
+          } else {
+            cell.style.background = `linear-gradient(180deg, rgba(10,35,70,.22), rgba(45,107,255,.18))`;
+            cell.style.borderColor = `rgba(45,107,255,.28)`;
+          }
+
+          const cls = (pct >= 0) ? "good" : "bad";
+          const monthLabel = `${months[mi]} ${y}`;
+          const html = `
+            <div style="min-width:220px;">
+              <div style="opacity:.9; margin-bottom:6px;">${monthLabel}</div>
+              <div style="font-weight:900; font-size:16px;" class="${cls}">Δ ${fmtSignedEUR2(eurDelta)}</div>
+              <div style="font-weight:900; font-size:16px;" class="${cls}">Δ ${fmtPct1(pct)}</div>
+              <div style="margin-top:6px; color: rgba(138,164,214,.95);">Equity End: ${fmtEUR2(endThis)}</div>
+            </div>
+          `;
+
+          cell.addEventListener("mouseenter", ()=> showDataTipAnchored(html, cell, "center"));
+          cell.addEventListener("mouseleave", hideDataTip);
+          cell.addEventListener("click", (e)=>{ e.preventDefault(); toggleDataTipAnchored(html, cell, "center"); });
+        } else {
+          const sumR = Number(valInfo.sumR ?? 0);
+          const trades = Number(valInfo.trades ?? 0);
+          const rPer = (trades > 0) ? (sumR / trades) : 0;
+
+          const abs = Math.abs(sumR);
+          const t = Math.min(abs / cap, 1);
+          if(sumR > 0){
+            cell.style.background = `linear-gradient(180deg, rgba(10,35,70,.18), rgba(30,180,90,${0.18 + 0.45*t}))`;
+            cell.style.borderColor = `rgba(40,220,120,${0.18 + 0.35*t})`;
+          } else if(sumR < 0){
+            cell.style.background = `linear-gradient(180deg, rgba(10,35,70,.18), rgba(240,80,80,${0.18 + 0.45*t}))`;
+            cell.style.borderColor = `rgba(255,90,90,${0.18 + 0.35*t})`;
+          } else {
+            cell.style.background = `linear-gradient(180deg, rgba(10,35,70,.22), rgba(45,107,255,.18))`;
+            cell.style.borderColor = `rgba(45,107,255,.28)`;
+          }
+
+          const cls = (sumR >= 0) ? "good" : "bad";
+          const monthLabel = `${months[mi]} ${y}`;
+          const html = `
+            <div style="min-width:220px;">
+              <div style="opacity:.9; margin-bottom:6px;">${monthLabel}</div>
+              <div style="font-weight:900; font-size:16px;" class="${cls}">Δ R: ${fmtSignedR1(sumR)}</div>
+              <div style="margin-top:6px; color: rgba(138,164,214,.95);">Trades : ${Number.isFinite(trades)?trades:0} &nbsp;|&nbsp; R/Trade: ${Number(rPer).toFixed(1)}</div>
+            </div>
+          `;
+          cell.addEventListener("mouseenter", ()=> showDataTipAnchored(html, cell, "center"));
+          cell.addEventListener("mouseleave", hideDataTip);
+          cell.addEventListener("click", (e)=>{ e.preventDefault(); toggleDataTipAnchored(html, cell, "center"); });
+        }
+
+        yearGrid.appendChild(cell);
+      }
+
+      // Year total cell (text + saturated color; tooltip right aligned)
+      const total = document.createElement("div");
+      total.className = "yTotal";
+      total.dataset.anchorId = `yt_${y}`;
+
+      const mode = (typeof calendarBadgeMode === "string") ? calendarBadgeMode : "pnl";
+      if(mode === "pnl"){
+        // Year %: end vs start baseline
+        const mkFirst = `${y}-01`;
+        const mkLast  = `${y}-12`;
+        // Find first month key present in this year
+        const present = [...byYear.get(y)].sort((a,b)=>a-b);
+        const firstMi = present.length ? present[0] : 0;
+        const lastMi  = present.length ? present[present.length-1] : 11;
+        const firstKey = `${y}-${String(firstMi+1).padStart(2,"0")}`;
+        const lastKey  = `${y}-${String(lastMi+1).padStart(2,"0")}`;
+        const startKey = prevMonthKey(firstKey);
+        const startEq  = Number(monthData.get(startKey)?.endEquity);
+        const endEq    = Number(monthData.get(lastKey)?.endEquity);
+
+        const yearPct = (Number.isFinite(startEq) && Number.isFinite(endEq) && startEq !== 0) ? ((endEq/startEq - 1) * 100) : 0;
+
+        total.textContent = fmtPct1(yearPct);
+        if(yearPct > 0){
+          total.style.background = "linear-gradient(180deg, rgba(20,60,28,.25), rgba(30,180,90,.55))";
+          total.style.borderColor = "rgba(40,220,120,.45)";
+        } else if(yearPct < 0){
+          total.style.background = "linear-gradient(180deg, rgba(60,22,22,.25), rgba(240,80,80,.55))";
+          total.style.borderColor = "rgba(255,90,90,.45)";
+        } else {
+          total.style.background = "linear-gradient(180deg, rgba(10,35,70,.22), rgba(45,107,255,.20))";
+          total.style.borderColor = "rgba(45,107,255,.30)";
+        }
+
+        // Tooltip: sum of PnL in year
+        let sumPnLYear = 0;
+        for(const mk of allowedMonths){
+          if(Number(mk.slice(0,4)) !== y) continue;
+          const md = monthData.get(mk);
+          sumPnLYear += Number(md?.sumPnL ?? 0) || 0;
+        }
+        const cls = (sumPnLYear >= 0) ? "good" : "bad";
+        const html = `
+          <div style="min-width:180px;">
+            <div style="opacity:.9; margin-bottom:6px;">Year ${y}</div>
+            <div style="font-weight:900; font-size:16px;" class="${cls}">Δ ${fmtSignedEUR2(sumPnLYear)}</div>
+          </div>
+        `;
+        total.addEventListener("mouseenter", ()=> showDataTipAnchored(html, total, "right"));
+        total.addEventListener("mouseleave", hideDataTip);
+        total.addEventListener("click", (e)=>{ e.preventDefault(); toggleDataTipAnchored(html, total, "right"); });
+
+      } else {
+        let sumRYear = 0;
+        let monthsCount = 0;
+        for(const mk of allowedMonths){
+          if(Number(mk.slice(0,4)) !== y) continue;
+          sumRYear += Number(monthData.get(mk)?.sumR ?? 0) || 0;
+          monthsCount += 1;
+        }
+        total.textContent = fmtR1(sumRYear);
+        if(sumRYear > 0){
+          total.style.background = "linear-gradient(180deg, rgba(20,60,28,.25), rgba(30,180,90,.55))";
+          total.style.borderColor = "rgba(40,220,120,.45)";
+        } else if(sumRYear < 0){
+          total.style.background = "linear-gradient(180deg, rgba(60,22,22,.25), rgba(240,80,80,.55))";
+          total.style.borderColor = "rgba(255,90,90,.45)";
+        } else {
+          total.style.background = "linear-gradient(180deg, rgba(10,35,70,.22), rgba(45,107,255,.20))";
+          total.style.borderColor = "rgba(45,107,255,.30)";
+        }
+
+        const avg = (monthsCount > 0) ? (sumRYear / monthsCount) : 0;
+        const cls = (avg >= 0) ? "good" : "bad";
+        const html = `
+          <div style="min-width:200px;">
+            <div style="opacity:.9; margin-bottom:6px;">Year ${y}</div>
+            <div style="font-weight:900; font-size:16px;" class="${cls}">Ø ${fmtSigned1(avg, " R / month")}</div>
+          </div>
+        `;
+        total.addEventListener("mouseenter", ()=> showDataTipAnchored(html, total, "right"));
+        total.addEventListener("mouseleave", hideDataTip);
+        total.addEventListener("click", (e)=>{ e.preventDefault(); toggleDataTipAnchored(html, total, "right"); });
+      }
+
+      yearGrid.appendChild(total);
+    }
+
+    // keep view toggle buttons in sync
+    const calViewEl = $("calView");
+    if(calViewEl){
+      const view = GLOBAL.calendar?.view || "month";
+      [...calViewEl.querySelectorAll("button[data-view]")].forEach(b=>b.classList.toggle("active", b.dataset.view === view));
+    }
+  }
+
+  function prevMonthKey(mk){
+    const y = Number(mk.slice(0,4));
+    const m = Number(mk.slice(5,7));
+    const d = new Date(Date.UTC(y, m-1, 1));
+    d.setUTCMonth(d.getUTCMonth() - 1);
+    const yy = d.getUTCFullYear();
+    const mm = String(d.getUTCMonth()+1).padStart(2,"0");
+    return `${yy}-${mm}`;
+  }
+
+function renderCalendar(){
     const wrap = $("calendarWrap");
     const grid = $("calGrid");
-    if(!wrap || !grid) return;
+    const yearGrid = $("calYearGrid");
+    if(!wrap || !grid || !yearGrid) return;
 
     const ds = GLOBAL.filters?.dateStart || null;
     const de = GLOBAL.filters?.dateEnd   || null;
@@ -4286,6 +4739,25 @@ if(type === "tradeQuality"){
     const allowedMonths = computeAllowedMonths(ds, de, GLOBAL.spine);
     GLOBAL.calendar = GLOBAL.calendar || {};
     GLOBAL.calendar.allowedMonths = allowedMonths;
+
+    // Ensure view state
+    if(!GLOBAL.calendar.view) GLOBAL.calendar.view = "month";
+    const calViewEl = $("calView");
+    if(calViewEl){
+      const v = GLOBAL.calendar.view;
+      [...calViewEl.querySelectorAll("button[data-view]")].forEach(b=>b.classList.toggle("active", b.dataset.view===v));
+    }
+
+    // Toggle containers
+    if(GLOBAL.calendar.view === "years"){
+      grid.style.display = "none";
+      yearGrid.style.display = "";
+      renderCalendarYears(allowedMonths);
+      return;
+    } else {
+      yearGrid.style.display = "none";
+      grid.style.display = "";
+    }
 
     const defaultMonth = monthKeyFromISO(de || (GLOBAL.spine?.at?.(-1) ?? isoToday()));
     if(!GLOBAL.calendar.month || !allowedMonths.includes(GLOBAL.calendar.month)){
@@ -4303,35 +4775,6 @@ if(type === "tradeQuality"){
     const btnNext = $("calNext");
     if(btnPrev) btnPrev.disabled = (idx <= 0);
     if(btnNext) btnNext.disabled = (idx < 0 || idx >= allowedMonths.length - 1);
-
-    const chips = $("calChips");
-    if(chips){
-      chips.innerHTML = "";
-      for(const mk of allowedMonths){
-        const b = document.createElement("button");
-        b.className = "chip" + (mk === monthKey ? " active" : "");
-        b.type = "button";
-        b.textContent = MONTHS_DE[Number(mk.slice(5,7))-1] || mk;
-        b.title = monthLabelFromKey(mk);
-        b.addEventListener("click", () => {
-          GLOBAL.calendar.month = mk;
-          renderCalendar();
-        
-    // Calendar mode toggle (PnL vs Trades & R)
-    const calModeEl = $("calMode");
-    if(calModeEl){
-      calModeEl.addEventListener("click", (e)=>{
-        const btn = e.target.closest("button[data-mode]");
-        if(!btn) return;
-        calendarBadgeMode = btn.dataset.mode;
-        [...calModeEl.querySelectorAll("button")].forEach(b=>b.classList.toggle("active", b===btn));
-        renderCalendar();
-      });
-    }
-});
-        chips.appendChild(b);
-      }
-    }
 
     // Grid build (Mon–So)
     const first = firstDayOfMonthUTC(monthKey);
@@ -5064,7 +5507,7 @@ if(type === "tradeQuality"){
 
     mode:"equity",
 
-    calendar: { month:null, allowedMonths: [] },
+    calendar: { month:null, allowedMonths: [], view:"month" },
     _calMaps: null
 
   };
