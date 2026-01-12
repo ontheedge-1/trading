@@ -958,6 +958,7 @@ background: var(--cardGrad);
       letter-spacing:.2px;
       text-transform:uppercase;
       padding:2px 0;
+      text-align:center;
       opacity:.9;
     }
     .yYear{
@@ -4444,7 +4445,7 @@ if(type === "tradeQuality"){
       if(!byYear.has(y)) byYear.set(y, new Set());
       byYear.get(y).add(mo);
     }
-    const years = [...byYear.keys()].sort((a,b)=>b-a);
+    const years = [...byYear.keys()].sort((a,b)=>a-b);
 
     const spine = GLOBAL.spine || [];
     const eq = GLOBAL.seriesEquity || [];
@@ -4465,7 +4466,62 @@ if(type === "tradeQuality"){
       return idxs;
     };
 
-    // Precompute month end equity index and aggregates for trades/r/pnl
+    
+    // Helpers: month/year equity baselines from GLOBAL series (independent of allowedMonths)
+    const getMonthEndEquity = (monthKey) => {
+      if(!monthKey) return NaN;
+      const y = Number(monthKey.slice(0,4));
+      const mo = Number(monthKey.slice(5,7)) - 1;
+      if(!Number.isFinite(y) || !Number.isFinite(mo)) return NaN;
+      const idxs = daysInMonth(y, mo);
+      if(!idxs.length) return NaN;
+      const v = Number(eq[idxs[idxs.length-1]]);
+      return Number.isFinite(v) ? v : NaN;
+    };
+
+    const getMonthFirstEquity = (monthKey) => {
+      if(!monthKey) return NaN;
+      const y = Number(monthKey.slice(0,4));
+      const mo = Number(monthKey.slice(5,7)) - 1;
+      if(!Number.isFinite(y) || !Number.isFinite(mo)) return NaN;
+      const idxs = daysInMonth(y, mo);
+      if(!idxs.length) return NaN;
+      const v = Number(eq[idxs[0]]);
+      return Number.isFinite(v) ? v : NaN;
+    };
+
+    const getYearEndEquity = (year) => {
+      const yy = Number(year);
+      if(!Number.isFinite(yy)) return NaN;
+      for(let mo=11; mo>=0; mo--){
+        const v = getMonthEndEquity(`${yy}-${String(mo+1).padStart(2,"0")}`);
+        if(Number.isFinite(v)) return v;
+      }
+      return NaN;
+    };
+
+    const getYearFirstEquity = (year) => {
+      const yy = Number(year);
+      if(!Number.isFinite(yy)) return NaN;
+      for(let mo=0; mo<12; mo++){
+        const v = getMonthFirstEquity(`${yy}-${String(mo+1).padStart(2,"0")}`);
+        if(Number.isFinite(v)) return v;
+      }
+      return NaN;
+    };
+
+    const fmtSignedPct1 = (v) => {
+      const n = Number(v) || 0;
+      const sign = (n > 0) ? "+ " : (n < 0) ? "- " : "";
+      return sign + Math.abs(n).toFixed(1) + " %";
+    };
+
+    const fmtSignedR1sp = (v) => {
+      const n = Number(v) || 0;
+      const sign = (n > 0) ? "+ " : (n < 0) ? "- " : "";
+      return sign + Math.abs(n).toFixed(1) + " R";
+    };
+// Precompute month end equity index and aggregates for trades/r/pnl
     const monthData = new Map(); // mk -> {endEquity, sumR, trades, sumPnL}
     for(const mk of allowedMonths){
       const y = Number(mk.slice(0,4));
@@ -4542,11 +4598,19 @@ if(type === "tradeQuality"){
           // no data for this month -> neutral blue-ish base (keep default bg)
           cell.style.opacity = "0.65";
         } else if(mode === "pnl"){
-          const prev = prevMonthKey(mk);
           const endThis = Number(valInfo.endEquity);
-          const endPrev = Number(monthData.get(prev)?.endEquity);
+
+          // Baseline: end of previous month (global), fallback to first value in current month
+          let endPrev = getMonthEndEquity(prevMonthKey(mk));
+          if(!Number.isFinite(endPrev) || endPrev === 0){
+            const firstThis = getMonthFirstEquity(mk);
+            if(Number.isFinite(firstThis) && firstThis !== 0) endPrev = firstThis;
+          }
+
           const pct = (Number.isFinite(endThis) && Number.isFinite(endPrev) && endPrev !== 0) ? ((endThis/endPrev - 1) * 100) : 0;
-          const eurDelta = (Number.isFinite(endThis) && Number.isFinite(endPrev)) ? (endThis - endPrev) : 0;
+
+          // € delta in tooltips = sum of daily PnL (wins+losses) within the month
+          const eurDelta = Number(valInfo.sumPnL ?? 0);
 
           // Color: blue at 0, red/green intensity
           const abs = Math.abs(pct);
@@ -4568,7 +4632,7 @@ if(type === "tradeQuality"){
             <div style="min-width:220px;">
               <div style="opacity:.9; margin-bottom:6px;">${monthLabel}</div>
               <div style="font-weight:900; font-size:16px;" class="${cls}">Δ ${fmtSignedEUR2(eurDelta)}</div>
-              <div style="font-weight:900; font-size:16px;" class="${cls}">Δ ${fmtPct1(pct)}</div>
+              <div style="font-weight:900; font-size:16px;" class="${cls}">Δ ${fmtSignedPct1(pct)}</div>
               <div style="margin-top:6px; color: rgba(138,164,214,.95);">Equity End: ${fmtEUR2(endThis)}</div>
             </div>
           `;
@@ -4616,83 +4680,85 @@ if(type === "tradeQuality"){
       total.className = "yTotal";
       total.dataset.anchorId = `yt_${y}`;
 
-      if(mode === "pnl"){
-        // Year %: end vs start baseline
-        const mkFirst = `${y}-01`;
-        const mkLast  = `${y}-12`;
-        // Find first month key present in this year
-        const present = [...byYear.get(y)].sort((a,b)=>a-b);
-        const firstMi = present.length ? present[0] : 0;
-        const lastMi  = present.length ? present[present.length-1] : 11;
-        const firstKey = `${y}-${String(firstMi+1).padStart(2,"0")}`;
-        const lastKey  = `${y}-${String(lastMi+1).padStart(2,"0")}`;
-        const startKey = prevMonthKey(firstKey);
-        const startEq  = Number(monthData.get(startKey)?.endEquity);
-        const endEq    = Number(monthData.get(lastKey)?.endEquity);
+      const present = [...byYear.get(y)].sort((a,b)=>a-b);
 
+      if(mode === "pnl"){
+        // Year %: end vs start baseline (prev-year end; fallback to first value in same year)
+        const endEq = getYearEndEquity(y);
+        let startEq = getYearEndEquity(y-1);
+        if(!Number.isFinite(startEq) || startEq === 0){
+          const firstEq = getYearFirstEquity(y);
+          if(Number.isFinite(firstEq) && firstEq !== 0) startEq = firstEq;
+        }
         const yearPct = (Number.isFinite(startEq) && Number.isFinite(endEq) && startEq !== 0) ? ((endEq/startEq - 1) * 100) : 0;
 
-        total.textContent = fmtPct1(yearPct);
+        total.textContent = fmtSignedPct1(yearPct);
         if(yearPct > 0){
-          total.style.background = "linear-gradient(180deg, rgba(20,60,28,.25), rgba(30,180,90,.55))";
-          total.style.borderColor = "rgba(40,220,120,.45)";
+          total.style.background = `linear-gradient(180deg, rgba(10,35,70,.18), rgba(30,180,90,.45))`;
+          total.style.border = `1px solid rgba(40,210,120,.55)`;
+          total.style.boxShadow = `0 0 0 1px rgba(40,210,120,.10), 0 10px 28px rgba(0,0,0,.25)`;
         } else if(yearPct < 0){
-          total.style.background = "linear-gradient(180deg, rgba(60,22,22,.25), rgba(240,80,80,.55))";
-          total.style.borderColor = "rgba(255,90,90,.45)";
+          total.style.background = `linear-gradient(180deg, rgba(10,35,70,.18), rgba(220,60,70,.45))`;
+          total.style.border = `1px solid rgba(240,80,90,.55)`;
+          total.style.boxShadow = `0 0 0 1px rgba(240,80,90,.10), 0 10px 28px rgba(0,0,0,.25)`;
         } else {
-          total.style.background = "linear-gradient(180deg, rgba(10,35,70,.22), rgba(45,107,255,.20))";
-          total.style.borderColor = "rgba(45,107,255,.30)";
+          total.style.background = `linear-gradient(180deg, rgba(10,35,70,.18), rgba(45,110,210,.35))`;
+          total.style.border = `1px solid rgba(70,130,230,.45)`;
         }
 
-        // Tooltip: sum of PnL in year
-        let sumPnLYear = 0;
-        for(const mk of allowedMonths){
-          if(Number(mk.slice(0,4)) !== y) continue;
-          const md = monthData.get(mk);
-          sumPnLYear += Number(md?.sumPnL ?? 0) || 0;
+        // Tooltip (Equity): Δ € = sum of daily PnL (wins+losses) within the year
+        let sumYearPnL = 0;
+        for(const mi of present){
+          const mk = `${y}-${String(mi+1).padStart(2,"0")}`;
+          const v = Number(monthData.get(mk)?.sumPnL ?? 0);
+          sumYearPnL += (Number.isFinite(v) ? v : 0);
         }
-        const cls = (sumPnLYear >= 0) ? "good" : "bad";
-        const html = `
-          <div style="min-width:180px;">
-            <div style="opacity:.9; margin-bottom:6px;">Year ${y}</div>
-            <div style="font-weight:900; font-size:16px;" class="${cls}">Δ ${fmtSignedEUR2(sumPnLYear)}</div>
+        const cls = (sumYearPnL >= 0) ? "good" : "bad";
+        const tip = `
+          <div style="min-width:220px;">
+            <div style="opacity:.9; margin-bottom:6px;">${y}</div>
+            <div style="font-weight:900; font-size:16px;" class="${cls}">Δ ${fmtSignedEUR2(sumYearPnL)}</div>
           </div>
         `;
-        total.addEventListener("mouseenter", ()=> showDataTipAnchored(html, total, "right"));
+        total.addEventListener("mouseenter", ()=> showDataTipAnchored(tip, total, "right"));
         total.addEventListener("mouseleave", hideDataTip);
-        total.addEventListener("click", (e)=>{ e.preventDefault(); toggleDataTipAnchored(html, total, "right"); });
+        total.addEventListener("click", (e)=>{ e.preventDefault(); toggleDataTipAnchored(tip, total, "right"); });
 
       } else {
+        // Year R total and avg per active month
         let sumRYear = 0;
-        let monthsCount = 0;
-        for(const mk of allowedMonths){
-          if(Number(mk.slice(0,4)) !== y) continue;
-          sumRYear += Number(monthData.get(mk)?.sumR ?? 0) || 0;
-          monthsCount += 1;
+        for(const mi of present){
+          const mk = `${y}-${String(mi+1).padStart(2,"0")}`;
+          const v = Number(monthData.get(mk)?.sumR ?? 0);
+          sumRYear += (Number.isFinite(v) ? v : 0);
         }
-        total.textContent = fmtR1(sumRYear);
+        const monthsCount = present.length || 0;
+        const avgR = (monthsCount > 0) ? (sumRYear / monthsCount) : 0;
+
+        total.textContent = fmtSignedR1sp(sumRYear);
         if(sumRYear > 0){
-          total.style.background = "linear-gradient(180deg, rgba(20,60,28,.25), rgba(30,180,90,.55))";
-          total.style.borderColor = "rgba(40,220,120,.45)";
+          total.style.background = `linear-gradient(180deg, rgba(10,35,70,.18), rgba(30,180,90,.45))`;
+          total.style.border = `1px solid rgba(40,210,120,.55)`;
+          total.style.boxShadow = `0 0 0 1px rgba(40,210,120,.10), 0 10px 28px rgba(0,0,0,.25)`;
         } else if(sumRYear < 0){
-          total.style.background = "linear-gradient(180deg, rgba(60,22,22,.25), rgba(240,80,80,.55))";
-          total.style.borderColor = "rgba(255,90,90,.45)";
+          total.style.background = `linear-gradient(180deg, rgba(10,35,70,.18), rgba(220,60,70,.45))`;
+          total.style.border = `1px solid rgba(240,80,90,.55)`;
+          total.style.boxShadow = `0 0 0 1px rgba(240,80,90,.10), 0 10px 28px rgba(0,0,0,.25)`;
         } else {
-          total.style.background = "linear-gradient(180deg, rgba(10,35,70,.22), rgba(45,107,255,.20))";
-          total.style.borderColor = "rgba(45,107,255,.30)";
+          total.style.background = `linear-gradient(180deg, rgba(10,35,70,.18), rgba(45,110,210,.35))`;
+          total.style.border = `1px solid rgba(70,130,230,.45)`;
         }
 
-        const avg = (monthsCount > 0) ? (sumRYear / monthsCount) : 0;
-        const cls = (avg >= 0) ? "good" : "bad";
-        const html = `
-          <div style="min-width:200px;">
-            <div style="opacity:.9; margin-bottom:6px;">Year ${y}</div>
-            <div style="font-weight:900; font-size:16px;" class="${cls}">Ø ${fmtSigned1(avg, " R / month")}</div>
+        const cls = (avgR >= 0) ? "good" : "bad";
+        const tip = `
+          <div style="min-width:220px;">
+            <div style="opacity:.9; margin-bottom:6px;">${y}</div>
+            <div style="font-weight:900; font-size:16px;" class="${cls}">Ø ${fmtSignedR1sp(avgR)} / month</div>
           </div>
         `;
-        total.addEventListener("mouseenter", ()=> showDataTipAnchored(html, total, "right"));
+        total.addEventListener("mouseenter", ()=> showDataTipAnchored(tip, total, "right"));
         total.addEventListener("mouseleave", hideDataTip);
-        total.addEventListener("click", (e)=>{ e.preventDefault(); toggleDataTipAnchored(html, total, "right"); });
+        total.addEventListener("click", (e)=>{ e.preventDefault(); toggleDataTipAnchored(tip, total, "right"); });
       }
 
       yearGrid.appendChild(total);
