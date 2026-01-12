@@ -4342,6 +4342,16 @@ if(type === "tradeQuality"){
     if(!Number.isFinite(x)) return "—";
     return x.toLocaleString("de-DE", { style:"currency", currency:"EUR", minimumFractionDigits:2, maximumFractionDigits:2 });
   };
+  const fmtPct1 = (pct) => {
+    const x = Number(pct);
+    if(!Number.isFinite(x)) return "—";
+    return x.toFixed(1) + "%";
+  };
+  const fmtR1 = (r) => {
+    const x = Number(r);
+    if(!Number.isFinite(x)) return "—";
+    return x.toFixed(1) + "R";
+  };
   const fmtSigned1 = (n, suffix="") => {
     const x = Number(n);
     if(!Number.isFinite(x)) return "—";
@@ -4616,7 +4626,7 @@ if(type === "tradeQuality"){
       total.className = "yTotal";
       total.dataset.anchorId = `yt_${y}`;
 
-      if(mode === "pnl"){
+            if(mode === "pnl"){
         // Year %: end vs start baseline
         const mkFirst = `${y}-01`;
         const mkLast  = `${y}-12`;
@@ -6345,6 +6355,35 @@ if(dpApply && !dpApply._bound){
             GLOBAL.calendar.month = months[idx+1];
             renderCalendar();
           }
+        });
+      }
+
+
+      // Calendar mode (PnL vs Trades&R) wiring (once)
+      const calModeEl = $("calMode");
+      if(calModeEl && !calModeEl._bound){
+        calModeEl._bound = true;
+        calModeEl.addEventListener("click", (ev) => {
+          const btn = ev.target?.closest?.("button[data-mode]");
+          if(!btn) return;
+          calendarBadgeMode = btn.getAttribute("data-mode") || "pnl";
+          [...calModeEl.querySelectorAll("button[data-mode]")].forEach(b=>b.classList.toggle("active", b===btn));
+          renderCalendar();
+        });
+      }
+
+      // Calendar view (Month vs Years) wiring (once)
+      const calViewEl = $("calView");
+      if(calViewEl && !calViewEl._bound){
+        calViewEl._bound = true;
+        calViewEl.addEventListener("click", (ev) => {
+          const btn = ev.target?.closest?.("button[data-view]");
+          if(!btn) return;
+          const view = btn.getAttribute("data-view") || "month";
+          if(!GLOBAL.calendar) GLOBAL.calendar = {};
+          GLOBAL.calendar.view = view;
+          [...calViewEl.querySelectorAll("button[data-view]")].forEach(b=>b.classList.toggle("active", b===btn));
+          renderCalendar();
         });
       }
 
