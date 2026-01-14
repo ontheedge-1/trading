@@ -1,6 +1,6 @@
 {
   "schema_version": "kpi90_weekly_v1",
-  "generated_at": "2026-01-13T04:56:29.269Z",
+  "generated_at": "2026-01-14T04:59:07.080Z",
   "source": "kpi_snapshots_daily.json (90d only)",
   "min_date": "2025-10-01",
   "max_date": "2026-01-07",
@@ -178,6 +178,7 @@
       "recovery_factor_R": 3.38,
       "sharpe": 5.76,
       "winrate": 0.42,
+      "tier": "STRONG",
       "delta_vs_prev": {
         "final_score": 8.04,
         "expectancy_R": 0.1,
@@ -195,6 +196,7 @@
       "recovery_factor_R": 4.61,
       "sharpe": 6.36,
       "winrate": 0.45,
+      "tier": "ULTRA",
       "delta_vs_prev": {
         "final_score": 16.62,
         "expectancy_R": 0.1,
@@ -202,7 +204,8 @@
         "recovery_factor_R": 1.23,
         "sharpe": 0.6,
         "winrate": 0.03
-      }
+      },
+      "tier_changed": true
     },
     {
       "date": "2025-12-24",
@@ -212,6 +215,7 @@
       "recovery_factor_R": 4.61,
       "sharpe": 6.36,
       "winrate": 0.45,
+      "tier": "ULTRA",
       "delta_vs_prev": {
         "final_score": 0,
         "expectancy_R": 0,
@@ -229,6 +233,7 @@
       "recovery_factor_R": 3.63,
       "sharpe": 5.81,
       "winrate": 0.44,
+      "tier": "STRONG",
       "delta_vs_prev": {
         "final_score": -16.62,
         "expectancy_R": -0.05,
@@ -236,7 +241,8 @@
         "recovery_factor_R": -0.98,
         "sharpe": -0.55,
         "winrate": -0.01
-      }
+      },
+      "tier_changed": true
     },
     {
       "date": "2026-01-07",
@@ -246,6 +252,7 @@
       "recovery_factor_R": 3.35,
       "sharpe": 5.84,
       "winrate": 0.44,
+      "tier": "STRONG",
       "delta_vs_prev": {
         "final_score": 0,
         "expectancy_R": -0.01,
