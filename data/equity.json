@@ -392,10 +392,10 @@
   {
     "date": "2026-01-15",
     "equity_start_$": 35387.0,
-    "equity_end_$": 35387.0,
-    "cash_equity_$": 35387.0,
+    "equity_end_$": 33932.0,
+    "cash_equity_$": 33932.0,
     "ath_$": 35735.0,
-    "drawdown_pct": -0.009738,
+    "drawdown_pct": -0.050455,
     "dd_tier": "0–12%",
     "dd_multiplier": 1.0,
     "base_equity_for_sizing_$": 34305.39,
