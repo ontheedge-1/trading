@@ -752,5 +752,18 @@
     "loss_streak": 0,
     "trade_id": "T-20260121-164453-3839",
     "notes": null
+  },
+  {
+    "date": "2026-01-23",
+    "instrument": "ES",
+    "result_r": -1.0,
+    "is_win": false,
+    "is_loss": true,
+    "is_be": false,
+    "cum_R": 17.37,
+    "win_streak": 0,
+    "loss_streak": 1,
+    "trade_id": "T-20260123-154943-5617",
+    "notes": null
   }
 ]
