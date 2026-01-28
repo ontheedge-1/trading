@@ -872,13 +872,26 @@
   },
   {
     "date": "2026-01-28",
-    "instrument": "RTY",
+    "instrument": "ES",
     "result_r": 2.2,
     "is_win": true,
     "is_loss": false,
     "is_be": false,
     "cum_R": 17.97,
     "win_streak": 1,
+    "loss_streak": 0,
+    "trade_id": "T-20260128-165402-5890",
+    "notes": null
+  },
+  {
+    "date": "2026-01-28",
+    "instrument": "RTY",
+    "result_r": 2.2,
+    "is_win": true,
+    "is_loss": false,
+    "is_be": false,
+    "cum_R": 20.17,
+    "win_streak": 2,
     "loss_streak": 0,
     "trade_id": "T-20260128-160905-1719",
     "notes": null
