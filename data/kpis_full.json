@@ -14,8 +14,8 @@
   "longest_losing_streak": 6,
   "avg_losing_streak": 2.571429,
   "starting_equity_$": 31116.0,
-  "ending_equity_$": 32876.0,
-  "net_profit_$": 1760.0,
+  "ending_equity_$": 34315.0,
+  "net_profit_$": 3199.0,
   "max_drawdown_pct": -0.080006,
-  "recovery_factor": 0.706979
+  "recovery_factor": 1.285014
 }
