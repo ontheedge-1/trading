@@ -521,10 +521,10 @@
   },
   {
     "date": "2026-02-13",
-    "trade_count": 1,
-    "daily_R": 0.0,
+    "trade_count": 3,
+    "daily_R": -2.0,
     "wins": 0,
-    "losses": 0,
+    "losses": 2,
     "daily_adjustments_total_$": 0.0,
     "daily_pnl_$": 0.0,
     "withdrawal_$": 0.0,
