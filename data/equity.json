@@ -602,10 +602,10 @@
   {
     "date": "2026-02-13",
     "equity_start_$": 38217.0,
-    "equity_end_$": 38217.0,
-    "cash_equity_$": 38217.0,
+    "equity_end_$": 37423.0,
+    "cash_equity_$": 37423.0,
     "ath_$": 38217.0,
-    "drawdown_pct": 0.0,
+    "drawdown_pct": -0.020776,
     "dd_tier": "0–12%",
     "dd_multiplier": 1.0,
     "base_equity_for_sizing_$": 37821.69,
