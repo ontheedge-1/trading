@@ -613,5 +613,20 @@
     "next_resize_down_threshold_$": 35930.61,
     "base_risk_$": 378.22,
     "effective_risk_$": 378.22
+  },
+  {
+    "date": "2026-02-16",
+    "equity_start_$": 37423.0,
+    "equity_end_$": 37423.0,
+    "cash_equity_$": 37423.0,
+    "ath_$": 38217.0,
+    "drawdown_pct": -0.020776,
+    "dd_tier": "0–12%",
+    "dd_multiplier": 1.0,
+    "base_equity_for_sizing_$": 37821.69,
+    "next_resize_up_threshold_$": 39712.78,
+    "next_resize_down_threshold_$": 35930.61,
+    "base_risk_$": 378.22,
+    "effective_risk_$": 378.22
   }
 ]
