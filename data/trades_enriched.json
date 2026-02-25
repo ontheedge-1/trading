@@ -1337,5 +1337,31 @@
     "loss_streak": 1,
     "trade_id": "T-20260223-155256-4745",
     "notes": null
+  },
+  {
+    "date": "2026-02-25",
+    "instrument": "RTY",
+    "result_r": 1.98,
+    "is_win": true,
+    "is_loss": false,
+    "is_be": false,
+    "cum_R": 37.86,
+    "win_streak": 1,
+    "loss_streak": 0,
+    "trade_id": "T-20260225-154403-5401",
+    "notes": null
+  },
+  {
+    "date": "2026-02-25",
+    "instrument": "RTY",
+    "result_r": -1.0,
+    "is_win": false,
+    "is_loss": true,
+    "is_be": false,
+    "cum_R": 36.86,
+    "win_streak": 0,
+    "loss_streak": 1,
+    "trade_id": "T-20260225-163636-8073",
+    "notes": null
   }
 ]
