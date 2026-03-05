@@ -651,10 +651,10 @@
   },
   {
     "date": "2026-03-05",
-    "trade_count": 6,
-    "daily_R": -5.0,
+    "trade_count": 7,
+    "daily_R": -6.0,
     "wins": 0,
-    "losses": 5,
+    "losses": 6,
     "daily_adjustments_total_$": 0.0,
     "daily_pnl_$": 0.0,
     "withdrawal_$": 0.0,
