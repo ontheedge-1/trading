@@ -737,16 +737,16 @@
   {
     "date": "2026-03-04",
     "equity_start_$": 41181.0,
-    "equity_end_$": 41181.0,
-    "cash_equity_$": 41181.0,
-    "ath_$": 41181.0,
+    "equity_end_$": 43342.0,
+    "cash_equity_$": 43342.0,
+    "ath_$": 43342.0,
     "drawdown_pct": 0.0,
     "dd_tier": "0–12%",
     "dd_multiplier": 1.0,
-    "base_equity_for_sizing_$": 39712.78,
-    "next_resize_up_threshold_$": 41698.42,
-    "next_resize_down_threshold_$": 37727.14,
-    "base_risk_$": 397.13,
-    "effective_risk_$": 397.13
+    "base_equity_for_sizing_$": 41698.42,
+    "next_resize_up_threshold_$": 43783.34,
+    "next_resize_down_threshold_$": 39613.5,
+    "base_risk_$": 416.98,
+    "effective_risk_$": 416.98
   }
 ]
