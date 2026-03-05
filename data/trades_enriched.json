@@ -1454,5 +1454,83 @@
     "loss_streak": 0,
     "trade_id": "T-20260304-163043-1907",
     "notes": null
+  },
+  {
+    "date": "2026-03-05",
+    "instrument": "ES",
+    "result_r": -1.0,
+    "is_win": false,
+    "is_loss": true,
+    "is_be": false,
+    "cum_R": 44.15,
+    "win_streak": 0,
+    "loss_streak": 1,
+    "trade_id": "T-20260305-154353-5348",
+    "notes": null
+  },
+  {
+    "date": "2026-03-05",
+    "instrument": "ES",
+    "result_r": -1.0,
+    "is_win": false,
+    "is_loss": true,
+    "is_be": false,
+    "cum_R": 43.15,
+    "win_streak": 0,
+    "loss_streak": 2,
+    "trade_id": "T-20260305-154958-8580",
+    "notes": null
+  },
+  {
+    "date": "2026-03-05",
+    "instrument": "ES",
+    "result_r": 0.0,
+    "is_win": false,
+    "is_loss": false,
+    "is_be": true,
+    "cum_R": 43.15,
+    "win_streak": 0,
+    "loss_streak": 0,
+    "trade_id": "T-20260305-160753-6019",
+    "notes": null
+  },
+  {
+    "date": "2026-03-05",
+    "instrument": "RTY",
+    "result_r": -1.0,
+    "is_win": false,
+    "is_loss": true,
+    "is_be": false,
+    "cum_R": 42.15,
+    "win_streak": 0,
+    "loss_streak": 1,
+    "trade_id": "T-20260305-155213-1490",
+    "notes": null
+  },
+  {
+    "date": "2026-03-05",
+    "instrument": "RTY",
+    "result_r": -1.0,
+    "is_win": false,
+    "is_loss": true,
+    "is_be": false,
+    "cum_R": 41.15,
+    "win_streak": 0,
+    "loss_streak": 2,
+    "trade_id": "T-20260305-160843-7528",
+    "notes": null
+  },
+  {
+    "date": "2026-03-05",
+    "instrument": "YM",
+    "result_r": -1.0,
+    "is_win": false,
+    "is_loss": true,
+    "is_be": false,
+    "cum_R": 40.15,
+    "win_streak": 0,
+    "loss_streak": 3,
+    "trade_id": "T-20260305-154331-4862",
+    "notes": null
   }
 ]
