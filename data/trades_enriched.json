@@ -1873,7 +1873,7 @@
   },
   {
     "date": "2026-03-20",
-    "instrument": "RTY",
+    "instrument": "NQ",
     "result_r": -1.0,
     "is_win": false,
     "is_loss": true,
@@ -1881,6 +1881,19 @@
     "cum_R": 41.01,
     "win_streak": 0,
     "loss_streak": 2,
+    "trade_id": "T-20260320-181621-1548",
+    "notes": null
+  },
+  {
+    "date": "2026-03-20",
+    "instrument": "RTY",
+    "result_r": -1.0,
+    "is_win": false,
+    "is_loss": true,
+    "is_be": false,
+    "cum_R": 40.01,
+    "win_streak": 0,
+    "loss_streak": 3,
     "trade_id": "T-20260320-162745-8185",
     "notes": null
   }
