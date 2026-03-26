@@ -820,10 +820,10 @@
   },
   {
     "date": "2026-03-26",
-    "trade_count": 3,
-    "daily_R": -3.0,
+    "trade_count": 6,
+    "daily_R": -4.3,
     "wins": 0,
-    "losses": 3,
+    "losses": 5,
     "daily_adjustments_total_$": 0.0,
     "daily_pnl_$": 0.0,
     "withdrawal_$": 0.0,
