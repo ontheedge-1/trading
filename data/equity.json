@@ -1067,10 +1067,10 @@
   {
     "date": "2026-05-18",
     "equity_start_$": 38965.0,
-    "equity_end_$": 38965.0,
-    "cash_equity_$": 38965.0,
+    "equity_end_$": 39608.0,
+    "cash_equity_$": 39608.0,
     "ath_$": 43747.0,
-    "drawdown_pct": -0.10931,
+    "drawdown_pct": -0.094612,
     "dd_tier": "0–12%",
     "dd_multiplier": 1.0,
     "base_equity_for_sizing_$": 39613.5,
