@@ -1,6 +1,6 @@
 {
   "schema_version": "kpi90_weekly_v1",
-  "generated_at": "2026-05-25T07:57:25.382Z",
+  "generated_at": "2026-05-26T06:56:05.774Z",
   "source": "kpi_snapshots_daily.json (90d only)",
   "min_date": "2025-10-01",
   "max_date": "2026-05-20",
