@@ -1,6 +1,6 @@
 {
   "schema_version": "kpi90_weekly_v1",
-  "generated_at": "2026-05-29T07:03:19.408Z",
+  "generated_at": "2026-05-30T06:30:41.317Z",
   "source": "kpi_snapshots_daily.json (90d only)",
   "min_date": "2025-10-01",
   "max_date": "2026-05-27",
@@ -615,7 +615,7 @@
       "expectancy_R": -0.08,
       "profit_factor_R": 0.86,
       "recovery_factor_R": -0.36,
-      "sharpe": -0.17,
+      "sharpe": -0.39,
       "winrate": 0.27,
       "tier": "WEAK",
       "delta_vs_prev": {
@@ -623,7 +623,7 @@
         "expectancy_R": -0.03,
         "profit_factor_R": -0.06,
         "recovery_factor_R": -0.14,
-        "sharpe": -0.36,
+        "sharpe": -0.58,
         "winrate": -0.02
       }
     }
