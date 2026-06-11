@@ -1,6 +1,6 @@
 {
   "schema_version": "kpi90_weekly_v1",
-  "generated_at": "2026-06-10T07:17:20.671Z",
+  "generated_at": "2026-06-11T08:15:32.689Z",
   "source": "kpi_snapshots_daily.json (90d only)",
   "min_date": "2025-10-01",
   "max_date": "2026-06-03",
@@ -485,127 +485,127 @@
     },
     {
       "date": "2026-04-08",
-      "final_score": -6.63,
+      "final_score": -13.72,
       "expectancy_R": 0.04,
       "profit_factor_R": 1.07,
       "recovery_factor_R": 0.32,
-      "sharpe": 1.06,
+      "sharpe": 0.5,
       "winrate": 0.31,
       "tier": "WEAK",
       "delta_vs_prev": {
-        "final_score": -22.9,
+        "final_score": -29.99,
         "expectancy_R": -0.07,
         "profit_factor_R": -0.13,
         "recovery_factor_R": -0.72,
-        "sharpe": -0.21,
+        "sharpe": -0.77,
         "winrate": -0.01
       }
     },
     {
       "date": "2026-04-15",
-      "final_score": 10.41,
+      "final_score": 4.41,
       "expectancy_R": 0.08,
       "profit_factor_R": 1.15,
       "recovery_factor_R": 0.61,
-      "sharpe": 1.74,
+      "sharpe": 1.12,
       "winrate": 0.32,
       "tier": "WEAK",
       "delta_vs_prev": {
-        "final_score": 17.04,
+        "final_score": 18.13,
         "expectancy_R": 0.04,
         "profit_factor_R": 0.08,
         "recovery_factor_R": 0.29,
-        "sharpe": 0.68,
+        "sharpe": 0.62,
         "winrate": 0.01
       }
     },
     {
       "date": "2026-04-22",
-      "final_score": 10.54,
+      "final_score": 4.04,
       "expectancy_R": 0.08,
       "profit_factor_R": 1.15,
       "recovery_factor_R": 0.58,
-      "sharpe": 1.72,
+      "sharpe": 1.08,
       "winrate": 0.32,
       "tier": "WEAK",
       "delta_vs_prev": {
-        "final_score": 0.13,
+        "final_score": -0.37,
         "expectancy_R": 0,
         "profit_factor_R": 0,
         "recovery_factor_R": -0.03,
-        "sharpe": -0.02,
+        "sharpe": -0.04,
         "winrate": 0
       }
     },
     {
       "date": "2026-04-29",
-      "final_score": 11.07,
+      "final_score": 5.03,
       "expectancy_R": 0.09,
       "profit_factor_R": 1.16,
       "recovery_factor_R": 0.53,
-      "sharpe": 1.85,
+      "sharpe": 1.12,
       "winrate": 0.32,
       "tier": "WEAK",
       "delta_vs_prev": {
-        "final_score": 0.53,
+        "final_score": 0.99,
         "expectancy_R": 0.01,
         "profit_factor_R": 0.01,
         "recovery_factor_R": -0.05,
-        "sharpe": 0.13,
+        "sharpe": 0.04,
         "winrate": 0
       }
     },
     {
       "date": "2026-05-06",
-      "final_score": 3.8,
+      "final_score": -5.68,
       "expectancy_R": 0.06,
       "profit_factor_R": 1.11,
       "recovery_factor_R": 0.35,
-      "sharpe": 1.55,
+      "sharpe": 0.79,
       "winrate": 0.31,
       "tier": "WEAK",
       "delta_vs_prev": {
-        "final_score": -7.27,
+        "final_score": -10.71,
         "expectancy_R": -0.03,
         "profit_factor_R": -0.05,
         "recovery_factor_R": -0.18,
-        "sharpe": -0.3,
+        "sharpe": -0.33,
         "winrate": -0.01
       }
     },
     {
       "date": "2026-05-13",
-      "final_score": -25.68,
+      "final_score": -30,
       "expectancy_R": -0.02,
       "profit_factor_R": 0.96,
       "recovery_factor_R": -0.11,
-      "sharpe": 0.35,
+      "sharpe": -0.4,
       "winrate": 0.29,
       "tier": "WEAK",
       "delta_vs_prev": {
-        "final_score": -29.48,
+        "final_score": -24.32,
         "expectancy_R": -0.08,
         "profit_factor_R": -0.15,
         "recovery_factor_R": -0.46,
-        "sharpe": -1.2,
+        "sharpe": -1.19,
         "winrate": -0.02
       }
     },
     {
       "date": "2026-05-20",
-      "final_score": -27.61,
+      "final_score": -30,
       "expectancy_R": -0.05,
       "profit_factor_R": 0.92,
       "recovery_factor_R": -0.22,
-      "sharpe": 0.19,
+      "sharpe": -0.65,
       "winrate": 0.29,
       "tier": "WEAK",
       "delta_vs_prev": {
-        "final_score": -1.93,
+        "final_score": 0,
         "expectancy_R": -0.03,
         "profit_factor_R": -0.04,
         "recovery_factor_R": -0.11,
-        "sharpe": -0.16,
+        "sharpe": -0.25,
         "winrate": 0
       }
     },
@@ -615,15 +615,15 @@
       "expectancy_R": -0.08,
       "profit_factor_R": 0.86,
       "recovery_factor_R": -0.36,
-      "sharpe": -0.39,
+      "sharpe": -1.24,
       "winrate": 0.27,
       "tier": "WEAK",
       "delta_vs_prev": {
-        "final_score": -2.39,
+        "final_score": 0,
         "expectancy_R": -0.03,
         "profit_factor_R": -0.06,
         "recovery_factor_R": -0.14,
-        "sharpe": -0.58,
+        "sharpe": -0.59,
         "winrate": -0.02
       }
     },
@@ -633,7 +633,7 @@
       "expectancy_R": -0.1,
       "profit_factor_R": 0.82,
       "recovery_factor_R": -0.44,
-      "sharpe": -1.6,
+      "sharpe": -2.42,
       "winrate": 0.28,
       "tier": "WEAK",
       "delta_vs_prev": {
@@ -641,7 +641,7 @@
         "expectancy_R": -0.02,
         "profit_factor_R": -0.04,
         "recovery_factor_R": -0.08,
-        "sharpe": -1.21,
+        "sharpe": -1.18,
         "winrate": 0.01
       }
     }
