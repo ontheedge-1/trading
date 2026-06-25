@@ -1220,5 +1220,18 @@
     "deposit_$": 0.0,
     "fees_$": 0.0,
     "correction_$": 0.0
+  },
+  {
+    "date": "2026-06-24",
+    "trade_count": 12,
+    "daily_R": -1.8,
+    "wins": 3,
+    "losses": 8,
+    "daily_adjustments_total_$": -293.0,
+    "daily_pnl_$": -293.0,
+    "withdrawal_$": 0.0,
+    "deposit_$": 0.0,
+    "fees_$": 0.0,
+    "correction_$": 0.0
   }
 ]
