@@ -2988,5 +2988,18 @@
     "loss_streak": 3,
     "trade_id": "T-20260629-155624-9198",
     "notes": null
+  },
+  {
+    "date": "2026-06-30",
+    "instrument": "RTY",
+    "result_r": -1.0,
+    "is_win": false,
+    "is_loss": true,
+    "is_be": false,
+    "cum_R": 44.66,
+    "win_streak": 0,
+    "loss_streak": 4,
+    "trade_id": "T-20260630-155228-6227",
+    "notes": null
   }
 ]
