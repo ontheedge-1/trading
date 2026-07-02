@@ -3027,5 +3027,18 @@
     "loss_streak": 0,
     "trade_id": "T-20260630-164903-4459",
     "notes": null
+  },
+  {
+    "date": "2026-07-01",
+    "instrument": "NQ",
+    "result_r": 0.5,
+    "is_win": true,
+    "is_loss": false,
+    "is_be": false,
+    "cum_R": 46.16,
+    "win_streak": 3,
+    "loss_streak": 0,
+    "trade_id": "T-20260702-103629-7239",
+    "notes": null
   }
 ]
