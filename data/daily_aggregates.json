@@ -1353,9 +1353,9 @@
   },
   {
     "date": "2026-07-09",
-    "trade_count": 5,
-    "daily_R": 1.5,
-    "wins": 3,
+    "trade_count": 4,
+    "daily_R": 0.5,
+    "wins": 2,
     "losses": 2,
     "daily_adjustments_total_$": 131.0,
     "daily_pnl_$": 131.0,
