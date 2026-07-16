@@ -1607,10 +1607,10 @@
   {
     "date": "2026-07-15",
     "equity_start_$": 41457.0,
-    "equity_end_$": 41457.0,
-    "cash_equity_$": 41457.0,
+    "equity_end_$": 42484.0,
+    "cash_equity_$": 42484.0,
     "ath_$": 43921.0,
-    "drawdown_pct": -0.056101,
+    "drawdown_pct": -0.032718,
     "dd_tier": "0–12%",
     "dd_multiplier": 1.0,
     "base_equity_for_sizing_$": 43564.69,
