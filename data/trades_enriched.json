@@ -3638,5 +3638,31 @@
     "loss_streak": 2,
     "trade_id": "T-20260818-162838-1417",
     "notes": null
+  },
+  {
+    "date": "2026-08-18",
+    "instrument": "NQ",
+    "result_r": -1.0,
+    "is_win": false,
+    "is_loss": true,
+    "is_be": false,
+    "cum_R": 48.45,
+    "win_streak": 0,
+    "loss_streak": 3,
+    "trade_id": "T-20260818-164507-7808",
+    "notes": null
+  },
+  {
+    "date": "2026-08-18",
+    "instrument": "NQ",
+    "result_r": -1.0,
+    "is_win": false,
+    "is_loss": true,
+    "is_be": false,
+    "cum_R": 47.45,
+    "win_streak": 0,
+    "loss_streak": 4,
+    "trade_id": "T-20260818-164508-1258",
+    "notes": null
   }
 ]
