@@ -1,9 +1,9 @@
 {
   "schema_version": "kpi90_weekly_v1",
-  "generated_at": "2026-09-03T08:05:03.704Z",
+  "generated_at": "2026-09-04T08:00:26.364Z",
   "source": "kpi_snapshots_daily.json (90d only)",
   "min_date": "2025-10-01",
-  "max_date": "2026-08-26",
+  "max_date": "2026-09-02",
   "points": [
     {
       "date": "2025-10-01",
@@ -866,6 +866,24 @@
         "winrate": -0.02
       },
       "tier_changed": true
+    },
+    {
+      "date": "2026-09-02",
+      "final_score": 3.01,
+      "expectancy_R": 0.05,
+      "profit_factor_R": 1.11,
+      "recovery_factor_R": 0.48,
+      "sharpe": 3.35,
+      "winrate": 0.33,
+      "tier": "WEAK",
+      "delta_vs_prev": {
+        "final_score": -4.19,
+        "expectancy_R": -0.02,
+        "profit_factor_R": -0.03,
+        "recovery_factor_R": -0.26,
+        "sharpe": -0.03,
+        "winrate": -0.02
+      }
     }
   ]
 }
