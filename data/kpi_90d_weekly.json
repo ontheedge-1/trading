@@ -1,6 +1,6 @@
 {
   "schema_version": "kpi90_weekly_v1",
-  "generated_at": "2026-10-09T10:37:15.056Z",
+  "generated_at": "2026-10-10T09:53:19.196Z",
   "source": "kpi_snapshots_daily.json (90d only)",
   "min_date": "2025-10-01",
   "max_date": "2026-10-07",
@@ -942,35 +942,35 @@
     {
       "date": "2026-09-30",
       "final_score": -30,
-      "expectancy_R": -0.04,
-      "profit_factor_R": 0.92,
-      "recovery_factor_R": -0.24,
+      "expectancy_R": -0.07,
+      "profit_factor_R": 0.87,
+      "recovery_factor_R": -0.38,
       "sharpe": -0.6,
-      "winrate": 0.31,
+      "winrate": 0.3,
       "tier": "WEAK",
       "delta_vs_prev": {
         "final_score": 0,
-        "expectancy_R": 0.04,
-        "profit_factor_R": 0.07,
-        "recovery_factor_R": 0.29,
+        "expectancy_R": 0.01,
+        "profit_factor_R": 0.02,
+        "recovery_factor_R": 0.15,
         "sharpe": 1.27,
-        "winrate": 0.03
+        "winrate": 0.02
       }
     },
     {
       "date": "2026-10-07",
       "final_score": -20,
-      "expectancy_R": -0.14,
-      "profit_factor_R": 0.73,
-      "recovery_factor_R": -0.73,
-      "winrate": 0.28,
+      "expectancy_R": -0.17,
+      "profit_factor_R": 0.69,
+      "recovery_factor_R": -0.76,
+      "winrate": 0.26,
       "tier": "WEAK",
       "delta_vs_prev": {
         "final_score": 10,
         "expectancy_R": -0.1,
-        "profit_factor_R": -0.19,
-        "recovery_factor_R": -0.49,
-        "winrate": -0.03
+        "profit_factor_R": -0.18,
+        "recovery_factor_R": -0.38,
+        "winrate": -0.04
       }
     }
   ]
